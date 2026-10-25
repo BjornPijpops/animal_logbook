@@ -1,0 +1,145 @@
+{
+  "common": {
+    "appName": "Animal Logbook",
+    "skipToContent": "Skip to content",
+    "loading": "Loading…",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "genericError": "Something went wrong. Please try again.",
+    "required": "This field is required.",
+    "invalidEmail": "Enter a valid email address.",
+    "passwordTooShort": "Use at least {min} characters.",
+    "role": {
+      "owner": "Owner",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    }
+  },
+  "nav": {
+    "label": "Main",
+    "home": "Home",
+    "household": "Household",
+    "settings": "Settings",
+    "signOut": "Sign out"
+  },
+  "auth": {
+    "signUp": {
+      "title": "Create your account",
+      "description": "Keep everything about your animals in one place.",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "checkEmailTitle": "Check your email",
+      "checkEmailBody": "If this address can be registered, we sent a link to confirm it. Open the link to finish creating your account.",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "passwordHint": "At least {min} characters."
+    },
+    "signIn": {
+      "title": "Welcome back",
+      "description": "Sign in to your Animal Logbook.",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "forgot": "Forgot your password?",
+      "noAccount": "New here?",
+      "signUpLink": "Create an account",
+      "invalidCredentials": "Email or password is incorrect.",
+      "unverified": "Please confirm your email address first. We can send the link again.",
+      "resend": "Resend confirmation email",
+      "resent": "If this address needs confirming, a new link is on its way.",
+      "rateLimited": "Too many attempts. Please wait a moment and try again."
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "description": "Enter your email and we will send you a reset link.",
+      "submit": "Send reset link",
+      "sentTitle": "Check your email",
+      "sentBody": "If an account exists for this address, a reset link is on its way.",
+      "backToSignIn": "Back to sign in"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "submit": "Save new password",
+      "invalidLink": "This reset link is invalid or has expired.",
+      "requestNew": "Request a new link",
+      "successTitle": "Password updated",
+      "successBody": "You can now sign in with your new password.",
+      "newPassword": "New password"
+    },
+    "verifyError": "That confirmation link is invalid or has expired. Sign in to request a new one."
+  },
+  "home": {
+    "welcome": "Hello, {name}",
+    "household": "Household: {name}",
+    "emptyTitle": "No animals yet",
+    "emptyBody": "Animal profiles are coming in the next release."
+  },
+  "settings": {
+    "title": "Settings",
+    "preferencesTitle": "Preferences",
+    "timezone": "Time zone",
+    "weightUnit": "Weight unit",
+    "currency": "Default currency",
+    "kg": "Kilograms (kg)",
+    "lb": "Pounds (lb)",
+    "saved": "Preferences saved.",
+    "language": "Language",
+    "languageEnglish": "English"
+  },
+  "household": {
+    "title": "Household",
+    "members": "Members",
+    "you": "(you)",
+    "remove": "Remove",
+    "removeLabel": "Remove {name}",
+    "pendingInvites": "Pending invitations",
+    "noPending": "No pending invitations.",
+    "revoke": "Revoke",
+    "revokeLabel": "Revoke invitation for {email}",
+    "inviteTitle": "Invite someone",
+    "inviteHelp": "They need an account with this email address. Editors can change data, viewers can only look.",
+    "inviteSubmit": "Send invitation",
+    "roleLabel": "Access level",
+    "inviteSent": "Invitation sent.",
+    "ownerOnly": "Only the owner can manage members.",
+    "errors": {
+      "conflict": "This person is already a member or has a pending invitation.",
+      "rate_limited": "Too many invitations. Try again later.",
+      "forbidden": "You are not allowed to do that.",
+      "not_found": "That item no longer exists.",
+      "validation": "Check the details and try again.",
+      "unauthenticated": "Please sign in again."
+    }
+  },
+  "invite": {
+    "title": "Household invitation",
+    "body": "Accept the invitation to join this household. You will then see its animals.",
+    "accept": "Accept invitation",
+    "errors": {
+      "not_found": "This invitation is invalid or has expired.",
+      "forbidden": "This invitation was sent to a different email address.",
+      "conflict": "You are already a member of this household.",
+      "other": "Could not accept the invitation."
+    }
+  },
+  "offline": {
+    "title": "You are offline",
+    "body": "This page needs a connection. Reconnect and try again.",
+    "retry": "Try again"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "We could not find what you were looking for.",
+    "home": "Go to home"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "retry": "Try again"
+  },
+  "pwa": {
+    "description": "Everything about your animals in one place."
+  }
+}
