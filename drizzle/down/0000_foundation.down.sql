@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS "household_invites";
+DROP TABLE IF EXISTS "household_members";
+DROP TABLE IF EXISTS "households";
+DROP TABLE IF EXISTS "rate_limits";
+DROP TABLE IF EXISTS "verifications";
+DROP TABLE IF EXISTS "accounts";
+DROP TABLE IF EXISTS "sessions";
+DROP TABLE IF EXISTS "users";
+DROP TYPE IF EXISTS "household_role";
+DROP TYPE IF EXISTS "weight_unit";
