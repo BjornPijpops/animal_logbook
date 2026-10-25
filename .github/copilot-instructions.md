@@ -14,7 +14,7 @@ Next.js App Router + TypeScript strict, PostgreSQL + Drizzle, Better Auth, Zod, 
 
 ## Commands
 
-`docker compose up -d` (postgres, mailpit) · `npm run dev` · `npm run worker` · `npm run build` · `npm run lint` · `npm run typecheck` · `npm run test` · `npm run test:e2e` · `npm run db:generate` · `npm run db:migrate` · `npm run db:seed` · `npm run format` · `npm run ci` (lint + typecheck + test + build)
+`docker compose up -d` (postgres, mailpit) · `npm run dev` · `npm run worker` · `npm run build` · `npm run lint` · `npm run typecheck` · `npm run test` (`test:unit`, `test:integration` need Docker Postgres) · `npm run test:e2e` · `npm run db:generate` · `npm run db:migrate` · `npm run db:seed` · `npm run format` · `npm run ci` (lint + typecheck + test + build)
 
 ## Structure
 
@@ -35,7 +35,7 @@ Cross-feature imports only through `features/<x>/index.ts`.
 
 - TS strict; no `any`, no unchecked casts; exhaustive `switch` on enums (`assertNever`).
 - Thin route handlers/server actions: authenticate, parse with Zod, call a service, map result. Business logic lives in services (pure where possible); data access only in repositories.
-- Every repository function requires `householdId`. Cross-tenant access must be impossible and covered by integration tests.
+- Every repository function requires `householdId`. Cross-tenant access must be impossible and covered by integration tests (standing requirement; reuse `seedTwoHouseholds` in `src/test/db.ts`).
 - Expected failures return typed `Result`; unexpected errors throw and go to `ErrorReporter`.
 - Money = integer minor units + ISO currency. Dates: timestamps UTC, date-only as `date`, user IANA timezone for reminders. Weight stored in grams.
 - Files only via `StorageAdapter` and authenticated route handlers; no public URLs.

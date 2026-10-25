@@ -54,7 +54,7 @@ route handler / server action   (thin: auth, parse with Zod, call service, map r
 
 ```
 src/
-  app/                    Next.js routes only (thin); [locale]/(auth|app)/...; api/
+  app/                    Next.js routes only (thin); (auth|app)/...; api/
   features/<feature>/     components/ server/ schemas/ hooks/ tests/ index.ts
     animals appointments medical documents medications expenses food
     households auth notifications dashboard
@@ -88,6 +88,6 @@ Cross-feature imports go only through `features/<x>/index.ts` (enforced by ESLin
 
 - **Security**: CSP with nonces, HSTS, Postgres-based rate limiting, CSRF (Origin check + SameSite cookies; server actions have built-in protection). See `.github/instructions/security.instructions.md`.
 - **Privacy**: export (JSON + files zip) and account deletion in Phase 8; data model supports hard-delete cascade. No external CDNs; fonts self-hosted.
-- **i18n**: next-intl, locale in URL; user preferences store `locale`, `timezone`, `weight_unit`, `currency`.
+- **i18n**: next-intl, English only for now, no locale in the URL (locale comes from user preferences/request, so adding languages needs no route changes); user preferences store `locale`, `timezone`, `weight_unit`, `currency`.
 - **Time**: timestamps UTC (`timestamptz`); date-only values are `date`; reminders computed from wall-clock time in the user's IANA zone (DST-safe, ADR 0004).
 - **Observability**: `pino` JSON logs with request id; `ErrorReporter` interface (default: log).

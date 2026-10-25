@@ -10,6 +10,10 @@ Status: Accepted
 - Authorization is a pure function `can(role, action)` called in services; routes only establish `Ctx`.
 - **Row-level security** is the defense-in-depth layer: policies keyed on `current_setting('app.household_id')`, set per transaction. Planned to be enabled in Phase 8 (needs a non-superuser app role); until then, integration tests prove isolation: for every repository function, user A's household cannot read/modify/delete user B's rows.
 
+## Known exception
+
+`findOpenInviteByTokenHash` is the one deliberately household-unscoped query: the invite token (stored hashed, 7-day TTL, single use) is the capability. Accepting also requires a verified email matching the invitee.
+
 ## Consequences
 
 - Per-animal sharing and multi-household switcher are backlog; the schema permits them.

@@ -1,15 +1,17 @@
 # Roadmap
 
+**Standing requirement for every phase:** each new repository ships with cross-tenant integration tests (household A must never read or write household B's data) built on `seedTwoHouseholds` from `src/test/db.ts`, and E2E pages are axe-checked.
+
 One phase per chat session; each phase ends with tests green, docs updated, and a summary. Every phase's Definition of Done: typecheck, lint, tests pass, accessible, authz verified, docs/ADRs updated.
 
-## Phase 0: Architecture (current)
+## Phase 0: Architecture (done)
 
 Docs, ADRs, Copilot customization, scaffold. **Accept**: user approves; `npm install`, `npm run typecheck`, `npm run lint` pass on the empty scaffold; `docker compose up -d` starts Postgres and Mailpit.
 
-## Phase 1: Foundation
+## Phase 1: Foundation (done)
 
-Auth (email+password, optional OAuth), households + members + invites, base layout, design system (shadcn/ui), PWA shell, next-intl, worker skeleton, CI, security headers, rate limiter.
-**Accept**: sign up/in/out works; a household is created at sign-up; invite flow lets a second account join with a role; viewer cannot write; app installable; Lighthouse PWA check passes; worker boots and runs a heartbeat job; CI green; cross-tenant integration test harness exists.
+Auth (email+password with verification and reset; OAuth providers structured but none enabled), households + members + invites, base layout, design system (shadcn/ui), PWA shell, next-intl, worker skeleton, CI, security headers, rate limiter.
+**Accept**: sign up/in/out works; a household is created on first sign-in; invite flow lets a second account join with a role; viewer cannot write; app installable; Lighthouse PWA check passes; worker boots and runs a heartbeat job; CI green; cross-tenant integration test harness exists.
 
 ## Phase 2: Animals
 

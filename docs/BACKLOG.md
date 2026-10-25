@@ -27,3 +27,6 @@ Ideas for after V1. Optional paid adapters may be listed here but must never be 
 ## Optional paid adapters (never built)
 
 - Hosted email (Resend, SendGrid), hosted object storage (S3, R2), error tracking (Sentry), hosted push (OneSignal)
+
+- Translate transactional emails (currently English only)
+- `audit_log` table (deferred to Phase 8)

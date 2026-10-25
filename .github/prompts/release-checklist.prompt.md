@@ -6,7 +6,7 @@ agent: agent
 Run the release checklist and report pass/fail with evidence.
 
 - [ ] `npm run ci` passes (lint, typecheck, test, build); E2E passes
-- [ ] Migrations applied on a copy of production-like data; each has a `down.sql`; no applied migration edited
+- [ ] Migrations applied on a copy of production-like data; each has a `drizzle/down/<NNNN_name>.down.sql`; no applied migration edited
 - [ ] New env vars are in `.env.example`, `src/lib/env.ts`, and the deployment guide
 - [ ] `docs/` and ADRs reflect decisions; CHANGELOG/summary written
 - [ ] No new paid/freemium dependency; `npm audit --omit=dev` reviewed

@@ -4,7 +4,7 @@ Self-hosted, mobile-first PWA to manage everything about your animals: profiles,
 
 **100% free and open source**: no paid services, no API keys, no external CDNs. See [ADR 0008](docs/adr/0008-free-only-policy.md).
 
-Status: **Phase 0 (architecture)**. See [docs/ROADMAP.md](docs/ROADMAP.md).
+Status: **Phase 1 (foundation) complete**: sign up/in/out with email verification and password reset, households with member invites and roles, PWA shell, worker heartbeat, CI. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Quick start
 
@@ -13,21 +13,23 @@ cp .env.example .env.local     # PowerShell: Copy-Item .env.example .env.local
 docker compose up -d           # Postgres + Mailpit (UI: http://localhost:8025)
 npm install
 npm run db:migrate
+npm run db:seed                # optional: alice@example.test / bob@example.test, password "password1234"
 npm run dev                    # http://localhost:3000
 npm run worker                 # in a second terminal
 ```
 
 ## Scripts
 
-| Script                                 | Purpose                         |
-| -------------------------------------- | ------------------------------- |
-| `dev`, `build`, `start`                | Next.js                         |
-| `worker`                               | pg-boss worker process          |
-| `lint`, `typecheck`, `format`          | Quality                         |
-| `test`, `test:e2e`                     | Vitest / Playwright             |
-| `db:generate`, `db:migrate`, `db:seed` | Drizzle                         |
-| `vapid`                                | Generate Web Push VAPID keys    |
-| `ci`                                   | lint + typecheck + test + build |
+| Script                                  | Purpose                                                                                |
+| --------------------------------------- | -------------------------------------------------------------------------------------- |
+| `dev`, `build`, `start`                 | Next.js                                                                                |
+| `worker`                                | pg-boss worker process                                                                 |
+| `lint`, `typecheck`, `format`           | Quality                                                                                |
+| `test`, `test:unit`, `test:integration` | Vitest (integration needs Docker Postgres)                                             |
+| `test:e2e`                              | Playwright + axe (needs Mailpit running; first run: `npx playwright install chromium`) |
+| `db:generate`, `db:migrate`, `db:seed`  | Drizzle                                                                                |
+| `vapid`                                 | Generate Web Push VAPID keys                                                           |
+| `ci`                                    | lint + typecheck + test + build                                                        |
 
 ## Documentation
 
