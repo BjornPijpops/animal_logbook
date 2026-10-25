@@ -34,3 +34,41 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: animal
+          POSTGRES_PASSWORD: animal
+          POSTGRES_DB: animal_logbook
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U animal" --health-interval 5s --health-timeout 3s --health-retries 10
+      mailpit:
+        image: axllent/mailpit:latest
+        ports: ["1025:1025", "8025:8025"]
+    env:
+      APP_URL: http://localhost:3000
+      DATABASE_URL: postgres://animal:animal@localhost:5432/animal_logbook
+      AUTH_SECRET: ci-only-secret-not-for-production-use
+      FILE_TOKEN_SECRET: ci-only-secret-not-for-production-use
+      SMTP_HOST: localhost
+      SMTP_PORT: "1025"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run db:migrate
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: test-results
