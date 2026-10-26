@@ -1,5 +1,6 @@
 import PgBoss from "pg-boss";
 import { createDatabase } from "@/db/client";
+import { assertRestrictedRole } from "@/db/role-safety";
 import { getEnv } from "@/lib/env";
 import { LocalDiskAdapter } from "@/lib/storage/local-disk";
 import { errorReporter } from "@/lib/error-reporter";
@@ -18,7 +19,8 @@ async function main(): Promise<void> {
   boss.on("error", (error) => errorReporter.report(error, { source: "pg-boss" }));
   await boss.start();
   const env = getEnv();
-  const { db } = createDatabase(url);
+  const { db, pool } = createDatabase(url);
+  await assertRestrictedRole(pool);
   await registerJobs(
     boss,
     {},
