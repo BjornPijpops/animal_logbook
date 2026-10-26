@@ -127,6 +127,14 @@ export function createMedicationsRepository(db: DbExecutor, householdId: string)
       return rows.map(toView);
     },
 
+    async listDeleted(): Promise<MedicationView[]> {
+      const rows = await base()
+        .where(and(inHousehold, isNotNull(medications.deletedAt), isNull(animals.deletedAt)))
+        .orderBy(desc(medications.deletedAt))
+        .limit(50);
+      return rows.map(toView);
+    },
+
     async setDosage(id: string, dosage: string): Promise<void> {
       await db
         .update(medications)

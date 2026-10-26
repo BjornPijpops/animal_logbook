@@ -31,7 +31,8 @@
     "signOut": "Sign out",
     "animals": "Animals",
     "documents": "Documents",
-    "timeline": "Timeline"
+    "timeline": "Timeline",
+    "medications": "Medications"
   },
   "auth": {
     "signUp": {
@@ -590,6 +591,101 @@
       "other": "Something went wrong. Please try again.",
       "denied": "Notifications are blocked in this browser. Allow them in the site settings and try again.",
       "unavailable": "The app is not ready for push yet. Reload the page and try again."
+    }
+  },
+  "medications": {
+    "title": "Medications",
+    "add": "Add medication",
+    "newTitle": "New medication",
+    "disclaimer": "Reminders are a convenience, not medical advice or a delivery guarantee. Always follow your vet's instructions.",
+    "dueTitle": "Due now",
+    "dueEmpty": "No doses are due right now.",
+    "late": "Late",
+    "given": "Given",
+    "skipped": "Skipped",
+    "listTitle": "All medications",
+    "empty": "No medications yet.",
+    "deletedTitle": "Recently deleted",
+    "restore": "Restore",
+    "delete": "Delete medication",
+    "deleteConfirm": "Delete this medication and its reminders?",
+    "saved": "Saved.",
+    "create": "Add medication",
+    "save": "Save changes",
+    "back": "Back to medications",
+    "logNow": "Log a dose now",
+    "asNeededHint": "This medication is given as needed. Log each dose when you give it.",
+    "history": "Dose history",
+    "historyEmpty": "No doses logged yet.",
+    "loggedBy": "by {name}",
+    "status": {
+      "given": "Given",
+      "skipped": "Skipped",
+      "missed": "Missed"
+    },
+    "fields": {
+      "animal": "Animal",
+      "choose": "Choose an animal",
+      "name": "Name",
+      "dosage": "Dosage",
+      "startedOn": "Start date",
+      "endedOn": "End date",
+      "notes": "Notes",
+      "kind": "Schedule",
+      "weekdays": "Days of the week",
+      "intervalDays": "Every how many days",
+      "times": "Times",
+      "timeN": "Time {n}"
+    },
+    "hints": {
+      "dosage": "Exactly as written on your vet's instructions, for example 1 tablet or 2.5 ml.",
+      "endedOn": "Leave empty if there is no end date."
+    },
+    "kinds": {
+      "daily": "Every day",
+      "weekdays": "Specific weekdays",
+      "every_n_days": "Every N days",
+      "as_needed": "As needed"
+    },
+    "kindHints": {
+      "daily": "Reminders at the times below, in your household time zone.",
+      "weekdays": "Reminders on the chosen days only.",
+      "every_n_days": "Reminders every N days, counted from the start date.",
+      "as_needed": "No reminders. Log doses yourself when you give them."
+    },
+    "weekday": {
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat",
+      "7": "Sun"
+    },
+    "addTime": "Add a time",
+    "removeTime": "Remove time {n}",
+    "errors": {
+      "validation": "Please check the highlighted fields.",
+      "not_found": "That medication or animal could not be found.",
+      "forbidden": "You do not have permission to do that.",
+      "other": "Something went wrong. Please try again.",
+      "dose": "That dose could not be logged. It may be too old or not a scheduled time.",
+      "before_start": "This date cannot be before the start date.",
+      "duplicate_time": "Each time can only be used once.",
+      "times_required": "Add at least one time.",
+      "weekdays_required": "Choose at least one day.",
+      "interval_required": "Enter a number between 2 and 365."
+    },
+    "adherence": {
+      "title": "Adherence",
+      "summary": "Last {days} days: {given} given, {skipped} skipped, {missed} missed.",
+      "rate": "{percent}% of due doses were given.",
+      "chartLabel": "Doses given, skipped and missed per day",
+      "given": "Given",
+      "skipped": "Skipped",
+      "missed": "Missed",
+      "showTable": "Show as table",
+      "date": "Date"
     }
   }
 }

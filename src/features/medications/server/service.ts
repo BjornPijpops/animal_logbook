@@ -217,6 +217,14 @@ export async function listMedications(
   return ok(await createMedicationsRepository(deps.db, ctx.householdId).list(filter));
 }
 
+export async function listDeletedMedications(
+  deps: MedicationDeps,
+  ctx: Ctx,
+): Promise<Result<MedicationView[]>> {
+  if (!can(ctx.role, "data:write")) return forbidden();
+  return ok(await createMedicationsRepository(deps.db, ctx.householdId).listDeleted());
+}
+
 export type MedicationDetail = {
   medication: MedicationView;
   doses: (DoseRecord & { loggedByName: string | null })[];

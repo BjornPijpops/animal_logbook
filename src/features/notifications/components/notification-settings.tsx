@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useSyncExternalStore, useTransition } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,9 @@ type Props = {
   vapidPublicKey: string | null;
   deviceCount: number;
 };
+
+const subscribeNever = () => () => undefined;
+const detectPushSupport = () => "serviceWorker" in navigator && "PushManager" in window;
 
 function keyBytes(base64Url: string): Uint8Array<ArrayBuffer> {
   const padded = base64Url
@@ -37,8 +40,8 @@ export function NotificationSettings({
   const [subscribed, setSubscribed] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const pushSupported =
-    typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window;
+  // The server cannot know about the browser, so render as unsupported first and then switch.
+  const pushSupported = useSyncExternalStore(subscribeNever, detectPushSupport, () => false);
 
   useEffect(() => {
     if (!pushSupported) return;
