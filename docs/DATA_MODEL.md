@@ -99,6 +99,8 @@ Sharing model: access is granted to a **household** (all its animals). Per-anima
 
 ## Indexes summary
 
+- Dashboard (migration 0008): `appointments_follow_up_idx (household_id, follow_up_date)`, `medical_records_next_due_idx (household_id, next_due_on)` (both partial, not deleted) and `medication_doses_household_time_idx (household_id, scheduled_at desc)`.
+
 - `(household_id, ...)` leads every list index; partial `where deleted_at is null`.
 - Timelines: `(animal_id, occurred_on desc)`, `(animal_id, scheduled_at desc)`, `(animal_id, measured_at desc)`.
 - Expenses: `(household_id, incurred_on)`, `(household_id, category, incurred_on)`.

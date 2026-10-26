@@ -43,7 +43,19 @@ Manual entry with receipts, auto-link from appointments (medication link now, fo
 Food plans, meal schedule with derived daily quantity, diet-change history, food markers on the weight chart, allergy-investigation view, "log a purchase" into expenses. Decisions: ADR 0013.
 **Accept**: overlapping plans supported; weight chart marks plan starts and ends with a table alternative; investigation view lists food changes next to allergy/illness/injury records without implying cause; no dietary advice.
 
-## Phase 8: Dashboard + hardening
+## Phase 8: Dashboard + hardening (split into 8a, 8b, 8c)
 
-Per-animal and household dashboards (upcoming, overdue vaccinations, low medication), GDPR export (JSON + zip) and account deletion, performance and security pass, full E2E suite, retention/purge of soft-deleted care rows (appointments, medical records, linked expenses, plus their reminders) past a configurable retention period, mirroring the files purge job, `Dockerfile` + `docker-compose.prod.yml` + deployment guide.
-**Accept**: LCP < 2.5s on throttled mobile profile; export contains all user data and files; deletion leaves no rows or files; soft-deleted care rows past retention are purged idempotently; security-reviewer audit has no open high findings; `docker compose -f docker-compose.prod.yml up` works from a clean checkout.
+### 8a: Dashboard and navigation
+
+Household and per-animal dashboards built only from existing data (upcoming, overdue by entered dates, medications, expiring documents, spending this month, recent diet changes) and a nav cleanup (mobile bottom bar with a "More" group). **Done** (ADR 0014).
+
+### 8b: Privacy and security
+
+Row-level security, GDPR export (JSON + zip) and account deletion, audit log, and retention/purge of soft-deleted care rows (appointments, medical records, linked expenses, plus their reminders) past a configurable retention period, mirroring the files purge job.
+**Purge rule for linked expenses**: when soft-deleted rows are purged, linked expenses are kept and their links (`food_plan_id`, `appointment_id`, `medication_id`) are set to null. Each link needs its own test.
+**Accept**: export contains all user data and files; deletion leaves no rows or files; purge is idempotent; security-reviewer audit has no open high findings.
+
+### 8c: Production
+
+`Dockerfile`, `docker-compose.prod.yml`, backups, deployment guide, E2E against the built image.
+**Accept**: LCP < 2.5s on throttled mobile profile; `docker compose -f docker-compose.prod.yml up` works from a clean checkout.

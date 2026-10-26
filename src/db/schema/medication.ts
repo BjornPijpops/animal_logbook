@@ -137,6 +137,8 @@ export const medicationDoses = pgTable(
       foreignColumns: [medications.id, medications.householdId],
     }),
     index("medication_doses_lookup_idx").on(t.householdId, t.medicationId, t.scheduledAt.desc()),
+    // Dashboard: household-wide doses in a time window.
+    index("medication_doses_household_time_idx").on(t.householdId, t.scheduledAt.desc()),
   ],
 );
 

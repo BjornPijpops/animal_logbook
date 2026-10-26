@@ -40,6 +40,7 @@ Cross-feature imports only through `features/<x>/index.ts`.
 - Money = integer minor units + ISO currency. Dates: timestamps UTC, date-only as `date`, user IANA timezone for reminders. Weight stored in grams.
 - Files only via `StorageAdapter` and authenticated route handlers; no public URLs.
 - All user-facing strings through next-intl; no hard-coded text. Locale-aware dates, units, currency.
+- Dashboards (`features/dashboard`) are derived and read-only: bounded, household-scoped queries, local-day windows, "overdue" only means "the entered date has passed" (ADR 0014). Mobile nav is Home, Animals, Timeline, More (`src/app/(app)/nav-links.tsx`).
 - Small pure functions, no premature abstraction, no dead code; comments explain why.
 - Migrations are reversible, reviewed, never edited after applied.
 - Never give veterinary/medical advice in the UI; show a disclaimer where relevant. All medical data is user-entered.

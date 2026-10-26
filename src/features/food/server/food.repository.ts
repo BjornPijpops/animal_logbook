@@ -8,6 +8,7 @@ import {
   isNotNull,
   isNull,
   lte,
+  or,
   sql,
   type SQL,
 } from "drizzle-orm";
@@ -230,7 +231,13 @@ export function createFoodRepository(db: DbExecutor, householdId: string) {
         inArray(medicalRecords.type, ["allergy", "illness", "injury"]),
       ];
       if (animalId) parts.push(eq(medicalRecords.animalId, animalId));
-      if (from) parts.push(gte(medicalRecords.startedOn, from));
+      // A record overlaps the range when it starts before the range ends and has not ended
+      // before the range starts. Ongoing records (no end date) always reach the range.
+      if (from) {
+        parts.push(
+          or(isNull(medicalRecords.endedOn), gte(medicalRecords.endedOn, from)) ?? sql`true`,
+        );
+      }
       if (to) parts.push(lte(medicalRecords.startedOn, to));
       const rows = await db
         .select({
@@ -240,6 +247,7 @@ export function createFoodRepository(db: DbExecutor, householdId: string) {
           type: medicalRecords.type,
           title: medicalRecords.title,
           date: medicalRecords.startedOn,
+          endedOn: medicalRecords.endedOn,
         })
         .from(medicalRecords)
         .innerJoin(

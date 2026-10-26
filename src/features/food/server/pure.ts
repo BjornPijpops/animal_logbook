@@ -66,11 +66,11 @@ export type HealthEvent = {
   type: "allergy" | "illness" | "injury";
   title: string;
   date: string;
+  endedOn: string | null;
 };
 
 export type InvestigationEntry =
-  | ({ source: "food" } & FoodChange)
-  | ({ source: "record" } & Omit<HealthEvent, "date"> & { date: string });
+  ({ source: "food" } & FoodChange) | ({ source: "record" } & HealthEvent);
 
 export function mergeInvestigation(
   changes: readonly FoodChange[],

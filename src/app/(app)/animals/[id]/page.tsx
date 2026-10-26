@@ -11,6 +11,7 @@ import {
   PhotoManager,
   WeightPanel,
 } from "@/features/animals";
+import { DashboardView, getDashboard, getDashboardDeps } from "@/features/dashboard";
 import { foodMarkersForAnimal, getFoodDeps } from "@/features/food";
 import { can, requireHouseholdAccess } from "@/features/households";
 
@@ -21,6 +22,7 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const { user, ctx } = await requireHouseholdAccess();
   const t = await getTranslations("animals");
+  const td = await getTranslations("dashboard");
   const deps = getAnimalDeps();
   const result = await getAnimalOverview(deps, ctx, id);
   if (!result.ok) notFound();
@@ -28,6 +30,7 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
   const unit = await getPreferredWeightUnit(deps, user.id);
   const canWrite = can(ctx.role, "data:write");
   const foodChanges = await foodMarkersForAnimal(getFoodDeps(), ctx, id);
+  const dashboard = await getDashboard(getDashboardDeps(), ctx, { animalId: id });
 
   return (
     <div className="space-y-6">
@@ -69,6 +72,15 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
           </Link>
         ) : null}
       </div>
+
+      {dashboard.ok ? (
+        <section aria-labelledby="animal-overview" className="space-y-3">
+          <h2 id="animal-overview" className="text-lg font-semibold">
+            {td("animalTitle")}
+          </h2>
+          <DashboardView dashboard={dashboard.value} timezone={ctx.timezone} showAnimal={false} />
+        </section>
+      ) : null}
 
       <PhotoManager
         animalId={id}

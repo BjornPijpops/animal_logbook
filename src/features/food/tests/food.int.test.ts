@@ -258,7 +258,41 @@ describe("history and investigation", () => {
       from: "2025-02-05",
       to: "2025-02-28",
     });
-    expect(ranged.ok && ranged.value).toHaveLength(1);
+    // The January illness has no end date, so it overlaps the range along with the February allergy.
+    expect(ranged.ok && ranged.value.map((e) => e.date)).toEqual(["2025-01-15", "2025-02-10"]);
+  });
+  it("matches records by overlap with the range, including ongoing ones", async () => {
+    const w = await world();
+    await create(w.ctxA, planInput(w.animalA, { startedOn: "2025-03-01" }));
+    const base = { householdId: w.householdA.id, animalId: w.animalA };
+    await db.insert(medicalRecords).values([
+      { ...base, type: "illness", title: "Ongoing", startedOn: "2025-01-01" },
+      {
+        ...base,
+        type: "illness",
+        title: "Ended before",
+        startedOn: "2025-01-01",
+        endedOn: "2025-02-01",
+      },
+      {
+        ...base,
+        type: "injury",
+        title: "Spans start",
+        startedOn: "2025-02-15",
+        endedOn: "2025-03-10",
+      },
+      { ...base, type: "allergy", title: "After range", startedOn: "2025-05-01" },
+    ]);
+    const titles = async (from: string | null, to: string | null) => {
+      const result = await investigate(deps, w.ctxA, { animalId: w.animalA, from, to });
+      if (!result.ok) throw new Error("investigate failed");
+      return result.value.flatMap((e) => (e.source === "record" ? [e.title] : []));
+    };
+    expect(await titles("2025-03-01", "2025-03-31")).toEqual(["Ongoing", "Spans start"]);
+    expect(await titles("2025-01-15", "2025-01-31")).toEqual(["Ongoing", "Ended before"]);
+    expect(await titles("2025-02-02", "2025-02-10")).toEqual(["Ongoing"]);
+    expect(await titles("2025-04-01", null)).toEqual(["Ongoing", "After range"]);
+    expect(await titles(null, null)).toHaveLength(4);
   });
 });
 

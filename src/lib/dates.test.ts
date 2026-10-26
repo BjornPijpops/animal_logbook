@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { isRealDate, localToUtc, reminderDueAt, utcToLocalParts, zoneOffsetMs } from "./dates";
+import {
+  addDays,
+  isRealDate,
+  localDayStart,
+  localToUtc,
+  reminderDueAt,
+  utcToLocalParts,
+  zoneOffsetMs,
+} from "./dates";
 
 const iso = (date: Date | null) => date?.toISOString();
 
@@ -106,5 +114,36 @@ describe("reminderDueAt", () => {
 describe("zoneOffsetMs", () => {
   it("reports half-hour zones", () => {
     expect(zoneOffsetMs(Date.UTC(2024, 0, 1), "Asia/Kolkata")).toBe(5.5 * 3_600_000);
+  });
+});
+
+describe("addDays", () => {
+  it("handles month, year and leap-day boundaries", () => {
+    expect(addDays("2025-01-31", 1)).toBe("2025-02-01");
+    expect(addDays("2024-02-28", 1)).toBe("2024-02-29");
+    expect(addDays("2025-02-28", 1)).toBe("2025-03-01");
+    expect(addDays("2025-12-31", 15)).toBe("2026-01-15");
+    expect(addDays("2025-03-01", -1)).toBe("2025-02-28");
+  });
+});
+
+describe("localDayStart", () => {
+  it("is midnight in the zone", () => {
+    expect(iso(localDayStart("2025-06-15", "Europe/Amsterdam"))).toBe("2025-06-14T22:00:00.000Z");
+    expect(iso(localDayStart("2025-01-15", "America/New_York"))).toBe("2025-01-15T05:00:00.000Z");
+  });
+
+  it("gives 23 and 25 hour days around DST changes", () => {
+    const hours = (date: string, next: string) =>
+      (localDayStart(next, "Europe/Amsterdam").getTime() -
+        localDayStart(date, "Europe/Amsterdam").getTime()) /
+      3_600_000;
+    expect(hours("2025-03-30", "2025-03-31")).toBe(23);
+    expect(hours("2025-10-26", "2025-10-27")).toBe(25);
+  });
+
+  it("starts a day whose midnight does not exist at the first valid moment", () => {
+    // Sao Paulo skipped 00:00 on 2018-11-04 (DST began at midnight).
+    expect(iso(localDayStart("2018-11-04", "America/Sao_Paulo"))).toBe("2018-11-04T03:00:00.000Z");
   });
 });

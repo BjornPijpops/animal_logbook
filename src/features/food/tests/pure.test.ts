@@ -79,6 +79,7 @@ describe("mergeInvestigation", () => {
         animalName: "Rex",
         type: "allergy",
         title: "Itch",
+        endedOn: null,
         date: "2025-01-15",
       },
       {
@@ -87,6 +88,7 @@ describe("mergeInvestigation", () => {
         animalName: "Rex",
         type: "illness",
         title: "Cold",
+        endedOn: null,
         date: "2025-02-01",
       },
     ]);

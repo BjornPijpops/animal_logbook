@@ -57,6 +57,13 @@
       "when": 1793017800371,
       "tag": "0007_food_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793019768686,
+      "tag": "0008_dashboard_indexes",
+      "breakpoints": true
     }
   ]
 }

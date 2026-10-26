@@ -34,7 +34,9 @@
     "timeline": "Timeline",
     "medications": "Medications",
     "expenses": "Expenses",
-    "food": "Food"
+    "food": "Food",
+    "more": "More",
+    "moreLabel": "More pages"
   },
   "auth": {
     "signUp": {
@@ -905,7 +907,9 @@
       "food_ended": "Food ended",
       "record_allergy": "Allergy record",
       "record_illness": "Illness record",
-      "record_injury": "Injury record"
+      "record_injury": "Injury record",
+      "until": "until {date}",
+      "ongoing": "no end date entered"
     },
     "errors": {
       "invalid": "Enter a valid date.",
@@ -918,6 +922,53 @@
       "forbidden": "You do not have permission to do that.",
       "conflict": "That change conflicts with the current data.",
       "other": "Something went wrong. Try again."
+    }
+  },
+  "dashboard": {
+    "seeAll": "See all",
+    "animalTitle": "Overview",
+    "upcoming": {
+      "title": "Upcoming",
+      "window": "Appointments and follow-up dates in the next 14 days.",
+      "empty": "Nothing scheduled in the next 14 days.",
+      "followUp": "Follow-up: {title}"
+    },
+    "vaccinations": {
+      "title": "Vaccination dates passed",
+      "note": "Based on the next-due date you entered.",
+      "empty": "No entered next-due dates have passed.",
+      "dueOn": "next due {date}"
+    },
+    "medications": {
+      "title": "Medications",
+      "dueToday": "Doses due today",
+      "dueEmpty": "No doses left today.",
+      "late": "past its time",
+      "missed": "Missed doses, last 7 days",
+      "missedEmpty": "No missed doses recorded.",
+      "ending": "Courses ending within 7 days",
+      "endingEmpty": "No courses ending soon.",
+      "endsOn": "ends {date}",
+      "link": "All medications"
+    },
+    "documents": {
+      "title": "Documents expiring",
+      "window": "Expiry dates within the next 60 days.",
+      "empty": "No documents expiring soon.",
+      "expiresOn": "expires {date}"
+    },
+    "spending": {
+      "title": "Spending this month",
+      "empty": "No expenses entered this month.",
+      "link": "View expenses"
+    },
+    "diet": {
+      "title": "Recent diet changes",
+      "window": "Food plans that started or ended in the last 30 days.",
+      "empty": "No recent diet changes.",
+      "started": "started {date}",
+      "ended": "ended {date}",
+      "link": "Diet history"
     }
   }
 }
