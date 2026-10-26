@@ -1,6 +1,7 @@
 import type PgBoss from "pg-boss";
 import type { Database } from "@/db/client";
 import { purgeFiles, type PurgeReport } from "@/features/files/worker";
+import { purgeSoftDeleted } from "@/features/retention/worker";
 import { logger } from "@/lib/logger";
 import {
   DOSES_MISSED_QUEUE,
@@ -21,6 +22,9 @@ export type PurgeJobDeps = { db: Database; storage: StorageAdapter; retentionDay
 type Hooks = { onHeartbeat?: () => void; onPurge?: (report: PurgeReport) => void };
 
 export async function runPurgeJob(deps: PurgeJobDeps, now = new Date()): Promise<PurgeReport> {
+  // Rows first, so files that lose their last reference are swept in the same run.
+  const retention = await purgeSoftDeleted(deps, { now, retentionDays: deps.retentionDays });
+  logger.info(retention, "retention purge finished");
   const report = await purgeFiles(deps, { now, retentionDays: deps.retentionDays });
   logger.info(report, "file purge finished");
   return report;

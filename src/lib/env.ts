@@ -11,7 +11,7 @@ const schema = z.object({
   UPLOAD_DIR: z.string().default("./data/uploads"),
   MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(100).default(15),
   HOUSEHOLD_QUOTA_MB: z.coerce.number().int().min(1).default(500),
-  FILE_RETENTION_DAYS: z.coerce.number().int().min(0).default(30),
+  RETENTION_DAYS: z.coerce.number().int().min(0).default(30),
   VIRUS_SCANNER: z.enum(["none", "clamav"]).default("none"),
   CLAMAV_HOST: z.string().default("localhost"),
   CLAMAV_PORT: z.coerce.number().int().default(3310),

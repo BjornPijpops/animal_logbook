@@ -25,7 +25,7 @@ async function main(): Promise<void> {
     {
       db,
       storage: new LocalDiskAdapter(env.UPLOAD_DIR),
-      retentionDays: env.FILE_RETENTION_DAYS,
+      retentionDays: env.RETENTION_DAYS,
     },
     buildReminderDeps(db, env),
   );

@@ -21,5 +21,5 @@ Upload pipeline: size limit, MIME allow-list, magic-byte verification (`file-typ
 - Filenames are sanitised; `Content-Disposition` is built safely. Only images render inline, PDFs always download. File responses carry `nosniff`, CORP same-origin and CSP `default-src 'none'; sandbox`. The page CSP in the proxy skips `/api/files/`.
 - Per-household quota (`HOUSEHOLD_QUOTA_MB`) is enforced under an advisory lock inside the upload transaction.
 - `VirusScanner`: `NoopScanner` by default; `ClamAvScanner` (clamd INSTREAM, fails closed) with `VIRUS_SCANNER=clamav` and `docker compose --profile scan up -d`.
-- The worker's daily `files-purge` job removes expired soft-deleted records, soft-deleted files past `FILE_RETENTION_DAYS`, unreferenced files past a 24h grace period and stray bytes. It is idempotent.
+- The worker's daily `files-purge` job removes expired soft-deleted records, soft-deleted files past `RETENTION_DAYS`, unreferenced files past a 24h grace period and stray bytes. It is idempotent.
 - Signed download tokens remain deferred; the session and ownership check gate every download.
