@@ -43,3 +43,36 @@ export async function householdTimezone(email: string): Promise<string> {
 export function runWorkerOnce() {
   execSync("npm run worker:once", { stdio: "pipe" });
 }
+
+// Rows for the dashboard test: dates are offset by several days so the household time zone never
+// changes which side of a boundary they fall on.
+export async function seedDashboardData(email: string, animalName: string) {
+  await withDb(async (client) => {
+    const { rows } = await client.query<{ household_id: string; animal_id: string }>(
+      `SELECT hm.household_id, a.id AS animal_id FROM users u
+       JOIN household_members hm ON hm.user_id = u.id
+       JOIN animals a ON a.household_id = hm.household_id AND a.name = $2
+       WHERE u.email = $1 LIMIT 1`,
+      [email, animalName],
+    );
+    const ids = rows[0];
+    if (!ids) throw new Error("Household or animal not found");
+    const { household_id: household, animal_id: animal } = ids;
+    await client.query(
+      `INSERT INTO medical_records (household_id, animal_id, type, title, started_on, next_due_on)
+       VALUES ($1, $2, 'vaccination', 'Rabies booster', current_date - 400, current_date - 3)`,
+      [household, animal],
+    );
+    await client.query(
+      `INSERT INTO appointments (household_id, animal_id, type, title, scheduled_at, timezone, follow_up_date)
+       VALUES ($1, $2, 'vet', 'Dental check', now() - interval '20 days', 'UTC', current_date + 3),
+              ($1, $2, 'grooming', 'Spring trim', now() + interval '2 days', 'UTC', NULL)`,
+      [household, animal],
+    );
+    await client.query(
+      `INSERT INTO documents (household_id, animal_id, type, title, expires_on)
+       VALUES ($1, $2, 'insurance', 'Pet insurance', current_date + 10)`,
+      [household, animal],
+    );
+  });
+}
