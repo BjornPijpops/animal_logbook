@@ -3,9 +3,10 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db/client";
 import { requireSessionUser, type SessionUser } from "@/features/auth";
-import type { Result } from "@/lib/result";
+import { err, ok, type Result } from "@/lib/result";
 import { uuidSchema } from "../schemas";
 import { resolveCtx, type Ctx } from "./context";
+import { listMembershipsForUser } from "./households.repository";
 
 export const ACTIVE_HOUSEHOLD_COOKIE = "al_household";
 
@@ -33,4 +34,34 @@ export async function requireHouseholdAccess(): Promise<{ user: SessionUser; ctx
 // For route handlers, which answer with status codes instead of redirects.
 export async function resolveRequestCtx(user: SessionUser): Promise<Result<Ctx>> {
   return resolveWithPreference(user);
+}
+
+export async function rememberActiveHousehold(householdId: string): Promise<void> {
+  (await cookies()).set(ACTIVE_HOUSEHOLD_COOKIE, householdId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+}
+
+// The only way to change the active household. A household the user does not belong to is
+// reported as not found, exactly like an unknown id, and the cookie is left alone.
+export async function switchActiveHousehold(
+  user: SessionUser,
+  householdId: unknown,
+): Promise<Result<{ householdId: string }>> {
+  const parsed = uuidSchema.safeParse(householdId);
+  if (!parsed.success) return err("validation", "Invalid household");
+  const result = await resolveCtx(getDb(), user, parsed.data);
+  if (!result.ok) return result;
+  await rememberActiveHousehold(result.value.householdId);
+  return ok({ householdId: result.value.householdId });
+}
+
+export async function listMyHouseholds(
+  user: SessionUser,
+): Promise<{ householdId: string; householdName: string }[]> {
+  return listMembershipsForUser(getDb(), user.id);
 }

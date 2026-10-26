@@ -1,13 +1,12 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSessionUser } from "@/features/auth";
 import { errorReporter } from "@/lib/error-reporter";
 import type { AppErrorCode, Result } from "@/lib/result";
 import { tokenSchema } from "../schemas";
-import { ACTIVE_HOUSEHOLD_COOKIE, requireHouseholdAccess } from "./access";
+import { rememberActiveHousehold, requireHouseholdAccess, switchActiveHousehold } from "./access";
 import { getHouseholdDeps } from "./deps";
 import {
   acceptInvite,
@@ -56,14 +55,16 @@ export async function acceptInviteAction(token: string): Promise<ActionResult> {
   if (!parsed.success) return { ok: false, code: "validation" };
   const result = await acceptInvite(getHouseholdDeps(), user, parsed.data);
   if (!result.ok) return { ok: false, code: result.error.code };
-  (await cookies()).set(ACTIVE_HOUSEHOLD_COOKIE, result.value.householdId, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-  });
+  await rememberActiveHousehold(result.value.householdId);
   redirect("/household");
+}
+
+export async function switchHouseholdAction(householdId: string): Promise<ActionResult> {
+  const user = await requireSessionUser();
+  const result = await switchActiveHousehold(user, householdId);
+  if (!result.ok) return { ok: false, code: result.error.code };
+  revalidatePath("/", "layout");
+  return { ok: true };
 }
 
 export async function updateTimezoneAction(timezone: string): Promise<ActionResult> {

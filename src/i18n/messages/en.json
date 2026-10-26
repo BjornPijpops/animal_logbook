@@ -146,7 +146,11 @@
     "makeOwnerLabel": "Make {name} the owner",
     "makeOwnerConfirm": "Make {name} the owner of this household? You will become an editor.",
     "leave": "Leave household",
-    "leaveConfirm": "Leave this household? You will lose access to its animals and data."
+    "leaveConfirm": "Leave this household? You will lose access to its animals and data.",
+    "switcher": {
+      "label": "Active household",
+      "error": "Could not switch household."
+    }
   },
   "invite": {
     "title": "Household invitation",
