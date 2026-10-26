@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PersonalExportForm } from "./personal-export-form";
 import { clearOfflineEmergency } from "@/lib/offline/emergency-cache";
 import type { AppErrorCode } from "@/lib/result";
 import type { PrivacyActionResult } from "../server/actions";
@@ -163,6 +164,8 @@ export function PrivacyPanel({ canExport, canDeleteHousehold, exports, ttlHours 
       ) : (
         <p className="text-muted-foreground text-sm">{t("export.ownerOnly")}</p>
       )}
+
+      <PersonalExportForm />
 
       {canDeleteHousehold ? (
         <PasswordSection

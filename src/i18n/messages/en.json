@@ -1046,6 +1046,18 @@
       "description": "Permanently deletes your account, sessions, devices and invitations. Households where you are the only member are deleted with all their data. If you are a member of a shared household you leave it; what you added there stays, without your name.",
       "submit": "Delete my account",
       "blocked": "You own a household that still has other members: {households}. Transfer ownership or delete the household first."
+    },
+    "personal": {
+      "title": "Export my personal data",
+      "description": "Downloads a JSON file with your own account data: profile, preferences, devices, sessions, household memberships and audit entries that name you. It never contains household content or other people's details. Every member can do this.",
+      "confirmPassword": "Confirm your password",
+      "submit": "Download my data",
+      "done": "Your file was downloaded.",
+      "errors": {
+        "forbidden": "The password is wrong.",
+        "rate_limited": "Too many requests. Try again later.",
+        "error": "Something went wrong. Try again."
+      }
     }
   }
 }
