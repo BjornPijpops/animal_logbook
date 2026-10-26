@@ -1,7 +1,8 @@
 import { spawn } from "node:child_process";
 import { describe, expect, it } from "vitest";
 
-const START_TIMEOUT_MS = 20_000;
+// A cold tsx start plus pg-boss setup took about 12s on a CI runner, so allow generous headroom.
+const START_TIMEOUT_MS = 45_000;
 
 // Boots the real entry point (not registerJobs) because the worker once crashed on startup for two
 // phases while every unit test stayed green. Fails when it exits early or never logs a heartbeat.
@@ -40,5 +41,5 @@ describe("worker entry point", () => {
 
     expect(outcome, output).toBe("heartbeat");
     expect(exited, output).toBe(false);
-  }, 30_000);
+  }, 60_000);
 });
