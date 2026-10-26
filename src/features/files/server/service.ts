@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Database } from "@/db/client";
-import { can, listMembershipsForUser } from "@/features/households";
+import { can, listMembershipsForUser, type Ctx } from "@/features/households";
 import { err, ok, type Result } from "@/lib/result";
 import type { StorageAdapter } from "@/lib/storage/types";
 import { createFilesRepository, type FileRow } from "./files.repository";
@@ -24,4 +24,16 @@ export async function getFileForUser(
     return ok({ file, data });
   }
   return err("not_found", "File not found");
+}
+
+export type StorageUsage = { usedBytes: number; quotaBytes: number; percent: number };
+
+export async function getStorageUsage(
+  deps: { db: Database; householdQuotaBytes: number },
+  ctx: Ctx,
+): Promise<Result<StorageUsage>> {
+  if (!can(ctx.role, "data:read")) return err("forbidden", "Not allowed");
+  const usedBytes = await createFilesRepository(deps.db, ctx.householdId).usedBytes();
+  const percent = Math.min(100, Math.round((usedBytes / deps.householdQuotaBytes) * 100));
+  return ok({ usedBytes, quotaBytes: deps.householdQuotaBytes, percent });
 }

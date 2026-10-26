@@ -286,6 +286,11 @@
       "body": "Upload registration papers, vaccination records, insurance contracts, invoices and passports."
     },
     "noResults": "No documents match your filters.",
+    "storage": {
+      "title": "Storage used",
+      "label": "Storage: {used} of {quota} used ({percent}%)",
+      "almostFull": "Storage is almost full. Delete files you no longer need."
+    },
     "viewerNote": "You have read-only access to this household.",
     "filters": {
       "title": "Filter documents",
