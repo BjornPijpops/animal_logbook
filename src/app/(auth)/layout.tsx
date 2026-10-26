@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { getSessionUser } from "@/features/auth";
 import { ClearOfflineEmergencyOnMount } from "@/lib/offline/clear-on-mount";
+import { LegalLinks } from "@/components/legal-links";
 import { Card } from "@/components/ui/card";
 
 export default async function AuthLayout({ children }: { children: ReactNode }) {
@@ -9,7 +10,10 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
   return (
     <main id="main" className="mx-auto flex min-h-dvh max-w-md items-center px-4 py-8">
       <ClearOfflineEmergencyOnMount />
-      <Card className="w-full p-6">{children}</Card>
+      <div className="w-full">
+        <Card className="w-full p-6">{children}</Card>
+        <LegalLinks />
+      </div>
     </main>
   );
 }

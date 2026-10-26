@@ -1,7 +1,15 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/forgot-password", "/reset-password", "/offline"];
+const PUBLIC_PATHS = [
+  "/sign-in",
+  "/sign-up",
+  "/forgot-password",
+  "/reset-password",
+  "/offline",
+  "/privacy",
+  "/disclaimer",
+];
 
 function isPublic(pathname: string): boolean {
   return (

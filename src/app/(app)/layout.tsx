@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { SignOutButton } from "@/features/auth";
 import { HouseholdSwitcher, listMyHouseholds, requireHouseholdAccess } from "@/features/households";
+import { LegalLinks } from "@/components/legal-links";
 import { MobileNav, NavLinks } from "./nav-links";
 
 function Brand() {
@@ -39,6 +40,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </aside>
       <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-4 pt-6 pb-28 md:pb-10">
         {children}
+        <LegalLinks />
       </main>
       <div className="border-border bg-card fixed inset-x-0 bottom-0 border-t md:hidden print:hidden">
         <MobileNav />
