@@ -26,8 +26,15 @@ async function main(): Promise<void> {
       db,
       storage: new LocalDiskAdapter(env.UPLOAD_DIR),
       retentionDays: env.RETENTION_DAYS,
+      auditRetentionDays: env.AUDIT_RETENTION_DAYS,
     },
     buildReminderDeps(db, env),
+    {
+      db,
+      exportStorage: new LocalDiskAdapter(env.EXPORT_DIR),
+      fileStorage: new LocalDiskAdapter(env.UPLOAD_DIR),
+      ttlHours: env.EXPORT_TTL_HOURS,
+    },
   );
   // Beat once right away so a healthy start is visible (and testable) without waiting for the cron.
   await boss.send(HEARTBEAT_QUEUE, {});

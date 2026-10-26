@@ -6,7 +6,8 @@ import { getTranslations } from "next-intl/server";
 import { getDb } from "@/db/client";
 import { users } from "@/db/schema";
 import { Card } from "@/components/ui/card";
-import { PreferencesForm, requireSessionUser } from "@/features/auth";
+import { PreferencesForm } from "@/features/auth";
+import { can, requireHouseholdAccess } from "@/features/households";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("settings");
@@ -14,7 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SettingsPage() {
-  const session = await requireSessionUser();
+  const { user: session, ctx } = await requireHouseholdAccess();
+  const isOwner = can(ctx.role, "audit:read");
   const t = await getTranslations("settings");
   const [user] = await getDb().select().from(users).where(eq(users.id, session.id));
   if (!user) notFound();
@@ -40,13 +42,27 @@ export default async function SettingsPage() {
           currencies={currencies}
         />
       </Card>
-      <Card>
+      <Card className="space-y-3">
         <Link
           href="/settings/notifications"
-          className="text-primary text-lg font-semibold underline"
+          className="text-primary block text-lg font-semibold underline"
         >
           {t("notificationsLink")}
         </Link>
+        <Link
+          href="/settings/privacy"
+          className="text-primary block text-lg font-semibold underline"
+        >
+          {t("privacyLink")}
+        </Link>
+        {isOwner ? (
+          <Link
+            href="/settings/audit"
+            className="text-primary block text-lg font-semibold underline"
+          >
+            {t("auditLink")}
+          </Link>
+        ) : null}
       </Card>
     </div>
   );
