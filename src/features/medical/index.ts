@@ -4,9 +4,11 @@ export {
   deleteMedicalRecord,
   getAllergySummaries,
   getMedicalRecord,
+  listLinkableVaccinations,
   restoreMedicalRecord,
   updateMedicalRecord,
   type AllergySummary,
+  type LinkableVaccination,
   type MedicalDeps,
   type MedicalRecordDetail,
 } from "./server/service";
@@ -29,3 +31,6 @@ export {
   restoreMedicalRecordAction,
   updateMedicalRecordAction,
 } from "./server/actions";
+export { MedicalForm, type AnimalOption } from "./components/medical-form";
+export { DeleteMedicalRecordButton } from "./components/delete-button";
+export { RestoreMedicalRecordButton } from "./components/restore-button";

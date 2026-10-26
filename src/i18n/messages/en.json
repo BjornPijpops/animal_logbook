@@ -2,9 +2,9 @@
   "common": {
     "appName": "Animal Logbook",
     "skipToContent": "Skip to content",
-    "loading": "Loadingâ€¦",
+    "loading": "Loading…",
     "save": "Save",
-    "saving": "Savingâ€¦",
+    "saving": "Saving…",
     "cancel": "Cancel",
     "email": "Email",
     "password": "Password",
@@ -30,14 +30,15 @@
     "settings": "Settings",
     "signOut": "Sign out",
     "animals": "Animals",
-    "documents": "Documents"
+    "documents": "Documents",
+    "timeline": "Timeline"
   },
   "auth": {
     "signUp": {
       "title": "Create your account",
       "description": "Keep everything about your animals in one place.",
       "submit": "Create account",
-      "submitting": "Creating accountâ€¦",
+      "submitting": "Creating account…",
       "checkEmailTitle": "Check your email",
       "checkEmailBody": "If this address can be registered, we sent a link to confirm it. Open the link to finish creating your account.",
       "haveAccount": "Already have an account?",
@@ -48,7 +49,7 @@
       "title": "Welcome back",
       "description": "Sign in to your Animal Logbook.",
       "submit": "Sign in",
-      "submitting": "Signing inâ€¦",
+      "submitting": "Signing in…",
       "forgot": "Forgot your password?",
       "noAccount": "New here?",
       "signUpLink": "Create an account",
@@ -210,7 +211,8 @@
     },
     "hints": {
       "breed": "Pick a suggestion or type any breed.",
-      "emergencyNotes": "Shown on the emergency card, e.g. your vet's phone number."
+      "emergencyNotes": "Shown on the emergency card, e.g. your vet's phone number.",
+      "allergies": "Allergies are kept as health records. Add one from the animal page and it appears on the emergency card."
     },
     "save": "Save animal",
     "saving": "Saving?",
@@ -234,7 +236,7 @@
     "photos": {
       "title": "Photos",
       "upload": "Add a photo",
-      "uploading": "Uploading?",
+      "uploading": "Uploading…",
       "hint": "JPEG, PNG or WebP. Location data is removed automatically.",
       "primary": "Primary photo",
       "makePrimary": "Make photo {n} primary",
@@ -282,7 +284,10 @@
       "hint": "Stores the cards and primary photos in this browser. Removed when you sign out.",
       "enabled": "Emergency cards are saved for offline use.",
       "failed": "Could not save the cards offline. Check your connection."
-    }
+    },
+    "healthLink": "Timeline",
+    "addAppointment": "Add appointment",
+    "addRecord": "Add health record"
   },
   "documents": {
     "title": "Documents",
@@ -334,7 +339,7 @@
       "expiresOn": "Optional. Shown as expiring when it is within 30 days."
     },
     "upload": "Upload document",
-    "uploading": "Uploadingâ€¦",
+    "uploading": "Uploading…",
     "save": "Save changes",
     "expires": "Expires {date}",
     "expired": "Expired",
@@ -429,6 +434,139 @@
     "saved": "Saved.",
     "delete": "Delete record",
     "deleteConfirm": "Delete this record? You can restore it from the timeline.",
+    "restore": "Restore",
+    "back": "Back to the timeline"
+  },
+  "appointments": {
+    "title": "Appointment",
+    "newTitle": "Add an appointment",
+    "disclaimer": "Information you enter yourself. It is not veterinary advice.",
+    "viewerNote": "You have read-only access to this household.",
+    "types": {
+      "vet": "Vet visit",
+      "grooming": "Grooming",
+      "training": "Training",
+      "vaccination": "Vaccination",
+      "medication": "Medication reminder"
+    },
+    "fields": {
+      "animal": "Animal",
+      "noAnimal": "No specific animal",
+      "type": "Type",
+      "title": "Title",
+      "date": "Date",
+      "time": "Time",
+      "cost": "Cost",
+      "currency": "Currency",
+      "notes": "Notes",
+      "followUpDate": "Follow-up date",
+      "vaccination": "Vaccination record"
+    },
+    "vaccination": {
+      "none": "Do not create a record",
+      "new": "Create a vaccination record for this visit"
+    },
+    "hints": {
+      "cost": "Saved as an expense. Use a dot or comma for cents, for example 45.50.",
+      "followUp": "A reminder is created for this date.",
+      "zone": "Times are in the household time zone: {zone}.",
+      "vaccination": "Choose an existing vaccination record to link, or create one."
+    },
+    "errors": {
+      "invalid": "Enter a real date.",
+      "invalid_amount": "Enter an amount like 45.50.",
+      "before_start": "This date cannot be before the appointment.",
+      "not_applicable": "This only applies to vaccination appointments with an animal.",
+      "validation": "Please check the highlighted fields.",
+      "not_found": "That appointment, animal or record could not be found.",
+      "forbidden": "You do not have permission to do that.",
+      "other": "Something went wrong. Please try again."
+    },
+    "save": "Save appointment",
+    "create": "Add appointment",
+    "saved": "Saved.",
+    "delete": "Delete appointment",
+    "deleteConfirm": "Delete this appointment? You can restore it from the timeline.",
+    "linkedRecord": "Linked vaccination record",
+    "viewRecord": "Open the record",
+    "cost": "Cost: {amount}",
+    "back": "Back to the timeline",
     "restore": "Restore"
+  },
+  "timeline": {
+    "title": "Timeline",
+    "intro": "Appointments and health records in one place.",
+    "viewerNote": "You have read-only access to this household.",
+    "addAppointment": "Add appointment",
+    "addRecord": "Add health record",
+    "empty": {
+      "title": "Nothing here yet",
+      "body": "Add an appointment or a health record to start the timeline."
+    },
+    "noResults": "No items match these filters.",
+    "noDeleted": "There are no deleted items.",
+    "results": "{count, plural, one {# item} other {# items}}",
+    "filters": {
+      "title": "Filter the timeline",
+      "animal": "Animal",
+      "allAnimals": "All animals",
+      "householdOnly": "Household only",
+      "type": "Type",
+      "allTypes": "All types",
+      "groupAppointment": "All appointments",
+      "groupRecord": "All health records",
+      "from": "From",
+      "to": "To",
+      "showDeleted": "Show deleted items",
+      "apply": "Apply filters",
+      "reset": "Reset"
+    },
+    "kinds": {
+      "appointment": "Appointment",
+      "record": "Health record"
+    },
+    "deleted": "Deleted",
+    "restored": "Restored.",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {page} of {pages}",
+    "errors": {
+      "forbidden": "You do not have permission to do that.",
+      "not_found": "That item could not be found.",
+      "other": "Something went wrong. Please try again."
+    },
+    "restore": "Restore"
+  },
+  "attachments": {
+    "title": "Attachments",
+    "empty": "No files attached yet.",
+    "hint": "PDF, JPEG, PNG or WebP, up to {max} MB each, at most {limit} files.",
+    "choose": "Add files",
+    "uploading": "Uploading…",
+    "upload": "Upload",
+    "remove": "Remove {name}",
+    "removeConfirm": "Remove {name}?",
+    "download": "Download {name}",
+    "uploaded": "Uploaded {name}",
+    "failed": "{name}: {reason}",
+    "rejections": {
+      "empty": "The file is empty.",
+      "too_large": "The file is larger than the maximum upload size.",
+      "unsupported_type": "Only PDF, JPEG, PNG and WebP files are accepted.",
+      "type_mismatch": "The file does not match its name or type, so it was rejected.",
+      "corrupt": "The image could not be read.",
+      "quota_exceeded": "Your household has reached its storage limit.",
+      "infected": "The file was blocked by the virus scanner.",
+      "scan_unavailable": "The virus scanner is unavailable, so the file was not stored. Try again later."
+    },
+    "errors": {
+      "validation": "The file could not be uploaded.",
+      "forbidden": "You only have read access.",
+      "not_found": "That item no longer exists.",
+      "unauthenticated": "Please sign in again.",
+      "conflict": "This item already has the maximum number of files.",
+      "rate_limited": "Too many attempts. Please wait a moment.",
+      "other": "Something went wrong. Please try again."
+    }
   }
 }

@@ -23,3 +23,4 @@ export {
   removeAttachment,
 } from "./server/attachments.service";
 export { removeAttachmentAction, type RemoveAttachmentResult } from "./server/attachment-actions";
+export { AttachmentManager, type AttachmentItem } from "./components/attachment-manager";

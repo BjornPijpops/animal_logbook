@@ -55,14 +55,14 @@ export function createMedicalRepository(db: DbExecutor, householdId: string) {
     },
 
     // Live vaccination records of an animal that no appointment is linked to yet.
-    async listUnlinkedVaccinations(animalId: string): Promise<MedicalRecordRow[]> {
+    async listUnlinkedVaccinations(animalId?: string): Promise<MedicalRecordRow[]> {
       return db
         .select()
         .from(medicalRecords)
         .where(
           and(
             live,
-            eq(medicalRecords.animalId, animalId),
+            ...(animalId ? [eq(medicalRecords.animalId, animalId)] : []),
             eq(medicalRecords.type, "vaccination"),
             isNull(medicalRecords.appointmentId),
           ),

@@ -42,9 +42,22 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
         <Link href={`/animals/${id}/emergency`} className={linkClass}>
           {t("emergencyCard")}
         </Link>
+        <Link href={`/timeline?animal=${id}`} className={linkClass}>
+          {t("healthLink")}
+        </Link>
         <Link href={`/documents?animal=${id}`} className={linkClass}>
           {t("documentsLink")}
         </Link>
+        {canWrite ? (
+          <>
+            <Link href={`/appointments/new?animal=${id}`} className={linkClass}>
+              {t("addAppointment")}
+            </Link>
+            <Link href={`/health/new?animal=${id}`} className={linkClass}>
+              {t("addRecord")}
+            </Link>
+          </>
+        ) : null}
         {canWrite ? (
           <Link href={`/animals/${id}/edit`} className={linkClass}>
             {t("editTitle", { name: animal.name })}

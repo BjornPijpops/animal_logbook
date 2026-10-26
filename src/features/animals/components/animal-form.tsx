@@ -177,6 +177,7 @@ export function AnimalForm({ animalId, defaults, hints }: Props) {
         )}
       </Field>
 
+      <p className="text-muted-foreground text-sm">{t("hints.allergies")}</p>
       <Field
         id="emergencyNotes"
         label={t("fields.emergencyNotes")}

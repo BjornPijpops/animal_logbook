@@ -170,3 +170,19 @@ export async function getAllergySummaries(
   }
   return ok(summaries);
 }
+
+export type LinkableVaccination = {
+  id: string;
+  animalId: string;
+  title: string;
+  startedOn: string;
+};
+
+export async function listLinkableVaccinations(
+  deps: MedicalDeps,
+  ctx: Ctx,
+): Promise<Result<LinkableVaccination[]>> {
+  if (!can(ctx.role, "data:read")) return forbidden();
+  const rows = await createMedicalRepository(deps.db, ctx.householdId).listUnlinkedVaccinations();
+  return ok(rows.map(({ id, animalId, title, startedOn }) => ({ id, animalId, title, startedOn })));
+}

@@ -27,3 +27,6 @@ export {
   restoreAppointmentAction,
   updateAppointmentAction,
 } from "./server/actions";
+export { AppointmentForm, type VaccinationOption } from "./components/appointment-form";
+export { DeleteAppointmentButton } from "./components/delete-button";
+export { RestoreAppointmentButton } from "./components/restore-button";
