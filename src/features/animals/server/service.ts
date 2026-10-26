@@ -1,6 +1,8 @@
 import { randomUUID, createHash } from "node:crypto";
 import { sql } from "drizzle-orm";
 import type { Database } from "@/db/client";
+import { eq } from "drizzle-orm";
+import { users } from "@/db/schema";
 import { createFilesRepository } from "@/features/files";
 import { can, createMembersRepository, type Ctx } from "@/features/households";
 import { processImage } from "@/lib/images/process-image";
@@ -12,7 +14,10 @@ import {
   toGrams,
   uuidSchema,
   weightInputSchema,
+  asSpecies,
+  WEIGHT_UNITS,
   type AnimalInput,
+  type WeightUnit,
 } from "../schemas";
 import {
   createAnimalsRepository,
@@ -326,4 +331,32 @@ export async function deleteWeight(
     entryId,
   );
   return deleted ? ok(true) : notFound();
+}
+
+export async function getPreferredWeightUnit(
+  deps: AnimalDeps,
+  userId: string,
+): Promise<WeightUnit> {
+  const [row] = await deps.db
+    .select({ unit: users.weightUnit })
+    .from(users)
+    .where(eq(users.id, userId));
+  return WEIGHT_UNITS.find((u) => u === row?.unit) ?? "kg";
+}
+export function toAnimalInput(row: AnimalRow): AnimalInput {
+  return {
+    name: row.name,
+    species: asSpecies(row.species),
+    speciesOther: row.speciesOther ?? "",
+    breed: row.breed ?? "",
+    gender: row.gender,
+    birthDate: row.birthDate ?? "",
+    birthDateIsEstimate: row.birthDateIsEstimate,
+    colorMarkings: row.colorMarkings ?? "",
+    chipNumber: row.chipNumber ?? "",
+    registrationNumber: row.registrationNumber ?? "",
+    sterilized: row.sterilized === null ? "unknown" : row.sterilized ? "yes" : "no",
+    allergyInfo: row.allergyInfo ?? "",
+    emergencyNotes: row.emergencyNotes ?? "",
+  };
 }

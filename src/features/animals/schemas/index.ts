@@ -93,3 +93,23 @@ export function fromGrams(grams: number, unit: WeightUnit): number {
 }
 
 export const MAX_PHOTOS_PER_ANIMAL = 20;
+
+export function asSpecies(value: string): Species {
+  return SPECIES.find((s) => s === value) ?? "other";
+}
+
+export const EMPTY_ANIMAL_INPUT: AnimalInput = {
+  name: "",
+  species: "dog",
+  speciesOther: "",
+  breed: "",
+  gender: "unknown",
+  birthDate: "",
+  birthDateIsEstimate: false,
+  colorMarkings: "",
+  chipNumber: "",
+  registrationNumber: "",
+  sterilized: "unknown",
+  allergyInfo: "",
+  emergencyNotes: "",
+};
