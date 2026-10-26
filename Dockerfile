@@ -23,7 +23,9 @@ ENV NODE_ENV=production \
     EXPORT_DIR=/data/exports \
     MIGRATIONS_DIR=/app/drizzle
 WORKDIR /app
-RUN mkdir -p /data/uploads /data/exports /app/.next/cache && chown -R node:node /data /app
+# npm, npx and yarn are not needed at runtime and carry their own dependency vulnerabilities
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /opt/yarn* /usr/local/bin/yarn* \
+ && mkdir -p /data/uploads /data/exports /app/.next/cache && chown -R node:node /data /app
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
 COPY --from=build --chown=node:node /app/public ./public

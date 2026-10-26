@@ -8,7 +8,8 @@ export COMPOSE_FILES="docker-compose.prod.yml docker-compose.e2e.yml"
 export BACKUP_DIR="${BACKUP_DIR:-$(mktemp -d)}"
 source deploy/lib.sh
 
-echo "== up"; dc up -d --wait --wait-timeout 240 --build
+echo "== up"; build=(); [ -n "${APP_IMAGE:-}" ] || build=(--build)
+dc up -d --wait --wait-timeout 240 "${build[@]}"
 echo "== create data through the app"
 E2E_KEEP=1 E2E_PROJECT="$PROJECT" node scripts/e2e-image.mjs e2e/animals.spec.ts --workers=1
 before="$(row_counts)"; echo "$before"

@@ -10,7 +10,9 @@ if (-not $env:BACKUP_DIR) { $env:BACKUP_DIR = Join-Path ([IO.Path]::GetTempPath(
 
 try {
   Write-Host "== up"
-  Invoke-Dc @("up", "-d", "--wait", "--wait-timeout", "240", "--build")
+  $upArgs = @("up", "-d", "--wait", "--wait-timeout", "240")
+  if (-not $env:APP_IMAGE) { $upArgs += "--build" }
+  Invoke-Dc $upArgs
   Write-Host "== create data through the app"
   $env:E2E_KEEP = "1"; $env:E2E_PROJECT = $Project
   Invoke-Native "node" @("scripts/e2e-image.mjs", "e2e/animals.spec.ts", "--workers=1")

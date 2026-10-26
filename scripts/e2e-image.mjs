@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 // E2E_KEEP=1 leaves the stack running afterwards.
 const compose = [
   "compose",
+  ...(process.env.E2E_PROJECT ? ["-p", process.env.E2E_PROJECT] : []),
   "--env-file",
   "docker/e2e.env",
   "-f",

@@ -33,7 +33,7 @@ async function waitForLink(request: import("@playwright/test").APIRequestContext
 }
 
 test.describe("public auth pages are accessible", () => {
-  for (const path of ["/sign-in", "/sign-up", "/forgot-password"]) {
+  for (const path of ["/sign-in", "/sign-up", "/forgot-password", "/privacy", "/disclaimer"]) {
     test(`axe: ${path}`, async ({ page }) => {
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
