@@ -3,7 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
-  workers: process.env.CI ? 3 : undefined,
+  // Capped locally: with one worker per core the production server and Mailpit time out under load.
+  workers: process.env.CI ? 3 : 4,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
