@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { files } from "@/db/schema";
 
@@ -9,6 +9,7 @@ export type FileRow = {
   mimeType: string;
   sizeBytes: number;
   checksumSha256: string;
+  originalName: string | null;
 };
 
 const columns = {
@@ -18,12 +19,27 @@ const columns = {
   mimeType: files.mimeType,
   sizeBytes: files.sizeBytes,
   checksumSha256: files.checksumSha256,
+  originalName: files.originalName,
 };
 
 export function createFilesRepository(db: DbExecutor, householdId: string) {
   return {
-    async insert(input: Omit<FileRow, "householdId"> & { uploadedBy: string }): Promise<void> {
+    async insert(
+      input: Omit<FileRow, "householdId" | "originalName"> & {
+        originalName?: string | null;
+        uploadedBy: string;
+      },
+    ): Promise<void> {
       await db.insert(files).values({ ...input, householdId });
+    },
+
+    // Soft-deleted files no longer count; their bytes are reclaimed by the purge job.
+    async usedBytes(): Promise<number> {
+      const [row] = await db
+        .select({ total: sql<string>`coalesce(sum(${files.sizeBytes}), 0)` })
+        .from(files)
+        .where(and(eq(files.householdId, householdId), isNull(files.deletedAt)));
+      return Number(row?.total ?? 0);
     },
 
     async find(fileId: string): Promise<FileRow | null> {

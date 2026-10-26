@@ -1,5 +1,6 @@
 import { getSessionUser } from "@/features/auth";
-import { getFileForUser, getFileDeps } from "@/features/files";
+import { getFileDeps, getFileForUser } from "@/features/files";
+import { contentDisposition } from "@/lib/http/content-disposition";
 
 export const dynamic = "force-dynamic";
 
@@ -15,22 +16,33 @@ export async function GET(
   const { id } = await params;
   const result = await getFileForUser(getFileDeps(), user.id, id);
   if (!result.ok) return notFound();
+  const { file, data } = result.value;
 
-  const etag = `"${result.value.file.checksumSha256}"`;
-  const headers = {
+  const etag = `"${file.checksumSha256}"`;
+  const headers: Record<string, string> = {
     ETag: etag,
     "Cache-Control": "private, no-cache",
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": "default-src 'none'; sandbox",
+    "Cross-Origin-Resource-Policy": "same-origin",
   };
   if (request.headers.get("if-none-match") === etag) {
     return new Response(null, { status: 304, headers });
   }
-  return new Response(new Uint8Array(result.value.data), {
+
+  // Only images may render inline. PDFs always download: a sandboxed PDF viewer is unreliable
+  // and an inline PDF would run in the app's origin.
+  const inline =
+    file.mimeType.startsWith("image/") && new URL(request.url).searchParams.get("download") !== "1";
+  headers["Content-Disposition"] = contentDisposition(
+    inline ? "inline" : "attachment",
+    file.originalName ?? "download",
+  );
+  return new Response(new Uint8Array(data), {
     headers: {
       ...headers,
-      "Content-Type": result.value.file.mimeType,
-      "Content-Length": String(result.value.data.byteLength),
+      "Content-Type": file.mimeType,
+      "Content-Length": String(data.byteLength),
     },
   });
 }
