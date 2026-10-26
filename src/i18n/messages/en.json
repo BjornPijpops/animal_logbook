@@ -146,7 +146,11 @@
     "makeOwnerLabel": "Make {name} the owner",
     "makeOwnerConfirm": "Make {name} the owner of this household? You will become an editor.",
     "leave": "Leave household",
-    "leaveConfirm": "Leave this household? You will lose access to its animals and data."
+    "leaveConfirm": "Leave this household? You will lose access to its animals and data.",
+    "switcher": {
+      "label": "Active household",
+      "error": "Could not switch household."
+    }
   },
   "invite": {
     "title": "Household invitation",
@@ -1013,7 +1017,8 @@
       "conflict": "An export is already being prepared.",
       "validation": "Enter your password.",
       "not_found": "That item no longer exists.",
-      "unauthenticated": "Please sign in again."
+      "unauthenticated": "Please sign in again.",
+      "too_large": "Your files are larger than the export limit of this server. Delete some files, or ask the server administrator to raise EXPORT_MAX_MB."
     },
     "export": {
       "title": "Export household data",
@@ -1042,6 +1047,82 @@
       "description": "Permanently deletes your account, sessions, devices and invitations. Households where you are the only member are deleted with all their data. If you are a member of a shared household you leave it; what you added there stays, without your name.",
       "submit": "Delete my account",
       "blocked": "You own a household that still has other members: {households}. Transfer ownership or delete the household first."
+    },
+    "personal": {
+      "title": "Export my personal data",
+      "description": "Downloads a JSON file with your own account data: profile, preferences, devices, sessions, household memberships and audit entries that name you. It never contains household content or other people's details. Every member can do this.",
+      "confirmPassword": "Confirm your password",
+      "submit": "Download my data",
+      "done": "Your file was downloaded.",
+      "errors": {
+        "forbidden": "The password is wrong.",
+        "rate_limited": "Too many requests. Try again later.",
+        "error": "Something went wrong. Try again."
+      }
+    }
+  },
+  "legal": {
+    "nav": "Legal pages",
+    "back": "Back to the app",
+    "template": {
+      "title": "Template.",
+      "body": "This text is a starting point written for a small self-hosted installation. Whoever runs this server is responsible for it and must review and adapt it (including contact details and any legal requirements that apply to them) before relying on it."
+    },
+    "privacy": {
+      "title": "Privacy notice",
+      "intro": "Animal Logbook keeps records about your animals and the people who care for them. This page explains in plain language what is stored and what you can do about it.",
+      "sections": {
+        "stored": {
+          "title": "What is stored",
+          "body": "Your account (name, email address, a hashed password), the households you belong to, and everything you or other members enter about animals: profiles, photos, appointments, health records, medications and dose logs, food plans, expenses and uploaded documents. Notification settings and, if you turn on push, a browser address per device are stored too. A short audit log records membership, invite and export events without any health details."
+        },
+        "where": {
+          "title": "Where it is stored",
+          "body": "On the server of the person who runs this installation: in its database and on its disk. Nothing is sent to analytics, advertising or error-tracking services. Emails and push notifications are sent through the mail server and push service configured by the owner and contain only minimal text."
+        },
+        "retention": {
+          "title": "How long it is kept",
+          "body": "Data stays until you delete it. Deleted items are kept for a recovery period (30 days unless the owner changed it) and are then removed for good, together with their files. Audit entries and expired exports are removed automatically after their own retention periods. Backups made by the owner may keep older copies for a while longer."
+        },
+        "sharing": {
+          "title": "Who can see it",
+          "body": "Only members of the same household, according to their role, and the person who administers the server. Data is not shared with anyone else by the application."
+        },
+        "rights": {
+          "title": "Your choices: export and deletion",
+          "body": "You can download a copy of your personal data at any time, and household owners can export all household data, from the privacy page in the app. You can delete your account there too, after confirming your password. Deleting an account removes your personal data and files; sole owners of a shared household must hand over ownership first."
+        },
+        "cookies": {
+          "title": "Cookies",
+          "body": "Only what is needed to keep you signed in and to remember which household is active. There are no tracking cookies."
+        },
+        "contact": {
+          "title": "Contact",
+          "body": "Questions about your data go to the person who runs this installation. The owner should add their name and contact address here."
+        }
+      }
+    },
+    "disclaimer": {
+      "title": "Medical disclaimer",
+      "intro": "Animal Logbook is a place to keep records. It is not a veterinary service.",
+      "sections": {
+        "notMedical": {
+          "title": "Not medical advice",
+          "body": "Nothing in the app is veterinary advice, a diagnosis or a recommendation about treatment, food, amounts or weight. Dates marked overdue only mean that a date you entered has passed. Always ask a veterinarian about your animal's health."
+        },
+        "reminders": {
+          "title": "Reminders are a convenience",
+          "body": "Reminders and notifications can be late, missed or not delivered at all, for example when a phone is offline or an email is filtered. Do not rely on them for anything critical, and check dose and appointment dates yourself."
+        },
+        "emergency": {
+          "title": "In an emergency",
+          "body": "If an animal is in danger, contact a veterinarian or emergency clinic immediately. The emergency card in the app only shows information you saved and may be out of date."
+        },
+        "accuracy": {
+          "title": "Your records",
+          "body": "The app shows what people entered. It cannot check that entries are correct or complete."
+        }
+      }
     }
   }
 }

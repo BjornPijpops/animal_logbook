@@ -1,5 +1,5 @@
 import { zipSync } from "fflate";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import type { Database } from "@/db/client";
 import { scopeDb } from "@/db/scope";
@@ -24,6 +24,23 @@ import {
   weightEntries,
 } from "@/db/schema";
 import type { StorageAdapter } from "@/lib/storage/types";
+
+export const EXPORT_TOO_LARGE = "export_too_large";
+
+export class ExportTooLargeError extends Error {
+  constructor(readonly limitBytes: number) {
+    super(EXPORT_TOO_LARGE);
+  }
+}
+
+// Total size of the files an export would carry (soft-deleted files are not exported).
+export async function exportedFileBytes(db: Database, householdId: string): Promise<number> {
+  const [row] = await scopeDb(db, {})
+    .select({ total: sql<number>`coalesce(sum(${files.sizeBytes}), 0)::float8` })
+    .from(files)
+    .where(and(eq(files.householdId, householdId), isNull(files.deletedAt)));
+  return row?.total ?? 0;
+}
 
 export type ExportBuild = { zip: Buffer; fileCount: number; missingFiles: number };
 
@@ -65,7 +82,7 @@ function json(value: unknown): Uint8Array {
 // Every query below is filtered by householdId explicitly. Row-level security is a second line of
 // defense, so an export must stay correct even when it runs as a role that can see every row.
 export async function buildHouseholdExport(
-  deps: { db: Database; fileStorage: StorageAdapter; now: Date },
+  deps: { db: Database; fileStorage: StorageAdapter; now: Date; maxBytes: number },
   input: { householdId: string; userId: string },
 ): Promise<ExportBuild> {
   const db = scopeDb(deps.db, {});
@@ -98,6 +115,10 @@ export async function buildHouseholdExport(
     .innerJoin(users, eq(users.id, householdMembers.userId))
     .where(eq(householdMembers.householdId, householdId));
 
+  if ((await exportedFileBytes(deps.db, householdId)) > deps.maxBytes) {
+    throw new ExportTooLargeError(deps.maxBytes);
+  }
+
   const where = (table: { householdId: AnyPgColumn }) => eq(table.householdId, householdId);
   const fileRows = await db.select().from(files).where(where(files));
 
@@ -112,7 +133,8 @@ export async function buildHouseholdExport(
       const bytes = await deps.fileStorage.get(storageKey);
       if (bytes) {
         const path = `files/${file.id}-${safeName(file.originalName)}`;
-        archive[path] = new Uint8Array(bytes);
+        // A view, not a copy: the zip is held in memory, so every extra copy counts.
+        archive[path] = new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
         entry.path = path;
         fileCount += 1;
       } else {
@@ -155,6 +177,7 @@ export async function buildHouseholdExport(
   );
 
   // Uploads are already compressed formats, so storing them is faster and no larger.
-  const zip = Buffer.from(zipSync(archive, { level: 0 }));
+  const zipped = zipSync(archive, { level: 0 });
+  const zip = Buffer.from(zipped.buffer, zipped.byteOffset, zipped.byteLength);
   return { zip, fileCount, missingFiles };
 }

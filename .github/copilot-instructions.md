@@ -16,6 +16,10 @@ Next.js App Router + TypeScript strict, PostgreSQL + Drizzle, Better Auth, Zod, 
 
 `docker compose up -d` (postgres, mailpit) · `npm run dev` · `npm run worker` · `npm run build` · `npm run lint` · `npm run typecheck` · `npm run test` (`test:unit`, `test:integration` need Docker Postgres) · `npm run test:e2e` · `npm run db:generate` · `npm run db:migrate` · `npm run db:seed` · `npm run format` · `npm run ci` (lint + typecheck + test + build)
 
+## Production
+
+One image (`Dockerfile`) runs web (`web-entry.mjs`), worker (`dist/worker.mjs`) and migrate (`dist/migrate.mjs`); `docker-compose.prod.yml` adds Caddy and Postgres (internal only). New server entry points go into `scripts/build-server-bundles.mjs`. Env rules for production live in `src/lib/production-env.ts` (messages never print values). `npm run e2e:image` runs Playwright against the image; `deploy/` holds the backup, restore and drill scripts (bash + PowerShell, keep them in sync). Health: `/api/health/live` and `/ready` (public, verdict only). Docs: `docs/DEPLOYMENT.md`, ADR 0018/0019.
+
 ## Structure
 
 ```

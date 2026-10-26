@@ -1,7 +1,7 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import { scopeDb } from "@/db/scope";
-import { dataExports, files, households, householdInvites, users } from "@/db/schema";
+import { dataExports } from "@/db/schema";
 import { createAuditRepository } from "@/features/audit";
 import {
   can,
@@ -13,6 +13,13 @@ import { logger } from "@/lib/logger";
 import { err, ok, type Result } from "@/lib/result";
 import type { RateLimiter } from "@/lib/security/rate-limit";
 import type { StorageAdapter } from "@/lib/storage/types";
+import {
+  completeAccountDeletion,
+  deleteHouseholdRows,
+  markDeletionPending,
+  type DeletionDeps,
+} from "./account-deletion";
+import { EXPORT_TOO_LARGE, exportedFileBytes } from "./export-build";
 import { STALE_AFTER_MS } from "./export-jobs";
 import { confirmPassword } from "./reauth";
 
@@ -22,6 +29,7 @@ export type PrivacyDeps = {
   fileStorage: StorageAdapter;
   exportStorage: StorageAdapter;
   exportTtlHours: number;
+  exportMaxBytes: number;
   now?: () => Date;
 };
 
@@ -61,6 +69,9 @@ export async function requestExport(
   if (!limit.allowed) return err("rate_limited", "Too many export requests, try again later");
   const confirmed = await confirmPassword(deps, ctx, password);
   if (!confirmed.ok) return confirmed;
+  if ((await exportedFileBytes(deps.db, ctx.householdId)) > deps.exportMaxBytes) {
+    return err("validation", EXPORT_TOO_LARGE);
+  }
 
   const now = nowOf(deps);
   return scopeDb(deps.db, ctx).transaction(async (tx) => {
@@ -119,29 +130,11 @@ export async function getExportDownload(
   return ok({ data, filename: `animal-logbook-export-${now.toISOString().slice(0, 10)}.zip` });
 }
 
-// Deletes the household row (everything under it cascades) and then the bytes it owned. Keys are
-// collected first; if the process dies between the two steps the stray-file sweeps remove the bytes.
-async function deleteHouseholdData(deps: PrivacyDeps, ctx: Ctx): Promise<void> {
-  const scoped = scopeDb(deps.db, ctx);
-  const fileKeys = (
-    await scoped
-      .select({ key: files.storageKey })
-      .from(files)
-      .where(eq(files.householdId, ctx.householdId))
-  ).map((row) => row.key);
-  const exportKeys = (
-    await scoped
-      .select({ key: dataExports.storageKey })
-      .from(dataExports)
-      .where(and(eq(dataExports.householdId, ctx.householdId), eq(dataExports.userId, ctx.userId)))
-  ).flatMap((row) => (row.key ? [row.key] : []));
-
-  await scoped.delete(households).where(eq(households.id, ctx.householdId));
-
-  for (const key of fileKeys) await deps.fileStorage.delete(key);
-  for (const key of exportKeys) await deps.exportStorage.delete(key);
-}
-
+const deletionDeps = (deps: PrivacyDeps): DeletionDeps => ({
+  db: deps.db,
+  fileStorage: deps.fileStorage,
+  exportStorage: deps.exportStorage,
+});
 export async function deleteHousehold(
   deps: PrivacyDeps,
   ctx: Ctx,
@@ -150,13 +143,13 @@ export async function deleteHousehold(
   if (!can(ctx.role, "household:delete")) return err("forbidden", "Not allowed");
   const confirmed = await confirmPassword(deps, ctx, password);
   if (!confirmed.ok) return confirmed;
-  await deleteHouseholdData(deps, ctx);
+  await deleteHouseholdRows(deletionDeps(deps), ctx);
   logger.info({ householdId: ctx.householdId }, "household deleted");
   return ok(null);
 }
 
 export type DeleteAccountOutcome =
-  { status: "deleted" } | { status: "blocked"; households: string[] };
+  { status: "deleted" } | { status: "pending" } | { status: "blocked"; households: string[] };
 
 // Rules: a sole owner of a household that still has other members must transfer ownership or delete
 // the household first. A non-owner member just leaves. A sole owner of a one-person household
@@ -191,34 +184,14 @@ export async function deleteAccount(
   }
   if (blocked.length > 0) return ok({ status: "blocked", households: blocked });
 
-  const exportKeys = (
-    await scopeDb(deps.db, { userId: user.id })
-      .select({ key: dataExports.storageKey })
-      .from(dataExports)
-      .where(eq(dataExports.userId, user.id))
-  ).flatMap((row) => (row.key ? [row.key] : []));
-
-  for (const ctx of contexts) {
-    if (ctx.role === "owner") {
-      await deleteHouseholdData(deps, ctx);
-      continue;
-    }
-    await scopeDb(deps.db, ctx).transaction(async (tx) => {
-      await createAuditRepository(tx, ctx).record({
-        event: "account_deleted",
-        actorUserId: user.id,
-      });
-      await createMembersRepository(tx, ctx).remove(user.id);
-    });
+  await markDeletionPending(deps.db, user.id, nowOf(deps));
+  try {
+    await completeAccountDeletion(deletionDeps(deps), user.id);
+  } catch (error) {
+    // The account is already locked, and the worker finishes the job.
+    logger.error({ err: error }, "account deletion interrupted, the worker will retry");
+    return ok({ status: "pending" });
   }
-
-  await scopeDb(deps.db, { userId: user.id })
-    .delete(householdInvites)
-    .where(sql`lower(${householdInvites.email}) = ${user.email.toLowerCase()}`);
-  // Sessions, accounts, push subscriptions, preferences, deliveries and exports cascade from here.
-  await deps.db.delete(users).where(eq(users.id, user.id));
-  for (const key of exportKeys) await deps.exportStorage.delete(key);
-
   logger.info("account deleted");
   return ok({ status: "deleted" });
 }

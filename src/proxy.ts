@@ -1,10 +1,22 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/forgot-password", "/reset-password", "/offline"];
+const PUBLIC_PATHS = [
+  "/sign-in",
+  "/sign-up",
+  "/forgot-password",
+  "/reset-password",
+  "/offline",
+  "/privacy",
+  "/disclaimer",
+];
 
 function isPublic(pathname: string): boolean {
-  return PUBLIC_PATHS.includes(pathname) || pathname.startsWith("/api/auth");
+  return (
+    PUBLIC_PATHS.includes(pathname) ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/health/")
+  );
 }
 
 export function buildCsp(nonce: string, dev: boolean): string {

@@ -4,16 +4,21 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireHouseholdAccess } from "@/features/households";
 import type { AppErrorCode } from "@/lib/result";
+import { EXPORT_TOO_LARGE } from "./export-build";
 import { getPrivacyDeps } from "./deps";
 import { deleteAccount, deleteHousehold, requestExport } from "./service";
 
 export type PrivacyActionResult =
-  { ok: true; blockedBy?: string[] } | { ok: false; code: AppErrorCode };
+  { ok: true; blockedBy?: string[] } | { ok: false; code: AppErrorCode; reason?: "too_large" };
 
 export async function requestExportAction(password: string): Promise<PrivacyActionResult> {
   const { ctx } = await requireHouseholdAccess();
   const result = await requestExport(getPrivacyDeps(), ctx, password);
-  if (!result.ok) return { ok: false, code: result.error.code };
+  if (!result.ok) {
+    return result.error.message === EXPORT_TOO_LARGE
+      ? { ok: false, code: result.error.code, reason: "too_large" }
+      : { ok: false, code: result.error.code };
+  }
   revalidatePath("/settings/privacy");
   return { ok: true };
 }

@@ -20,6 +20,7 @@ async function main(): Promise<void> {
       exportStorage: new LocalDiskAdapter(env.EXPORT_DIR),
       fileStorage: new LocalDiskAdapter(env.UPLOAD_DIR),
       ttlHours: env.EXPORT_TTL_HOURS,
+      maxBytes: env.EXPORT_MAX_MB * 1024 * 1024,
     });
     logger.info(exports, "export pass finished");
   } finally {

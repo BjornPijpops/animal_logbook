@@ -6,6 +6,7 @@ import {
   expireExports,
   processPendingExports,
   type ExportJobDeps,
+  finishPendingDeletions,
 } from "@/features/privacy/worker";
 import { purgeSoftDeleted } from "@/features/retention/worker";
 import { logger } from "@/lib/logger";
@@ -26,6 +27,7 @@ export const FILE_PURGE_QUEUE = "files-purge";
 
 export const EXPORT_PROCESS_QUEUE = "exports-process";
 export const EXPORT_EXPIRE_QUEUE = "exports-expire";
+export const ACCOUNT_DELETION_QUEUE = "accounts-finish-deletion";
 
 export type PurgeJobDeps = {
   db: Database;
@@ -101,6 +103,16 @@ export async function registerJobs(
     await boss.schedule(EXPORT_EXPIRE_QUEUE, "*/30 * * * *");
     await boss.work(EXPORT_EXPIRE_QUEUE, async () => {
       await expireExports(exports);
+    });
+    await boss.createQueue(ACCOUNT_DELETION_QUEUE);
+    await boss.schedule(ACCOUNT_DELETION_QUEUE, "*/5 * * * *");
+    await boss.work(ACCOUNT_DELETION_QUEUE, async () => {
+      const result = await finishPendingDeletions({
+        db: exports.db,
+        fileStorage: exports.fileStorage,
+        exportStorage: exports.exportStorage,
+      });
+      if (result.completed + result.failed > 0) logger.info(result, "pending deletions processed");
     });
   }
 }

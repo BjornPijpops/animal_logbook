@@ -13,3 +13,10 @@ Status: accepted (Phase 8b)
 3. **Not one transaction.** The flow is ordered so a partial failure can be retried; bytes are deleted only after the rows are gone.
 4. **Audit log** records membership changes, role changes, invites, exports, deletion requests and failed re-confirmations. It never stores medical content or invited email addresses (`detail` holds a role at most). Owners read it at `/settings/audit`. Rows are append-only for the app role; actor and target are set to null when a user is deleted.
 5. **Active household.** A validated `al_household` cookie records the preferred household (set on invite acceptance). There is no switcher yet.
+
+## Phase 8c follow-ups
+
+- **Pending state.** Account deletion first sets users.deletion_requested_at and removes the sessions in one transaction. Sign-in is refused for a pending user (Better Auth session hook and getSessionUser), so a failed run can never leave a usable half-deleted account. The worker queue ccounts-finish-deletion (every 5 minutes) completes it; completion is idempotent and re-checks the owner rule (if the household gained members the request is cancelled).
+- **Authored content.** Names and emails of a deleted member are removed from content they authored in shared households (verified by a catalog scan of every text/json column).
+- **Startup check.** Web and worker refuse to start when the database role is a superuser or has BYPASSRLS.
+- **Active household.** The household switcher stores a cookie that is validated against membership on every request; a forged value is ignored.

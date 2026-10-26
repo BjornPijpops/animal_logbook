@@ -1,0 +1,1 @@
+DROP POLICY audit_log_own_select ON audit_log;

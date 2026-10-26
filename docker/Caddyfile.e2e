@@ -1,0 +1,13 @@
+{
+	auto_https disable_redirects
+	skip_install_trust
+}
+
+# Test only. Each Playwright test sends X-Test-Client-IP so parallel tests do not share one
+# rate-limit bucket; the app still only trusts the single address Caddy forwards.
+https://logbook.localhost:8443 {
+	tls internal
+	reverse_proxy web:3000 {
+		header_up X-Forwarded-For {http.request.header.X-Test-Client-IP}
+	}
+}

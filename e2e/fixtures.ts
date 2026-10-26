@@ -7,7 +7,8 @@ import { expect, test as base } from "@playwright/test";
 export const test = base.extend({
   extraHTTPHeaders: async ({}, provide) => {
     const ip = `10.${randomInt(1, 255)}.${randomInt(1, 255)}.${randomInt(1, 255)}`;
-    await provide({ "x-forwarded-for": ip });
+    // The second header is read by the E2E Caddy, which turns it into the one address the app trusts.
+    await provide({ "x-forwarded-for": ip, "x-test-client-ip": ip });
   },
 });
 

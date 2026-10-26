@@ -1,0 +1,174 @@
+# Production stack: Caddy (HTTPS) -> web, worker, one-shot migrate, postgres. See docs/DEPLOYMENT.md.
+#   docker compose --env-file /etc/animal-logbook/.env.production -f docker-compose.prod.yml up -d
+# Secrets come from the env file (kept outside git). Nothing here is a secret.
+
+name: animal-logbook-prod
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+x-app-env: &app-env
+  NODE_ENV: production
+  APP_URL: https://${APP_DOMAIN:?set APP_DOMAIN}
+  AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+  FILE_TOKEN_SECRET: ${FILE_TOKEN_SECRET:?set FILE_TOKEN_SECRET}
+  DATABASE_URL: postgres://animal_app:${APP_DB_PASSWORD:?set APP_DB_PASSWORD}@postgres:5432/animal_logbook
+  WORKER_DATABASE_URL: postgres://animal_worker:${WORKER_DB_PASSWORD:?set WORKER_DB_PASSWORD}@postgres:5432/animal_logbook
+  # Set only here: Caddy overwrites X-Forwarded-For with the address it saw.
+  TRUSTED_PROXY: "true"
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_SECURE: ${SMTP_SECURE:-false}
+  EMAIL_FROM: ${EMAIL_FROM:-}
+  VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+  VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+  VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+  RETENTION_DAYS: ${RETENTION_DAYS:-30}
+  AUDIT_RETENTION_DAYS: ${AUDIT_RETENTION_DAYS:-365}
+  EXPORT_MAX_MB: ${EXPORT_MAX_MB:-300}
+  VIRUS_SCANNER: ${VIRUS_SCANNER:-none}
+  CLAMAV_HOST: clamav
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+
+x-app: &app
+  image: ${APP_IMAGE:-animal-logbook:local}
+  restart: unless-stopped
+  read_only: true
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  logging: *logging
+
+services:
+  postgres:
+    image: postgres:17.7-alpine3.22
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: animal_owner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: animal_logbook
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    tmpfs:
+      - /run/postgresql
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U animal_owner -d animal_logbook"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    deploy:
+      resources:
+        limits: { memory: 512M }
+    logging: *logging
+
+  migrate:
+    <<: *app
+    restart: "no"
+    command: ["node", "dist/migrate.mjs"]
+    environment:
+      DATABASE_OWNER_URL: postgres://animal_owner:${POSTGRES_PASSWORD}@postgres:5432/animal_logbook
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+      WORKER_DB_PASSWORD: ${WORKER_DB_PASSWORD}
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
+
+  web:
+    <<: *app
+    build: .
+    environment: *app-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    volumes:
+      - uploads:/data/uploads
+      - exports:/data/exports
+    networks: [internal, egress]
+    deploy:
+      resources:
+        limits: { memory: 768M, cpus: "1.5" }
+
+  worker:
+    <<: *app
+    command: ["node", "dist/worker.mjs"]
+    # pg-boss owns its own schema, so the worker also gets the owner URL (ADR 0015).
+    environment:
+      <<: *app-env
+      DATABASE_OWNER_URL: postgres://animal_owner:${POSTGRES_PASSWORD}@postgres:5432/animal_logbook
+      WORKER_ALIVE_FILE: /tmp/worker-alive
+      WORKER_STOP_TIMEOUT_MS: "20000"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    stop_grace_period: 30s
+    tmpfs:
+      - /tmp
+    volumes:
+      - uploads:/data/uploads
+      - exports:/data/exports
+    networks: [internal, egress]
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "const s=require('fs').statSync('/tmp/worker-alive');process.exit(Date.now()-s.mtimeMs<90000?0:1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits: { memory: 512M, cpus: "1.0" }
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      web: { condition: service_healthy }
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [internal, egress]
+    deploy:
+      resources:
+        limits: { memory: 128M }
+    logging: *logging
+
+  # Optional: docker compose --profile clamav ... up -d, then set VIRUS_SCANNER=clamav.
+  clamav:
+    profiles: [clamav]
+    image: clamav/clamav:1.4.3
+    restart: unless-stopped
+    networks: [internal, egress]
+    deploy:
+      resources:
+        limits: { memory: 2G }
+    logging: *logging
+
+networks:
+  # No route to the internet and nothing published: only the services that need to talk to each other.
+  internal:
+    internal: true
+  egress: {}
+
+volumes:
+  pgdata:
+  uploads:
+  exports:
+  caddy_data:
+  caddy_config:

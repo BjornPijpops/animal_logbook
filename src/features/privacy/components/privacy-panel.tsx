@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PersonalExportForm } from "./personal-export-form";
 import { clearOfflineEmergency } from "@/lib/offline/emergency-cache";
 import type { AppErrorCode } from "@/lib/result";
 import type { PrivacyActionResult } from "../server/actions";
@@ -51,7 +52,7 @@ function PasswordSection({
   const t = useTranslations("privacy");
   const tc = useTranslations("common");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<AppErrorCode | null>(null);
+  const [error, setError] = useState<AppErrorCode | "too_large" | null>(null);
   const [blockedBy, setBlockedBy] = useState<string[] | null>(null);
   const [done, setDone] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -62,7 +63,7 @@ function PasswordSection({
       const result = await onSubmit(password);
       setDone(false);
       setBlockedBy(null);
-      setError(result.ok ? null : result.code);
+      setError(result.ok ? null : (result.reason ?? result.code));
       if (result.ok) {
         setPassword("");
         if (result.blockedBy) setBlockedBy(result.blockedBy);
@@ -163,6 +164,8 @@ export function PrivacyPanel({ canExport, canDeleteHousehold, exports, ttlHours 
       ) : (
         <p className="text-muted-foreground text-sm">{t("export.ownerOnly")}</p>
       )}
+
+      <PersonalExportForm />
 
       {canDeleteHousehold ? (
         <PasswordSection
