@@ -43,3 +43,6 @@ export {
   restoreExpenseAction,
   updateExpenseAction,
 } from "./server/actions";
+export { ExpenseForm, type AnimalOption, type MedicationOption } from "./components/expense-form";
+export { DeleteExpenseButton, RestoreExpenseButton } from "./components/expense-buttons";
+export { SpendingChart, type SpendingPoint } from "./components/spending-chart";

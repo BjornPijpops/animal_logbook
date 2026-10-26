@@ -32,7 +32,8 @@
     "animals": "Animals",
     "documents": "Documents",
     "timeline": "Timeline",
-    "medications": "Medications"
+    "medications": "Medications",
+    "expenses": "Expenses"
   },
   "auth": {
     "signUp": {
@@ -693,5 +694,91 @@
       "date": "Date"
     },
     "fromRecordHint": "Name, dates and notes come from the existing record. Add the dosage and schedule."
+  },
+  "expenses": {
+    "title": "Expenses",
+    "intro": "Spending for your household, counted from the expense entries. Appointment costs appear here automatically.",
+    "add": "Add expense",
+    "newTitle": "New expense",
+    "create": "Add expense",
+    "save": "Save changes",
+    "saved": "Saved.",
+    "delete": "Delete expense",
+    "deleteConfirm": "Delete this expense? You can restore it afterwards.",
+    "restore": "Restore",
+    "deletedTitle": "Deleted expenses",
+    "deletedNotice": "This expense is deleted and not counted in totals.",
+    "back": "Back to expenses",
+    "listTitle": "Entries",
+    "empty": "No expenses match these filters yet.",
+    "emptySummary": "No spending to show for these filters.",
+    "results": "{count, plural, one {# entry} other {# entries}}",
+    "pagination": "Page {page} of {pages}",
+    "previous": "Previous",
+    "next": "Next",
+    "export": "Export CSV",
+    "fromAppointment": "From appointment",
+    "linkedTitle": "Cost from an appointment",
+    "linkedBody": "This amount comes from an appointment. Change it there and it updates here.",
+    "openAppointment": "Edit in the appointment",
+    "noConversion": "Totals are shown per currency; amounts are never converted.",
+    "views": {
+      "label": "Spending views",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "category": "By category"
+    },
+    "table": {
+      "month": "Month",
+      "year": "Year",
+      "category": "Category",
+      "amount": "Amount",
+      "total": "Total"
+    },
+    "filters": {
+      "title": "Filter expenses",
+      "year": "Year",
+      "allYears": "All years",
+      "animal": "Animal",
+      "allAnimals": "All animals",
+      "category": "Category",
+      "allCategories": "All categories",
+      "apply": "Apply filters"
+    },
+    "categories": {
+      "vet": "Vet",
+      "food": "Food",
+      "insurance": "Insurance",
+      "grooming": "Grooming",
+      "toys": "Toys",
+      "medication": "Medication",
+      "training": "Training",
+      "other": "Other"
+    },
+    "fields": {
+      "description": "Description",
+      "category": "Category",
+      "amount": "Amount",
+      "currency": "Currency",
+      "date": "Date",
+      "animal": "Animal",
+      "noAnimal": "Household (no animal)",
+      "medication": "Medication",
+      "noMedication": "None",
+      "notes": "Notes"
+    },
+    "hints": {
+      "amount": "For example 12.50",
+      "medication": "Linking a medication also sets the animal."
+    },
+    "errors": {
+      "invalid": "Enter a valid value.",
+      "invalid_amount": "Enter an amount above zero, for example 12.50.",
+      "validation": "Please check the form.",
+      "not_found": "That item no longer exists.",
+      "forbidden": "You can view expenses but not change them.",
+      "conflict": "This expense comes from an appointment. Edit it there.",
+      "other": "Something went wrong. Try again."
+    }
   }
 }
