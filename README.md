@@ -19,21 +19,33 @@ npm run dev                    # http://localhost:3000
 npm run worker                 # in a second terminal
 ```
 
+## Production
+
+`docker-compose.prod.yml` runs Caddy (automatic HTTPS), the web app, the worker, a one-shot migrate step and Postgres from one Docker image. Start with `.env.production.example`, then follow [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (setup, upgrade, rollback, backups, troubleshooting). Backups: `deploy/backup.sh` / `backup.ps1`, restore with `restore.sh` / `restore.ps1`, and `restore-drill` proves the round trip. Health: `/api/health/live`, `/api/health/ready`. `/privacy` and `/disclaimer` are templates the server owner must review.
+
+```bash
+npm run e2e:image          # build the image and run the Playwright suite against it (production stack + Mailpit)
+./deploy/restore-drill.sh  # backup, wipe all volumes, restore, verify (PowerShell: .\deploy\restore-drill.ps1)
+```
+
 ## Scripts
 
-| Script                                  | Purpose                                                                                |
-| --------------------------------------- | -------------------------------------------------------------------------------------- |
-| `dev`, `build`, `start`                 | Next.js                                                                                |
-| `worker:once`                           | One reminder generate + deliver pass (manual checks and E2E)                           |
-| `vapid`                                 | Generate VAPID keys for Web Push                                                       |
-| `worker`                                | pg-boss worker process                                                                 |
-| `lint`, `typecheck`, `format`           | Quality                                                                                |
-| `test`, `test:unit`, `test:integration` | Vitest (integration needs Docker Postgres)                                             |
-| `test:e2e`                              | Playwright + axe (needs Mailpit running; first run: `npx playwright install chromium`) |
-| `db:generate`, `db:migrate`, `db:seed`  | Drizzle (run as the owner role)                                                        |
-| `db:roles`                              | Set passwords for the restricted `animal_app` and `animal_worker` roles                |
-| `vapid`                                 | Generate Web Push VAPID keys                                                           |
-| `ci`                                    | lint + typecheck + test + build                                                        |
+| Script                                  | Purpose                                                                                      |
+| --------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `dev`, `build`, `start`                 | Next.js                                                                                      |
+| `worker:once`                           | One reminder generate + deliver pass (manual checks and E2E)                                 |
+| `vapid`                                 | Generate VAPID keys for Web Push                                                             |
+| `worker`                                | pg-boss worker process                                                                       |
+| `lint`, `typecheck`, `format`           | Quality                                                                                      |
+| `test`, `test:unit`, `test:integration` | Vitest (integration needs Docker Postgres)                                                   |
+| `e2e:image`                             | Playwright against the production image behind Caddy (Docker; first run builds the image)    |
+| `bundle:server`                         | esbuild bundles for the worker, migrate and email-test entry points (used by the Dockerfile) |
+| `email:test`                            | Send a test email with the configured SMTP settings (production: see the deployment guide)   |
+| `test:e2e`                              | Playwright + axe (needs Mailpit running; first run: `npx playwright install chromium`)       |
+| `db:generate`, `db:migrate`, `db:seed`  | Drizzle (run as the owner role)                                                              |
+| `db:roles`                              | Set passwords for the restricted `animal_app` and `animal_worker` roles                      |
+| `vapid`                                 | Generate Web Push VAPID keys                                                                 |
+| `ci`                                    | lint + typecheck + test + build                                                              |
 
 ## Database roles and row-level security
 
@@ -71,6 +83,9 @@ Behind Caddy, nginx or Traefik you **must** set `TRUSTED_PROXY=true` (and make t
 ### Privacy: export, deletion and audit log
 
 - `/settings/privacy`: request a data export (zip of JSON plus files, built by the worker, downloadable by you for `EXPORT_TTL_HOURS`, default 24) or delete your account. Both need your password. Owners of shared households must transfer ownership or delete the household first.
+- Every member can also export their own personal data (account, preferences, devices, audit entries about them) from the same page; owners additionally export the household. Exports are capped at `EXPORT_MAX_MB` (default 300, a clear error beyond that).
+- Deleting an account first marks it **pending**: sign-in is blocked immediately and the worker finishes the deletion if a run fails midway.
+- If you belong to several households, a switcher picks the active one (a cookie, validated against your memberships on every request).
 - `/settings/audit`: owners see membership, invite, export and deletion events (kept `AUDIT_RETENTION_DAYS`, default 365).
 - Soft-deleted rows are purged after `RETENTION_DAYS` (default 30). Env: `EXPORT_DIR`, `EXPORT_TTL_HOURS`, `AUDIT_RETENTION_DAYS`. Design: ADR [0016](docs/adr/0016-retention-deletion-audit.md), [0017](docs/adr/0017-data-export.md).
 

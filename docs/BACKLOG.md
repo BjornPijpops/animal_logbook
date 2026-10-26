@@ -75,3 +75,7 @@ Ideas for after V1. Optional paid adapters may be listed here but must never be 
 - Feeding reminders (meal times). Not built in V1; the meal schedule already stores times of day.
 - Transition helpers for gradual diet changes (V1 only stores a free-text note).
 - Weight-versus-food correlation statistics. V1 only shows events side by side.
+
+- Option to disable public sign-up (invite-only server), for operators who do not want strangers to register.
+- WAL archiving / point-in-time recovery and an atomic uploads + database snapshot for backups.
+- Stream the export zip instead of building it in memory (today a documented size cap applies, EXPORT_MAX_MB).

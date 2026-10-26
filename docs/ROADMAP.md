@@ -59,5 +59,38 @@ Row-level security, GDPR export (JSON + zip) and account deletion, audit log, an
 
 ### 8c: Production
 
-`Dockerfile`, `docker-compose.prod.yml`, backups, deployment guide, E2E against the built image.
-**Accept**: LCP < 2.5s on throttled mobile profile; `docker compose -f docker-compose.prod.yml up` works from a clean checkout.
+`Dockerfile`, `docker-compose.prod.yml` (Caddy, web, worker, migrate, postgres), health endpoints, production config validation, backup/restore scripts with a tested restore drill, CI that builds, scans and runs the E2E suite against the image, [deployment guide](DEPLOYMENT.md), privacy notice and disclaimer templates. **Done** (ADR [0018](adr/0018-production-deployment.md), [0019](adr/0019-backups.md)).
+
+### Launch readiness checklist
+
+Before inviting real users, tick every line.
+
+**Server and network**
+
+- [ ] DNS points at the server; `https://<domain>/api/health/ready` returns `{"status":"ok"}`
+- [ ] Firewall allows only SSH, 80 and 443; Postgres and the app publish no ports (`docker ps`)
+- [ ] `/etc/animal-logbook/.env.production` is mode 600, outside the repository, and secrets were generated (not the examples)
+- [ ] `dc run --rm worker node dist/send-test-email.mjs you@x.org` arrives, SPF/DKIM set for `EMAIL_FROM`
+- [ ] Behind Caddy `TRUSTED_PROXY=true` is active; behind Cloudflare Tunnel the `CF-Connecting-IP` mapping is in place (a burst of wrong sign-ins from one device does not lock out another)
+- [ ] Decided what to do about open sign-up (restrict at Caddy or accept)
+
+**Data safety**
+
+- [ ] A scheduled backup runs, archives are encrypted and copied off the server (not the same disk)
+- [ ] The encryption key is stored away from the server and a restore from a real archive succeeded (`restore.sh` verification printed OK)
+- [ ] `restore-drill` passes on your machine
+- [ ] `RETENTION_DAYS`, `AUDIT_RETENTION_DAYS` and `EXPORT_MAX_MB` reviewed
+
+**Legal and wording**
+
+- [ ] `/privacy` and `/disclaimer` reviewed and edited by the owner (name, contact, local requirements); they are templates, not legal advice
+- [ ] Everyone who joins knows who runs the server and how to export or delete their data
+
+**Operations**
+
+- [ ] An uptime check watches `/api/health/ready`; the worker shows `healthy` in `docker compose ps`
+- [ ] Upgrade and rollback were rehearsed once on a copy (including `migrate down`)
+- [ ] `npm audit --omit=dev` is clean and the Trivy scan in CI passes for the tag you deploy
+- [ ] Docker and the OS receive security updates
+
+**Accept**: `docker compose -f docker-compose.prod.yml up` works from a clean checkout with a filled-in env file; the E2E suite passes against the image.
