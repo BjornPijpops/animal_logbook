@@ -70,6 +70,20 @@ export function createMedicalRepository(db: DbExecutor, householdId: string) {
         .orderBy(medicalRecords.startedOn);
     },
 
+    async findLinkedVaccination(appointmentId: string): Promise<MedicalRecordRow | null> {
+      const [row] = await db
+        .select()
+        .from(medicalRecords)
+        .where(
+          and(
+            live,
+            eq(medicalRecords.appointmentId, appointmentId),
+            eq(medicalRecords.type, "vaccination"),
+          ),
+        );
+      return row ?? null;
+    },
+
     async update(id: string, values: MedicalRecordValues): Promise<MedicalRecordRow | null> {
       const [row] = await db
         .update(medicalRecords)
