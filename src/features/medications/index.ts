@@ -3,6 +3,8 @@ export {
   createMedication,
   deleteMedication,
   findMedicationForRecord,
+  getMedicationDashboard,
+  type MedicationDashboard,
   getMedication,
   listDeletedMedications,
   listDueDoses,

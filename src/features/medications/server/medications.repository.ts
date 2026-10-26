@@ -120,11 +120,72 @@ export function createMedicationsRepository(db: DbExecutor, householdId: string)
       return view?.deletedAt ? { ...view, deletedAt: view.deletedAt } : null;
     },
 
-    async list(filter: { animalId?: string } = {}): Promise<MedicationView[]> {
-      const rows = await base()
+    async list(filter: { animalId?: string; limit?: number } = {}): Promise<MedicationView[]> {
+      const query = base()
         .where(and(live, filter.animalId ? eq(medications.animalId, filter.animalId) : undefined))
         .orderBy(animals.name, medicalRecords.title);
+      const rows = await (filter.limit ? query.limit(filter.limit) : query);
       return rows.map(toView);
+    },
+
+    // Every logged or auto-marked dose in a window, for all medications of the household.
+    async dosesInWindow(
+      from: Date,
+      to: Date,
+      limit: number,
+    ): Promise<{ medicationId: string; scheduledAt: Date }[]> {
+      return db
+        .select({
+          medicationId: medicationDoses.medicationId,
+          scheduledAt: medicationDoses.scheduledAt,
+        })
+        .from(medicationDoses)
+        .where(
+          and(
+            eq(medicationDoses.householdId, householdId),
+            gte(medicationDoses.scheduledAt, from),
+            lt(medicationDoses.scheduledAt, to),
+          ),
+        )
+        .limit(limit);
+    },
+
+    async missedSince(
+      from: Date,
+      to: Date,
+      filter: { animalId?: string },
+      limit: number,
+    ): Promise<{ medicationId: string; name: string; animalName: string; scheduledAt: Date }[]> {
+      return db
+        .select({
+          medicationId: medications.id,
+          name: medicalRecords.title,
+          animalName: animals.name,
+          scheduledAt: medicationDoses.scheduledAt,
+        })
+        .from(medicationDoses)
+        .innerJoin(
+          medications,
+          and(
+            eq(medications.id, medicationDoses.medicationId),
+            eq(medications.householdId, medicationDoses.householdId),
+          ),
+        )
+        .innerJoin(medicalRecords, eq(medicalRecords.id, medications.medicalRecordId))
+        .innerJoin(animals, eq(animals.id, medications.animalId))
+        .where(
+          and(
+            eq(medicationDoses.householdId, householdId),
+            eq(medicationDoses.status, "missed"),
+            gte(medicationDoses.scheduledAt, from),
+            lt(medicationDoses.scheduledAt, to),
+            isNull(medications.deletedAt),
+            isNull(medicalRecords.deletedAt),
+            filter.animalId ? eq(medications.animalId, filter.animalId) : undefined,
+          ),
+        )
+        .orderBy(desc(medicationDoses.scheduledAt))
+        .limit(limit);
     },
 
     async listDeleted(): Promise<MedicationView[]> {

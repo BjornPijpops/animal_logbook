@@ -103,3 +103,15 @@ export const REMINDER_HOUR = 9;
 export function reminderDueAt(dateOnly: string, timeZone: string): Date | null {
   return localToUtc({ date: dateOnly, time: `${pad(REMINDER_HOUR)}:00` }, timeZone);
 }
+
+// Calendar arithmetic on date-only strings; no timezone is involved.
+export function addDays(date: string, days: number): string {
+  return new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+}
+
+// The instant a local calendar day begins (00:00, or the first valid moment when midnight is
+// skipped by a DST change). Days are 23, 24 or 25 hours long, so never add 24h to this.
+export function localDayStart(date: string, timeZone: string): Date {
+  const start = localToUtc({ date, time: "00:00" }, timeZone);
+  return start ?? new Date(Date.parse(`${date}T00:00:00Z`));
+}

@@ -3,6 +3,7 @@ import { createAttachmentsRepository } from "@/features/files";
 import { can, type Ctx } from "@/features/households";
 import { createMedicalRepository } from "@/features/medical";
 import { createRemindersRepository } from "@/features/notifications";
+import { addDays, localDayStart, utcToLocalParts } from "@/lib/dates";
 import { err, ok, type Result } from "@/lib/result";
 import { summarizeAdherence, type Adherence } from "../adherence";
 import { expandSchedule, type ScheduleSpec } from "../schedule";
@@ -339,6 +340,77 @@ export async function listDueDoses(
     }
   }
   return ok(due.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime()));
+}
+
+// Everything the dashboard needs about medications, from existing rows only. All lists are
+// bounded; `...Total` fields say how many exist beyond the shown items.
+export type MedicationDashboard = {
+  dueToday: DueDose[];
+  missed: { medicationId: string; name: string; animalName: string; scheduledAt: Date }[];
+  ending: { medicationId: string; name: string; animalName: string; endedOn: string }[];
+};
+
+export const DASHBOARD_MEDICATION_LIMIT = 100;
+const DASHBOARD_LIST_LIMIT = 20;
+const MISSED_DAYS = 7;
+const ENDING_DAYS = 7;
+
+export async function getMedicationDashboard(
+  deps: MedicationDeps,
+  ctx: Ctx,
+  filter: { animalId?: string } = {},
+): Promise<Result<MedicationDashboard>> {
+  if (!can(ctx.role, "data:read")) return forbidden();
+  if (filter.animalId && !uuidSchema.safeParse(filter.animalId).success) {
+    return ok({ dueToday: [], missed: [], ending: [] });
+  }
+  const now = clock(deps);
+  const today = utcToLocalParts(now, ctx.timezone).date;
+  const dayStart = localDayStart(today, ctx.timezone);
+  const dayEnd = localDayStart(addDays(today, 1), ctx.timezone);
+  const repo = createMedicationsRepository(deps.db, ctx.householdId);
+  const [list, logged, missed] = await Promise.all([
+    repo.list({ ...filter, limit: DASHBOARD_MEDICATION_LIMIT }),
+    repo.dosesInWindow(dayStart, dayEnd, DASHBOARD_MEDICATION_LIMIT * 12),
+    repo.missedSince(
+      new Date(now.getTime() - MISSED_DAYS * DAY_MS),
+      now,
+      filter,
+      DASHBOARD_LIST_LIMIT,
+    ),
+  ]);
+  const done = new Set(logged.map((dose) => `${dose.medicationId}|${dose.scheduledAt.getTime()}`));
+  const dueToday: DueDose[] = [];
+  const ending: MedicationDashboard["ending"] = [];
+  const endLimit = addDays(today, ENDING_DAYS);
+  for (const medication of list) {
+    if (medication.endedOn && medication.endedOn >= today && medication.endedOn <= endLimit) {
+      ending.push({
+        medicationId: medication.id,
+        name: medication.name,
+        animalName: medication.animalName,
+        endedOn: medication.endedOn,
+      });
+    }
+    const schedule = medication.schedule;
+    if (!schedule || schedule.kind === "as_needed") continue;
+    const from = new Date(Math.max(dayStart.getTime(), schedule.updatedAt.getTime()));
+    for (const scheduledAt of expandSchedule(schedule, windowOf(ctx, medication), from, dayEnd)) {
+      if (done.has(`${medication.id}|${scheduledAt.getTime()}`)) continue;
+      dueToday.push({
+        medicationId: medication.id,
+        name: medication.name,
+        dosage: medication.dosage,
+        animalId: medication.animalId,
+        animalName: medication.animalName,
+        scheduledAt,
+        late: scheduledAt < now,
+      });
+    }
+  }
+  dueToday.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
+  ending.sort((a, b) => a.endedOn.localeCompare(b.endedOn));
+  return ok({ dueToday: dueToday.slice(0, DASHBOARD_LIST_LIMIT), missed, ending });
 }
 
 // Logging is an upsert on (medication, scheduled time), so a double tap or two household members
