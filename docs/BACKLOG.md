@@ -59,3 +59,12 @@ Ideas for after V1. Optional paid adapters may be listed here but must never be 
 - Per-animal attachment storage totals and larger per-owner file limits
 - Link medical records of type medication to the Phase 5 medications table
 - Edit an appointment's linked vaccination record from the appointment page
+
+## From Phase 5
+
+- Multiple schedules per medication (for example a tapering dose).
+- Link legacy placeholder medication records to a medication.
+- Low-stock warnings and refill reminders (Phase 8 dashboard).
+- Per-reminder lead time and snooze.
+- In-app notification inbox (the `notifications` table is still unused).
+- A real-browser push E2E against a local push service.
