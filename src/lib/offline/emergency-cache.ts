@@ -21,6 +21,13 @@ export async function syncOfflineEmergency(): Promise<boolean> {
     credentials: "same-origin",
     cache: "no-store",
   });
+  if (
+    response.status === 401 ||
+    (response.redirected && new URL(response.url).pathname === "/sign-in")
+  ) {
+    await clearOfflineEmergency();
+    return false;
+  }
   if (!response.ok) return false;
   const { urls } = manifestSchema.parse(await response.json());
 
@@ -31,6 +38,10 @@ export async function syncOfflineEmergency(): Promise<boolean> {
   }
   for (const url of urls) {
     const page = await fetch(url, { credentials: "same-origin", cache: "no-store" });
+    if (page.status === 401 || (page.redirected && new URL(page.url).pathname === "/sign-in")) {
+      await clearOfflineEmergency();
+      return false;
+    }
     if (page.ok && !page.redirected) await cache.put(url, page);
   }
   return true;

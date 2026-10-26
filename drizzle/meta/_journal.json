@@ -15,6 +15,20 @@
       "when": 1792996683692,
       "tag": "0001_animals",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792998695725,
+      "tag": "0002_user_phone",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792998937790,
+      "tag": "0003_documents",
+      "breakpoints": true
     }
   ]
 }

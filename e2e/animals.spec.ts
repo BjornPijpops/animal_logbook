@@ -1,58 +1,12 @@
-import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import sharp from "sharp";
-import { z } from "zod";
-
-const MAILPIT = process.env.MAILPIT_URL ?? "http://localhost:8025";
-const searchSchema = z.object({ messages: z.array(z.object({ ID: z.string() })) });
-const messageSchema = z.object({ Text: z.string() });
-const PASSWORD = "correct-horse-battery";
-
-async function expectNoA11yViolations(page: Page) {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-    .analyze();
-  expect(results.violations).toEqual([]);
-}
-
-async function signUpAndVerify(page: Page, request: APIRequestContext) {
-  const email = `animals-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.test`;
-  await page.goto("/sign-up");
-  await page.getByLabel("Name").fill("Animal Owner");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(PASSWORD);
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
-
-  let link: string | undefined;
-  await expect
-    .poll(
-      async () => {
-        const search = await request.get(`${MAILPIT}/api/v1/search`, {
-          params: { query: `to:${email}` },
-        });
-        const first = searchSchema.parse(await search.json()).messages[0];
-        if (!first) return false;
-        const message = messageSchema.parse(
-          await (await request.get(`${MAILPIT}/api/v1/message/${first.ID}`)).json(),
-        );
-        link = /https?:\/\/\S+/.exec(message.Text)?.[0];
-        return Boolean(link);
-      },
-      { timeout: 20_000 },
-    )
-    .toBe(true);
-  if (!link) throw new Error("No verification link found");
-  await page.goto(link);
-  await expect(page.getByRole("heading", { name: /Hello, Animal Owner/ })).toBeVisible();
-  return email;
-}
+import { expectNoA11yViolations, signUpAndVerify } from "./helpers";
 
 test("create an animal, add a photo and a weight, open the emergency card", async ({
   page,
   request,
 }) => {
-  await signUpAndVerify(page, request);
+  await signUpAndVerify(page, request, "animals");
 
   await page.goto("/animals");
   await expect(page.getByRole("heading", { name: "No animals yet" })).toBeVisible();

@@ -42,6 +42,14 @@ export function PreferencesForm({ defaults, timezones, currencies }: Props) {
       <Field id="name" label={tc("name")} error={errors.name ? tc("required") : undefined}>
         {(aria) => <Input {...aria} autoComplete="name" {...register("name")} />}
       </Field>
+      <Field
+        id="phone"
+        label={t("phone")}
+        hint={t("phoneHint")}
+        error={errors.phone ? tc("invalid") : undefined}
+      >
+        {(aria) => <Input {...aria} type="tel" autoComplete="tel" {...register("phone")} />}
+      </Field>
       <Field id="language" label={t("language")}>
         {(aria) => (
           <Select {...aria} disabled defaultValue="en">

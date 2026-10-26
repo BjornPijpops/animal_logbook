@@ -87,7 +87,7 @@ export function EmergencyCard({ card }: { card: EmergencyCardData }) {
         <ul>
           {card.owners.map((owner) => (
             <li key={owner.email}>
-              {owner.name} · {owner.email}
+              {[owner.name, owner.phone, owner.email].filter(Boolean).join(" · ")}
             </li>
           ))}
         </ul>

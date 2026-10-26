@@ -18,10 +18,10 @@ Auth (email+password with verification and reset; OAuth providers structured but
 CRUD, photos (upload, crop, thumbnails via sharp), weight history + chart, emergency card (printable, offline).
 **Accept**: create/edit/archive animals; weight entries drive "current weight"; emergency card prints and loads offline; cross-tenant tests for every repository; axe clean.
 
-## Phase 3: Document vault + attachments
+## Phase 3: Document vault + attachments (done)
 
-Upload pipeline (type/size/magic-byte/scan hook), signed protected downloads, document types, search/filter, pinned offline docs.
-**Accept**: files never reachable without session + ownership; spoofed MIME rejected; expired token rejected; search by title/type/animal works.
+Upload pipeline (type/size/magic-byte/scan hook), protected downloads (session + ownership; signed tokens deferred), document types, search/filter, purge job. Offline documents moved to the backlog.
+**Accept**: files never reachable without session + ownership; spoofed MIME rejected; quota enforced; search by title/type/animal works.
 
 ## Phase 4: Appointments + medical history
 

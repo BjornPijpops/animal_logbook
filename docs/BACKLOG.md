@@ -39,3 +39,12 @@ Ideas for after V1. Optional paid adapters may be listed here but must never be 
 - Owner phone number and a deceased date on the animal profile
 - Photo cropping UI
 - Refresh the offline emergency cache automatically when animal data changes
+
+## From Phase 3
+
+- Offline caching of documents (explicitly out of Phase 3 scope; needs an opt-in design like ADR 0009)
+- Short-lived signed download tokens (currently session + ownership check)
+- S3-compatible StorageAdapter`n- Multiple files per document in the UI (the attachments model already supports it)
+- Reminders for expiring documents (Phase 5)
+- Per-household quota usage display and admin override
+- Real ClamAV integration test in CI (adapter is tested against a fake clamd)

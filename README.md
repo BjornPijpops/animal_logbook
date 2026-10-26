@@ -4,7 +4,7 @@ Self-hosted, mobile-first PWA to manage everything about your animals: profiles,
 
 **100% free and open source**: no paid services, no API keys, no external CDNs. See [ADR 0008](docs/adr/0008-free-only-policy.md).
 
-Status: **Phase 2 (animals) complete**: animal profiles, photos (EXIF stripped, thumbnails), weight history and chart, printable emergency card with opt-in offline cache, on top of the Phase 1 foundation: sign up/in/out with email verification and password reset, households with member invites and roles, PWA shell, worker heartbeat, CI. See [docs/ROADMAP.md](docs/ROADMAP.md).
+Status: **Phase 3 (document vault) complete**: documents with types, expiry, search/filter, validated uploads (magic bytes, quota, optional ClamAV) and protected downloads, plus **Phase 2 (animals)**: animal profiles, photos (EXIF stripped, thumbnails), weight history and chart, printable emergency card with opt-in offline cache, on top of the Phase 1 foundation: sign up/in/out with email verification and password reset, households with member invites and roles, PWA shell, worker heartbeat, CI. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Quick start
 
@@ -47,3 +47,7 @@ npm run worker                 # in a second terminal
 ## Using Copilot in this repo
 
 Work one phase per chat session. Start with `/plan-phase`, build in slices (`/new-feature-slice`), and finish with `/review-changes` and `/security-checklist`.
+
+### Documents and virus scanning
+
+Uploads accept PDF/JPEG/PNG/WebP. The worker (`npm run worker`) purges orphaned and soft-deleted files daily. To scan uploads with ClamAV: `docker compose --profile scan up -d` and set `VIRUS_SCANNER=clamav` (see `.env.example`).

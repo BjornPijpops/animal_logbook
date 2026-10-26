@@ -97,7 +97,7 @@ export async function getAnimalOverview(
 export type EmergencyCard = {
   animal: AnimalRow;
   photoFileId: string | null;
-  owners: { name: string; email: string }[];
+  owners: { name: string; email: string; phone: string | null }[];
 };
 
 export async function getEmergencyCard(
@@ -114,7 +114,9 @@ export async function getEmergencyCard(
   return ok({
     animal,
     photoFileId: photos.find((p) => p.isPrimary)?.fileId ?? null,
-    owners: members.filter((m) => m.role === "owner").map(({ name, email }) => ({ name, email })),
+    owners: members
+      .filter((m) => m.role === "owner")
+      .map(({ name, email, phone }) => ({ name, email, phone })),
   });
 }
 

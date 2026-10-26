@@ -36,6 +36,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // File responses set their own locked-down CSP; the page CSP must not replace it.
+  if (pathname.startsWith("/api/files/")) return NextResponse.next();
+
   const nonce = btoa(crypto.randomUUID());
   const csp = buildCsp(nonce, process.env.NODE_ENV !== "production");
   const requestHeaders = new Headers(request.headers);

@@ -74,6 +74,7 @@ export const files = pgTable(
     mimeType: text("mime_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
     checksumSha256: char("checksum_sha256", { length: 64 }).notNull(),
+    originalName: text("original_name"),
     uploadedBy: uuid("uploaded_by").references(() => users.id, { onDelete: "set null" }),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

@@ -18,6 +18,7 @@ describe("signUpSchema", () => {
 
 describe("preferencesSchema", () => {
   const valid = {
+    phone: "+32 470 00 00 00",
     name: "A",
     timezone: "Europe/Brussels",
     weightUnit: "kg",
@@ -31,6 +32,7 @@ describe("preferencesSchema", () => {
 
   it("rejects unknown zones, units and currencies", () => {
     expect(preferencesSchema.safeParse({ ...valid, timezone: "Mars/Base" }).success).toBe(false);
+    expect(preferencesSchema.safeParse({ ...valid, phone: "call me" }).success).toBe(false);
     expect(preferencesSchema.safeParse({ ...valid, weightUnit: "stone" }).success).toBe(false);
     expect(preferencesSchema.safeParse({ ...valid, defaultCurrency: "EURO" }).success).toBe(false);
   });

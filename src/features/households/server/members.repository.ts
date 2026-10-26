@@ -7,6 +7,7 @@ export type MemberRow = {
   userId: string;
   name: string;
   email: string;
+  phone: string | null;
   role: Role;
   joinedAt: Date;
 };
@@ -19,6 +20,7 @@ export function createMembersRepository(db: DbExecutor, householdId: string) {
           userId: users.id,
           name: users.name,
           email: users.email,
+          phone: users.phone,
           role: householdMembers.role,
           joinedAt: householdMembers.createdAt,
         })

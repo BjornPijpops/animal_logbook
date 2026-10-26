@@ -12,7 +12,10 @@ export async function updatePreferencesAction(input: unknown): Promise<Result<nu
   const user = await requireSessionUser();
   const parsed = preferencesSchema.safeParse(input);
   if (!parsed.success) return err("validation", "Invalid preferences");
-  await getDb().update(users).set(parsed.data).where(eq(users.id, user.id));
+  await getDb()
+    .update(users)
+    .set({ ...parsed.data, phone: parsed.data.phone === "" ? null : parsed.data.phone })
+    .where(eq(users.id, user.id));
   revalidatePath("/", "layout");
   return ok(null);
 }
