@@ -905,7 +905,9 @@
       "food_ended": "Food ended",
       "record_allergy": "Allergy record",
       "record_illness": "Illness record",
-      "record_injury": "Injury record"
+      "record_injury": "Injury record",
+      "until": "until {date}",
+      "ongoing": "no end date entered"
     },
     "errors": {
       "invalid": "Enter a valid date.",

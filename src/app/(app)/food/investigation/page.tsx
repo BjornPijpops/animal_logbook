@@ -82,7 +82,12 @@ export default async function FoodInvestigationPage({
                   ) : (
                     <>
                       <td className="py-1 pr-3">{t(`investigation.record_${entry.type}`)}</td>
-                      <td className="py-1 break-words">{entry.title}</td>
+                      <td className="py-1 break-words">
+                        {entry.title} ·{" "}
+                        {entry.endedOn
+                          ? t("investigation.until", { date: day(entry.endedOn) })
+                          : t("investigation.ongoing")}
+                      </td>
                     </>
                   )}
                 </tr>

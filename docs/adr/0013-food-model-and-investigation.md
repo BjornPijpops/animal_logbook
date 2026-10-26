@@ -41,3 +41,5 @@ for example next to an allergy or a weight change. The app must never give dieta
   brings them back.
 - Feeding reminders and correlation statistics are out of scope (docs/BACKLOG.md).
 - Amounts above 999,999.99 units or more than 12 meals per plan are rejected.
+
+- Amendment: the investigation view matches records by overlap with the selected range (start on or before the range end, and no end date or an end on or after the range start), so ongoing records always appear.
