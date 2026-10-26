@@ -118,6 +118,11 @@ export async function DashboardView({ dashboard, timezone, showAnimal = true }: 
             ))}
           </ul>
         )}
+        {meds.dueMore ? (
+          <Link href="/medications" className="text-primary text-sm underline">
+            {t("seeAll")}
+          </Link>
+        ) : null}
         <h3 className="mt-3 text-sm font-medium">{t("medications.missed")}</h3>
         {meds.missed.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t("medications.missedEmpty")}</p>

@@ -346,6 +346,8 @@ export async function listDueDoses(
 // bounded; `...Total` fields say how many exist beyond the shown items.
 export type MedicationDashboard = {
   dueToday: DueDose[];
+  // True when more doses were due today than the card shows.
+  dueMore: boolean;
   missed: { medicationId: string; name: string; animalName: string; scheduledAt: Date }[];
   ending: { medicationId: string; name: string; animalName: string; endedOn: string }[];
 };
@@ -362,7 +364,7 @@ export async function getMedicationDashboard(
 ): Promise<Result<MedicationDashboard>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (filter.animalId && !uuidSchema.safeParse(filter.animalId).success) {
-    return ok({ dueToday: [], missed: [], ending: [] });
+    return ok({ dueToday: [], dueMore: false, missed: [], ending: [] });
   }
   const now = clock(deps);
   const today = utcToLocalParts(now, ctx.timezone).date;
@@ -410,7 +412,12 @@ export async function getMedicationDashboard(
   }
   dueToday.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
   ending.sort((a, b) => a.endedOn.localeCompare(b.endedOn));
-  return ok({ dueToday: dueToday.slice(0, DASHBOARD_LIST_LIMIT), missed, ending });
+  return ok({
+    dueToday: dueToday.slice(0, DASHBOARD_LIST_LIMIT),
+    dueMore: dueToday.length > DASHBOARD_LIST_LIMIT,
+    missed,
+    ending,
+  });
 }
 
 // Logging is an upsert on (medication, scheduled time), so a double tap or two household members
