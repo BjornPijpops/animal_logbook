@@ -57,12 +57,21 @@ export async function seedTwoHouseholds(db: Database) {
   return { ownerA, ownerB, householdA, householdB };
 }
 
-export function createMemoryStorage(): StorageAdapter & { keys(): string[] } {
+export function createMemoryStorage(): StorageAdapter & {
+  keys(): string[];
+  setModifiedAt(key: string, date: Date): void;
+} {
   const store = new Map<string, Buffer>();
+  const modified = new Map<string, Date>();
   return {
     keys: () => [...store.keys()],
+    setModifiedAt: (key, date) => modified.set(key, date),
+    async list() {
+      return [...store.keys()].map((key) => ({ key, modifiedAt: modified.get(key) ?? new Date() }));
+    },
     async put(key, data) {
       store.set(key, data);
+      modified.set(key, new Date());
     },
     async get(key) {
       return store.get(key) ?? null;

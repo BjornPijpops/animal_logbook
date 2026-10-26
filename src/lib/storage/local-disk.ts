@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { STORAGE_KEY_PATTERN, type StorageAdapter } from "./types";
 
@@ -32,6 +32,27 @@ export class LocalDiskAdapter implements StorageAdapter {
 
   async delete(key: string): Promise<void> {
     await rm(this.resolve(key), { force: true });
+  }
+
+  async list(): Promise<{ key: string; modifiedAt: Date }[]> {
+    const found: { key: string; modifiedAt: Date }[] = [];
+    let households: string[];
+    try {
+      households = await readdir(this.root);
+    } catch (error) {
+      if (isNotFound(error)) return found;
+      throw error;
+    }
+    for (const household of households) {
+      const dir = path.join(this.root, household);
+      const entries = await readdir(dir).catch(() => []);
+      for (const name of entries) {
+        const key = `${household}/${name}`;
+        if (!STORAGE_KEY_PATTERN.test(key)) continue;
+        found.push({ key, modifiedAt: (await stat(path.join(dir, name))).mtime });
+      }
+    }
+    return found;
   }
 
   async exists(key: string): Promise<boolean> {

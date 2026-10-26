@@ -3,6 +3,8 @@ export interface StorageAdapter {
   get(key: string): Promise<Buffer | null>;
   delete(key: string): Promise<void>;
   exists(key: string): Promise<boolean>;
+  // Used by the cleanup job to find bytes that no database row points to.
+  list(): Promise<{ key: string; modifiedAt: Date }[]>;
 }
 
 // Keys are opaque server-generated paths: `<householdId>/<uuid>`.
