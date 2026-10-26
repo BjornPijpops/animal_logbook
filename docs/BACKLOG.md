@@ -44,7 +44,18 @@ Ideas for after V1. Optional paid adapters may be listed here but must never be 
 
 - Offline caching of documents (explicitly out of Phase 3 scope; needs an opt-in design like ADR 0009)
 - Short-lived signed download tokens (currently session + ownership check)
-- S3-compatible StorageAdapter`n- Multiple files per document in the UI (the attachments model already supports it)
+- S3-compatible StorageAdapter
+- Multiple files per document in the UI (the attachments model already supports it)
 - Reminders for expiring documents (Phase 5)
 - Per-household quota usage display and admin override
 - Real ClamAV integration test in CI (adapter is tested against a fake clamd)
+
+## From Phase 4
+
+- Purge soft-deleted appointments, medical records and expenses after a retention period
+- Reminder delivery (Phase 5): ignore stale past-due rows; resolve recipients per household member
+- Appointment status (scheduled, completed, cancelled) and a provider/clinic field
+- Per-animal timeline route (today the household timeline is filtered by animal)
+- Per-animal attachment storage totals and larger per-owner file limits
+- Link medical records of type medication to the Phase 5 medications table
+- Edit an appointment's linked vaccination record from the appointment page

@@ -1,18 +1,11 @@
-import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
+import { expectNoA11yViolations } from "./helpers";
 import { z } from "zod";
 
 const MAILPIT = process.env.MAILPIT_URL ?? "http://localhost:8025";
 const searchSchema = z.object({ messages: z.array(z.object({ ID: z.string() })) });
 const messageSchema = z.object({ Text: z.string() });
 const PASSWORD = "correct-horse-battery";
-
-async function expectNoA11yViolations(page: Page) {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-    .analyze();
-  expect(results.violations).toEqual([]);
-}
 
 async function waitForLink(request: import("@playwright/test").APIRequestContext, email: string) {
   let link: string | undefined;
@@ -89,4 +82,17 @@ test("wrong password shows an error", async ({ page }) => {
   await expect(page.getByRole("alert").filter({ hasText: "incorrect" })).toContainText(
     "Email or password is incorrect.",
   );
+});
+
+test("repeated sign-in attempts from one client are rate limited", async ({ request }) => {
+  const statuses: number[] = [];
+  for (let i = 0; i < 5; i++) {
+    const response = await request.post("/api/auth/sign-in/email", {
+      data: { email: `nobody-${i}@example.test`, password: PASSWORD },
+      headers: { origin: "http://localhost:3000" },
+    });
+    statuses.push(response.status());
+  }
+  expect(statuses.at(-1)).toBe(429);
+  expect(statuses.slice(0, 3)).not.toContain(429);
 });

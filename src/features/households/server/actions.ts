@@ -8,7 +8,13 @@ import type { AppErrorCode, Result } from "@/lib/result";
 import { tokenSchema } from "../schemas";
 import { requireHouseholdAccess } from "./access";
 import { getHouseholdDeps } from "./deps";
-import { acceptInvite, inviteMember, removeMember, revokeInvite } from "./service";
+import {
+  acceptInvite,
+  inviteMember,
+  removeMember,
+  revokeInvite,
+  updateHouseholdTimezone,
+} from "./service";
 
 export type ActionResult = { ok: true } | { ok: false; code: AppErrorCode };
 
@@ -47,4 +53,11 @@ export async function acceptInviteAction(token: string): Promise<ActionResult> {
   const result = await acceptInvite(getHouseholdDeps(), user, parsed.data);
   if (!result.ok) return { ok: false, code: result.error.code };
   redirect("/household");
+}
+
+export async function updateTimezoneAction(timezone: string): Promise<ActionResult> {
+  const { ctx } = await requireHouseholdAccess();
+  const result = await updateHouseholdTimezone(getHouseholdDeps(), ctx, timezone);
+  if (result.ok) revalidatePath("/", "layout");
+  return result.ok ? { ok: true } : { ok: false, code: result.error.code };
 }

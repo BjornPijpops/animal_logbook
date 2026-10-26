@@ -23,7 +23,7 @@ CRUD, photos (upload, crop, thumbnails via sharp), weight history + chart, emerg
 Upload pipeline (type/size/magic-byte/scan hook), protected downloads (session + ownership; signed tokens deferred), document types, search/filter, purge job. Offline documents moved to the backlog.
 **Accept**: files never reachable without session + ownership; spoofed MIME rejected; quota enforced; search by title/type/animal works.
 
-## Phase 4: Appointments + medical history
+## Phase 4: Appointments + medical history (done)
 
 All appointment types, costs, attachments, follow-up dates, per-animal timeline, medical records (typed), vaccination linking, derived allergy summary.
 **Accept**: vaccination appointment creates/links a record; follow-up creates a reminder row; timeline merges appointments and records; leap-day and DST cases tested.

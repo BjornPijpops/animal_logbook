@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import sharp from "sharp";
 import { expectNoA11yViolations, signUpAndVerify } from "./helpers";
 
@@ -20,7 +20,6 @@ test("create an animal, add a photo and a weight, open the emergency card", asyn
   await page.getByLabel("Species").selectOption("dog");
   await page.getByLabel("Breed").fill("Beagle");
   await page.getByLabel("Chip number").fill("985112345678901");
-  await page.getByLabel("Allergies").fill("Chicken");
   await page.getByLabel("Emergency notes").fill("Vet: 555-0100");
   await page.getByRole("button", { name: "Save animal" }).click();
 
@@ -51,7 +50,7 @@ test("create an animal, add a photo and a weight, open the emergency card", asyn
   await expect(page.getByRole("heading", { level: 1, name: "Emergency card" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 2, name: "Rex" })).toBeVisible();
   await expect(page.getByText("985112345678901")).toBeVisible();
-  await expect(page.getByText("Chicken")).toBeVisible();
+  await expect(page.getByText("None recorded")).toBeVisible();
   await expectNoA11yViolations(page);
 
   const fileUrl = await page.getByRole("img", { name: "Photo of Rex" }).getAttribute("src");

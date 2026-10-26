@@ -3,7 +3,13 @@ import { err, ok, type Result } from "@/lib/result";
 import type { Role } from "./can";
 import { ensureHouseholdForUser, listMembershipsForUser } from "./households.repository";
 
-export type Ctx = { userId: string; householdId: string; householdName: string; role: Role };
+export type Ctx = {
+  userId: string;
+  householdId: string;
+  householdName: string;
+  timezone: string;
+  role: Role;
+};
 
 // Establishes the household a user acts in. Ids of households the user does not belong to
 // are reported as "not found", never "forbidden", so they cannot be probed.
@@ -28,6 +34,7 @@ export async function resolveCtx(
     userId: user.id,
     householdId: membership.householdId,
     householdName: membership.householdName,
+    timezone: membership.timezone,
     role: membership.role,
   });
 }

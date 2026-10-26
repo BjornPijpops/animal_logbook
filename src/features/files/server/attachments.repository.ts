@@ -54,7 +54,11 @@ export function createAttachmentsRepository(db: DbExecutor, householdId: string)
     },
 
     // Marks attachments and their files deleted together; returns the file ids affected.
-    async softDelete(owner: AttachmentOwner, attachmentIds?: string[]): Promise<string[]> {
+    async softDelete(
+      owner: AttachmentOwner,
+      attachmentIds?: string[],
+      at: Date = new Date(),
+    ): Promise<string[]> {
       const rows = await db
         .select({ id: attachments.id, fileId: attachments.fileId })
         .from(attachments)
@@ -68,7 +72,7 @@ export function createAttachmentsRepository(db: DbExecutor, householdId: string)
           ),
         );
       if (rows.length === 0) return [];
-      const now = new Date();
+      const now = at;
       await db
         .update(attachments)
         .set({ deletedAt: now })
@@ -87,6 +91,47 @@ export function createAttachmentsRepository(db: DbExecutor, householdId: string)
         .set({ deletedAt: now })
         .where(and(eq(files.householdId, householdId), inArray(files.id, fileIds)));
       return fileIds;
+    },
+
+    // Brings back only what the owner's own deletion removed (same timestamp), so a file the user
+    // had removed earlier stays removed.
+    async restoreWithOwner(owner: AttachmentOwner, at: Date): Promise<void> {
+      const rows = await db
+        .select({ id: attachments.id, fileId: attachments.fileId })
+        .from(attachments)
+        .where(
+          and(
+            eq(attachments.householdId, householdId),
+            eq(attachments.ownerType, owner.type),
+            eq(attachments.ownerId, owner.id),
+            eq(attachments.deletedAt, at),
+          ),
+        );
+      if (rows.length === 0) return;
+      await db
+        .update(attachments)
+        .set({ deletedAt: null })
+        .where(
+          and(
+            eq(attachments.householdId, householdId),
+            inArray(
+              attachments.id,
+              rows.map((r) => r.id),
+            ),
+          ),
+        );
+      await db
+        .update(files)
+        .set({ deletedAt: null })
+        .where(
+          and(
+            eq(files.householdId, householdId),
+            inArray(
+              files.id,
+              rows.map((r) => r.fileId),
+            ),
+          ),
+        );
     },
   };
 }

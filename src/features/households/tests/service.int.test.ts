@@ -26,6 +26,7 @@ const ownerCtx = (w: Awaited<ReturnType<typeof seedTwoHouseholds>>): Ctx => ({
   userId: w.ownerA.id,
   householdId: w.householdA.id,
   householdName: w.householdA.name,
+  timezone: "UTC",
   role: "owner",
 });
 
@@ -166,7 +167,13 @@ describe("roles", () => {
       [editor, "editor"],
       [viewer, "viewer"],
     ] as const) {
-      const ctx: Ctx = { userId: user.id, householdId: w.householdA.id, householdName: "A", role };
+      const ctx: Ctx = {
+        userId: user.id,
+        householdId: w.householdA.id,
+        householdName: "A",
+        timezone: "UTC",
+        role,
+      };
       expect(await inviteMember(deps, ctx, { email: "z@example.test", role: "viewer" })).toEqual({
         ok: false,
         error: expect.objectContaining({ code: "forbidden" }),

@@ -34,6 +34,7 @@ async function setup() {
     userId: world.ownerA.id,
     householdId: world.householdA.id,
     householdName: world.householdA.name,
+    timezone: "UTC",
     role: "owner",
   };
   return { ...world, inviteB, ctxA };

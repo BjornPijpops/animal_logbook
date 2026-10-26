@@ -7,6 +7,7 @@ import {
   listMembers,
   listPendingInvites,
   requireHouseholdAccess,
+  TimezoneForm,
 } from "@/features/households";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,6 +19,7 @@ export default async function HouseholdPage() {
   const { user, ctx } = await requireHouseholdAccess();
   const t = await getTranslations("household");
   const deps = getHouseholdDeps();
+  const zones = [...new Set([ctx.timezone, ...Intl.supportedValuesOf("timeZone")])].sort();
   const canManage = can(ctx.role, "members:manage");
 
   const members = await listMembers(deps, ctx);
@@ -27,6 +29,13 @@ export default async function HouseholdPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">{t("title")}</h1>
       <p className="text-muted-foreground text-sm">{ctx.householdName}</p>
+      {canManage ? (
+        <TimezoneForm timezone={ctx.timezone} zones={zones} />
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          {t("timezone.current", { zone: ctx.timezone })}
+        </p>
+      )}
       <HouseholdPanel
         currentUserId={user.id}
         canManage={canManage}

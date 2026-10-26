@@ -4,6 +4,7 @@ import type { Database } from "@/db/client";
 import { eq } from "drizzle-orm";
 import { users } from "@/db/schema";
 import { createFilesRepository } from "@/features/files";
+import { getAllergySummaries, type AllergySummary } from "@/features/medical";
 import { can, createMembersRepository, type Ctx } from "@/features/households";
 import { processImage } from "@/lib/images/process-image";
 import { err, ok, type Result } from "@/lib/result";
@@ -52,7 +53,6 @@ export function toAnimalValues(input: AnimalInput): AnimalValues {
     chipNumber: nullable(input.chipNumber),
     registrationNumber: nullable(input.registrationNumber),
     sterilized: input.sterilized === "unknown" ? null : input.sterilized === "yes",
-    allergyInfo: nullable(input.allergyInfo),
     emergencyNotes: nullable(input.emergencyNotes),
   };
 }
@@ -97,6 +97,7 @@ export async function getAnimalOverview(
 export type EmergencyCard = {
   animal: AnimalRow;
   photoFileId: string | null;
+  allergies: AllergySummary[];
   owners: { name: string; email: string; phone: string | null }[];
 };
 
@@ -111,9 +112,15 @@ export async function getEmergencyCard(
   if (!animal) return notFound();
   const photos = await createPhotosRepository(deps.db, ctx.householdId).listForAnimal(animalId);
   const members = await createMembersRepository(deps.db, ctx.householdId).list();
+  const allergies = await getAllergySummaries(
+    { db: deps.db, ...(deps.now ? { now: deps.now } : {}) },
+    ctx,
+    [animalId],
+  );
   return ok({
     animal,
     photoFileId: photos.find((p) => p.isPrimary)?.fileId ?? null,
+    allergies: allergies.ok ? (allergies.value[animalId] ?? []) : [],
     owners: members
       .filter((m) => m.role === "owner")
       .map(({ name, email, phone }) => ({ name, email, phone })),
@@ -358,7 +365,6 @@ export function toAnimalInput(row: AnimalRow): AnimalInput {
     chipNumber: row.chipNumber ?? "",
     registrationNumber: row.registrationNumber ?? "",
     sterilized: row.sterilized === null ? "unknown" : row.sterilized ? "yes" : "no",
-    allergyInfo: row.allergyInfo ?? "",
     emergencyNotes: row.emergencyNotes ?? "",
   };
 }

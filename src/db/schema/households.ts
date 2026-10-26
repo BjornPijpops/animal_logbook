@@ -24,6 +24,8 @@ const timestamps = {
 export const households = pgTable("households", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
+  // IANA zone used to display times and to compute reminders for the whole household.
+  timezone: text("timezone").notNull().default("UTC"),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id, { onDelete: "restrict" }),

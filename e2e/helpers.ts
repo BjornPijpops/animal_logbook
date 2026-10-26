@@ -8,6 +8,8 @@ const messageSchema = z.object({ Text: z.string() });
 export const PASSWORD = "correct-horse-battery";
 
 export async function expectNoA11yViolations(page: Page) {
+  // Next streams <head> metadata; scanning before it lands reports a false "missing title".
+  await expect(page).toHaveTitle(/.+/);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();
@@ -21,9 +23,7 @@ export async function signUpAndVerify(page: Page, request: APIRequestContext, pr
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible({
-    timeout: 20_000,
-  });
+  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
 
   let link: string | undefined;
   await expect

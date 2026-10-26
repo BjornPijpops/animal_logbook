@@ -4,7 +4,7 @@ Self-hosted, mobile-first PWA to manage everything about your animals: profiles,
 
 **100% free and open source**: no paid services, no API keys, no external CDNs. See [ADR 0008](docs/adr/0008-free-only-policy.md).
 
-Status: **Phase 3 (document vault) complete**: documents with types, expiry, search/filter, validated uploads (magic bytes, quota, optional ClamAV) and protected downloads, plus **Phase 2 (animals)**: animal profiles, photos (EXIF stripped, thumbnails), weight history and chart, printable emergency card with opt-in offline cache, on top of the Phase 1 foundation: sign up/in/out with email verification and password reset, households with member invites and roles, PWA shell, worker heartbeat, CI. See [docs/ROADMAP.md](docs/ROADMAP.md).
+Status: **Phase 4 (appointments + medical history) complete**: appointments with cost (linked to one expense), follow-up reminders, multi-file attachments, typed health records with vaccination linking, allergies derived from records, and a filterable household timeline, plus **Phase 3 (document vault)**: documents with types, expiry, search/filter, validated uploads (magic bytes, quota, optional ClamAV) and protected downloads, plus **Phase 2 (animals)**: animal profiles, photos (EXIF stripped, thumbnails), weight history and chart, printable emergency card with opt-in offline cache, on top of the Phase 1 foundation: sign up/in/out with email verification and password reset, households with member invites and roles, PWA shell, worker heartbeat, CI. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Quick start
 

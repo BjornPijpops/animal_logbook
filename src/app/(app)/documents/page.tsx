@@ -14,9 +14,12 @@ import {
   getDocumentDeps,
   listDocuments,
 } from "@/features/documents";
+import { getStorageUsage } from "@/features/files";
 import { can, requireHouseholdAccess } from "@/features/households";
 
 type SearchParams = Record<string, string | string[] | undefined>;
+const formatBytes = (bytes: number) =>
+  bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
 const first = (value: string | string[] | undefined) =>
   (Array.isArray(value) ? value[0] : value) ?? "";
 
@@ -38,9 +41,10 @@ export default async function DocumentsPage({
     page: Number(first(params.page)) || 1,
   };
   const deps = getDocumentDeps();
-  const [result, animals] = await Promise.all([
+  const [result, animals, usage] = await Promise.all([
     listDocuments(deps, ctx, query),
     listAnimals(getAnimalDeps(), ctx),
+    getStorageUsage(deps, ctx),
   ]);
   if (!result.ok) notFound();
   const { items, total, page, pageCount } = result.value;
@@ -71,6 +75,27 @@ export default async function DocumentsPage({
       </div>
       {!can(ctx.role, "data:write") ? (
         <p className="text-muted-foreground text-sm">{t("viewerNote")}</p>
+      ) : null}
+
+      {usage.ok ? (
+        <Card>
+          <p className="text-sm font-medium">
+            {t("storage.label", {
+              used: formatBytes(usage.value.usedBytes),
+              quota: formatBytes(usage.value.quotaBytes),
+              percent: usage.value.percent,
+            })}
+          </p>
+          <progress
+            value={usage.value.percent}
+            max={100}
+            aria-label={t("storage.title")}
+            className="mt-2 h-2 w-full"
+          />
+          {usage.value.percent >= 90 ? (
+            <p className="text-destructive mt-2 text-sm font-medium">{t("storage.almostFull")}</p>
+          ) : null}
+        </Card>
       ) : null}
 
       <Card>

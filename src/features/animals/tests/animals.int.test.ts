@@ -51,7 +51,6 @@ describe("animal profile", () => {
     expect(animal.birthDate).toBeNull();
     expect(animal.birthDateIsEstimate).toBe(false);
     expect(animal.chipNumber).toBe("981000000000001");
-    expect(animal.allergyInfo).toBe("Chicken");
   });
 
   it("keeps a leap-day birth date as a plain date", async () => {

@@ -13,3 +13,4 @@ applyTo: "src/**/components/**,src/app/**/*.tsx"
 - Show a medical disclaimer on medical/medication screens; never present advice.
 - Do not trust client state for authorization; hide UI by role only as a convenience.
 - Emergency card and key documents must work offline (service worker); do not add offline writes in V1.
+- Client components import only their own feature's files (components, schemas, server/actions). Importing another feature's index.ts pulls server-only code into the browser bundle and breaks the page.
