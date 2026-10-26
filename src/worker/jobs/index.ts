@@ -1,6 +1,6 @@
 import type PgBoss from "pg-boss";
 import type { Database } from "@/db/client";
-import { purgeFiles, type PurgeReport } from "@/features/files";
+import { purgeFiles, type PurgeReport } from "@/features/files/worker";
 import { logger } from "@/lib/logger";
 import type { StorageAdapter } from "@/lib/storage/types";
 
