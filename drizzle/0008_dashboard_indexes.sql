@@ -1,0 +1,3 @@
+CREATE INDEX "appointments_follow_up_idx" ON "appointments" USING btree ("household_id","follow_up_date") WHERE "appointments"."follow_up_date" is not null and "appointments"."deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "medical_records_next_due_idx" ON "medical_records" USING btree ("household_id","next_due_on") WHERE "medical_records"."next_due_on" is not null and "medical_records"."deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "medication_doses_household_time_idx" ON "medication_doses" USING btree ("household_id","scheduled_at" DESC NULLS LAST);

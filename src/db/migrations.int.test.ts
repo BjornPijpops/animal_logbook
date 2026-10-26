@@ -50,6 +50,7 @@ describe("migration 0005_medications_reminders_delivery", () => {
       expect(await tables()).toContain("medication_doses");
 
       // Later migrations depend on 0005, so they are reversed first.
+      await runAll(pool, "./drizzle/down/0008_dashboard_indexes.down.sql");
       await runAll(pool, "./drizzle/down/0007_food_plans.down.sql");
       await runAll(pool, "./drizzle/down/0006_expenses_manual.down.sql");
       await runAll(pool, `./drizzle/down/${MIGRATION}.down.sql`);
@@ -73,6 +74,7 @@ describe("migration 0005_medications_reminders_delivery", () => {
       await runAll(pool, `./drizzle/${MIGRATION}.sql`);
       await runAll(pool, "./drizzle/0006_expenses_manual.sql");
       await runAll(pool, "./drizzle/0007_food_plans.sql");
+      await runAll(pool, "./drizzle/0008_dashboard_indexes.sql");
       expect(await tables()).toContain("medication_doses");
     });
   });
@@ -199,6 +201,33 @@ describe("migration 0007_food_plans", () => {
           [householdId],
         ),
       ).rejects.toThrow();
+    });
+  });
+});
+
+describe("migration 0008_dashboard_indexes", () => {
+  const NAMES = [
+    "appointments_follow_up_idx",
+    "medical_records_next_due_idx",
+    "medication_doses_household_time_idx",
+  ];
+  const present = async (pool: Pool) =>
+    (
+      await pool.query<{ indexname: string }>(
+        "SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND indexname = ANY($1)",
+        [NAMES],
+      )
+    ).rows
+      .map((row) => row.indexname)
+      .sort();
+
+  it("adds the indexes, removes them on down and adds them again", async () => {
+    await withScratchDatabase(async (pool) => {
+      expect(await present(pool)).toEqual([...NAMES].sort());
+      await runAll(pool, "./drizzle/down/0008_dashboard_indexes.down.sql");
+      expect(await present(pool)).toEqual([]);
+      await runAll(pool, "./drizzle/0008_dashboard_indexes.sql");
+      expect(await present(pool)).toEqual([...NAMES].sort());
     });
   });
 });

@@ -93,6 +93,10 @@ export const appointments = pgTable(
       .on(t.householdId, t.scheduledAt.desc())
       .where(sql`${t.deletedAt} is null`),
     index("appointments_animal_time_idx").on(t.householdId, t.animalId, t.scheduledAt.desc()),
+    // Dashboard: follow-ups due soon.
+    index("appointments_follow_up_idx")
+      .on(t.householdId, t.followUpDate)
+      .where(sql`${t.followUpDate} is not null and ${t.deletedAt} is null`),
   ],
 );
 
@@ -140,6 +144,10 @@ export const medicalRecords = pgTable(
       .on(t.householdId, t.animalId, t.startedOn.desc())
       .where(sql`${t.deletedAt} is null`),
     index("medical_records_appointment_idx").on(t.householdId, t.appointmentId),
+    // Dashboard: vaccinations whose entered next-due date has passed.
+    index("medical_records_next_due_idx")
+      .on(t.householdId, t.nextDueOn)
+      .where(sql`${t.nextDueOn} is not null and ${t.deletedAt} is null`),
   ],
 );
 
