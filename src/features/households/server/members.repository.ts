@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, asc, eq, ne } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { householdMembers, users } from "@/db/schema";
@@ -12,7 +13,9 @@ export type MemberRow = {
   joinedAt: Date;
 };
 
-export function createMembersRepository(db: DbExecutor, householdId: string) {
+export function createMembersRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   return {
     async list(): Promise<MemberRow[]> {
       return db

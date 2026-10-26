@@ -8,10 +8,13 @@ import { HEARTBEAT_QUEUE, registerJobs } from "./jobs";
 import { buildReminderDeps } from "./reminder-deps";
 
 async function main(): Promise<void> {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set");
+  // pg-boss owns its own schema, so it connects as the owner role. Everything else the worker does
+  // runs as the narrow worker role when WORKER_DATABASE_URL is set.
+  const url = process.env.WORKER_DATABASE_URL ?? process.env.DATABASE_URL;
+  const bossUrl = process.env.DATABASE_OWNER_URL ?? url;
+  if (!url || !bossUrl) throw new Error("DATABASE_URL is not set");
 
-  const boss = new PgBoss(url);
+  const boss = new PgBoss(bossUrl);
   boss.on("error", (error) => errorReporter.report(error, { source: "pg-boss" }));
   await boss.start();
   const env = getEnv();

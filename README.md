@@ -12,7 +12,8 @@ Status: **Phase 8a (dashboard + navigation)**: household and per-animal dashboar
 cp .env.example .env.local     # PowerShell: Copy-Item .env.example .env.local
 docker compose up -d           # Postgres + Mailpit (UI: http://localhost:8025)
 npm install
-npm run db:migrate
+npm run db:migrate             # as the owner role (DATABASE_OWNER_URL); also creates the app/worker roles
+npm run db:roles               # gives animal_app / animal_worker their passwords
 npm run db:seed                # optional: alice@example.test / bob@example.test, password "password1234"
 npm run dev                    # http://localhost:3000
 npm run worker                 # in a second terminal
@@ -29,9 +30,22 @@ npm run worker                 # in a second terminal
 | `lint`, `typecheck`, `format`           | Quality                                                                                |
 | `test`, `test:unit`, `test:integration` | Vitest (integration needs Docker Postgres)                                             |
 | `test:e2e`                              | Playwright + axe (needs Mailpit running; first run: `npx playwright install chromium`) |
-| `db:generate`, `db:migrate`, `db:seed`  | Drizzle                                                                                |
+| `db:generate`, `db:migrate`, `db:seed`  | Drizzle (run as the owner role)                                                        |
+| `db:roles`                              | Set passwords for the restricted `animal_app` and `animal_worker` roles                |
 | `vapid`                                 | Generate Web Push VAPID keys                                                           |
 | `ci`                                    | lint + typecheck + test + build                                                        |
+
+## Database roles and row-level security
+
+Three Postgres roles (see [ADR 0015](docs/adr/0015-row-level-security.md)):
+
+| Role             | Used by                                             | Env                                                  |
+| ---------------- | --------------------------------------------------- | ---------------------------------------------------- |
+| `animal` (owner) | migrations, seed, E2E/test fixtures, pg-boss schema | `DATABASE_OWNER_URL`, `TEST_DATABASE_URL`            |
+| `animal_app`     | the web app (runtime)                               | `DATABASE_URL`, password `APP_DB_PASSWORD`           |
+| `animal_worker`  | the worker (narrowest access it needs)              | `WORKER_DATABASE_URL`, password `WORKER_DB_PASSWORD` |
+
+Every household-scoped table has `FORCE ROW LEVEL SECURITY`, and the app and worker roles own nothing, so the policies apply to them. In production, set strong passwords, run `db:migrate` with the owner URL, run `db:roles`, and start the web app and worker with the restricted URLs.
 
 ## Documentation
 

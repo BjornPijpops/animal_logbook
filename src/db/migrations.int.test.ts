@@ -50,6 +50,7 @@ describe("migration 0005_medications_reminders_delivery", () => {
       expect(await tables()).toContain("medication_doses");
 
       // Later migrations depend on 0005, so they are reversed first.
+      await runAll(pool, "./drizzle/down/0009_row_level_security.down.sql");
       await runAll(pool, "./drizzle/down/0008_dashboard_indexes.down.sql");
       await runAll(pool, "./drizzle/down/0007_food_plans.down.sql");
       await runAll(pool, "./drizzle/down/0006_expenses_manual.down.sql");
@@ -75,6 +76,7 @@ describe("migration 0005_medications_reminders_delivery", () => {
       await runAll(pool, "./drizzle/0006_expenses_manual.sql");
       await runAll(pool, "./drizzle/0007_food_plans.sql");
       await runAll(pool, "./drizzle/0008_dashboard_indexes.sql");
+      await runAll(pool, "./drizzle/0009_row_level_security.sql");
       expect(await tables()).toContain("medication_doses");
     });
   });
@@ -228,6 +230,40 @@ describe("migration 0008_dashboard_indexes", () => {
       expect(await present(pool)).toEqual([]);
       await runAll(pool, "./drizzle/0008_dashboard_indexes.sql");
       expect(await present(pool)).toEqual([...NAMES].sort());
+    });
+  });
+});
+
+describe("migration 0009_row_level_security", () => {
+  const state = async (pool: Pool) => {
+    const forced = await pool.query<{ count: number }>(
+      "SELECT count(*)::int AS count FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relforcerowsecurity",
+    );
+    const policies = await pool.query<{ count: number }>(
+      "SELECT count(*)::int AS count FROM pg_policies WHERE schemaname = 'public'",
+    );
+    const functions = await pool.query<{ count: number }>(
+      "SELECT count(*)::int AS count FROM pg_proc WHERE proname IN ('app_user_id', 'app_household_id', 'app_invite_hash', 'app_is_member')",
+    );
+    return {
+      forced: forced.rows[0]?.count,
+      policies: policies.rows[0]?.count,
+      functions: functions.rows[0]?.count,
+    };
+  };
+
+  it("enables forced RLS, reverses to a plain schema and applies again", async () => {
+    await withScratchDatabase(async (pool) => {
+      const applied = await state(pool);
+      expect(applied.forced).toBe(21);
+      expect(applied.policies).toBeGreaterThan(40);
+      expect(applied.functions).toBe(4);
+
+      await runAll(pool, "./drizzle/down/0009_row_level_security.down.sql");
+      expect(await state(pool)).toEqual({ forced: 0, policies: 0, functions: 0 });
+
+      await runAll(pool, "./drizzle/0009_row_level_security.sql");
+      expect(await state(pool)).toEqual(applied);
     });
   });
 });

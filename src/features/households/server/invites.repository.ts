@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, asc, eq, gt, isNull, sql } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { householdInvites } from "@/db/schema";
@@ -31,7 +32,9 @@ const columns = {
 
 const open = and(isNull(householdInvites.acceptedAt), isNull(householdInvites.revokedAt));
 
-export function createInvitesRepository(db: DbExecutor, householdId: string) {
+export function createInvitesRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const inHousehold = eq(householdInvites.householdId, householdId);
 
   return {
@@ -85,10 +88,13 @@ export function createInvitesRepository(db: DbExecutor, householdId: string) {
 // The one deliberately unscoped lookup: the secret token is the capability that identifies the
 // household. Callers must continue with the returned invite's own `householdId`.
 export async function findOpenInviteByTokenHash(
-  db: DbExecutor,
+  executor: DbExecutor,
   tokenHash: string,
   now: Date,
+  userId: string,
 ): Promise<InviteRow | null> {
+  // The one deliberately household-less lookup: the bearer of a valid token may see exactly that invite.
+  const db = scopeDb(executor, { userId, inviteTokenHash: tokenHash });
   const [row] = await db
     .select(columns)
     .from(householdInvites)

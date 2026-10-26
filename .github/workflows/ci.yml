@@ -56,7 +56,11 @@ jobs:
         ports: ["1025:1025", "8025:8025"]
     env:
       APP_URL: http://localhost:3000
-      DATABASE_URL: postgres://animal:animal@localhost:5432/animal_logbook
+      DATABASE_OWNER_URL: postgres://animal:animal@localhost:5432/animal_logbook
+      DATABASE_URL: postgres://animal_app:animal_app@localhost:5432/animal_logbook
+      WORKER_DATABASE_URL: postgres://animal_worker:animal_worker@localhost:5432/animal_logbook
+      APP_DB_PASSWORD: animal_app
+      WORKER_DB_PASSWORD: animal_worker
       AUTH_SECRET: ci-only-secret-not-for-production-use
       FILE_TOKEN_SECRET: ci-only-secret-not-for-production-use
       SMTP_HOST: localhost
@@ -70,6 +74,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run db:migrate
+      - run: npm run db:roles
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

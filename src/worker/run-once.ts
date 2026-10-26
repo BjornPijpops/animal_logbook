@@ -7,7 +7,7 @@ import { buildReminderDeps } from "./reminder-deps";
 
 // One generate + deliver pass without the queue. Used by E2E tests and handy for manual checks.
 async function main(): Promise<void> {
-  const url = process.env.DATABASE_URL;
+  const url = process.env.WORKER_DATABASE_URL ?? process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set");
   const { db, pool } = createDatabase(url);
   try {

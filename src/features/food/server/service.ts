@@ -1,3 +1,4 @@
+import { scopeDb } from "@/db/scope";
 import type { Database } from "@/db/client";
 import { createExpensesRepository } from "@/features/expenses";
 import { can, type Ctx } from "@/features/households";
@@ -77,8 +78,8 @@ export async function createFoodPlan(
   const meals = parsed.success ? toMeals(parsed.data) : null;
   if (!parsed.success || !meals) return err("validation", "Invalid food plan");
   const data = parsed.data;
-  return deps.db.transaction(async (tx) => {
-    const repo = createFoodRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createFoodRepository(tx, ctx);
     if (!(await repo.animalExists(data.animalId))) return err("not_found", "Animal not found");
     const id = await repo.insertPlan(toValues(data), ctx.userId);
     await repo.replaceMeals(id, meals);
@@ -98,8 +99,8 @@ export async function updateFoodPlan(
   const meals = parsed.success ? toMeals(parsed.data) : null;
   if (!parsed.success || !meals) return err("validation", "Invalid food plan");
   const data = parsed.data;
-  return deps.db.transaction(async (tx) => {
-    const repo = createFoodRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createFoodRepository(tx, ctx);
     const existing = await repo.find(planId);
     if (!existing || existing.deletedAt) return notFound();
     if (!(await repo.animalExists(data.animalId))) return err("not_found", "Animal not found");
@@ -118,7 +119,7 @@ export async function deleteFoodPlan(
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!idOk(planId)) return notFound();
   const at = (deps.now ?? (() => new Date()))();
-  const repo = createFoodRepository(deps.db, ctx.householdId);
+  const repo = createFoodRepository(deps.db, ctx);
   return (await repo.softDelete(planId, at)) ? ok(true as const) : notFound();
 }
 
@@ -129,7 +130,7 @@ export async function restoreFoodPlan(
 ): Promise<Result<true>> {
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!idOk(planId)) return notFound();
-  const repo = createFoodRepository(deps.db, ctx.householdId);
+  const repo = createFoodRepository(deps.db, ctx);
   return (await repo.restore(planId)) ? ok(true as const) : notFound();
 }
 
@@ -140,7 +141,7 @@ export async function getFoodPlan(
 ): Promise<Result<FoodPlanDetail>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (!idOk(planId)) return notFound();
-  const repo = createFoodRepository(deps.db, ctx.householdId);
+  const repo = createFoodRepository(deps.db, ctx);
   const plan = await repo.find(planId);
   if (!plan) return notFound();
   const meals = (await repo.mealsFor([planId])).get(planId) ?? [];
@@ -155,7 +156,7 @@ async function summarize(
   deleted: boolean,
 ): Promise<Result<FoodPlanSummary[]>> {
   if (!can(ctx.role, "data:read")) return forbidden();
-  const repo = createFoodRepository(deps.db, ctx.householdId);
+  const repo = createFoodRepository(deps.db, ctx);
   const plans = await repo.list(animalId, deleted);
   const meals = await repo.mealsFor(plans.map((plan) => plan.id));
   return ok(
@@ -185,10 +186,10 @@ export async function logPurchase(
     return err("validation", "Invalid purchase");
   }
   const data = parsed.data;
-  return deps.db.transaction(async (tx) => {
-    const plan = await createFoodRepository(tx, ctx.householdId).find(planId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const plan = await createFoodRepository(tx, ctx).find(planId);
     if (!plan || plan.deletedAt) return notFound();
-    const row = await createExpensesRepository(tx, ctx.householdId).insertManual(
+    const row = await createExpensesRepository(tx, ctx).insertManual(
       {
         animalId: plan.animalId,
         category: "food",
@@ -215,7 +216,7 @@ export async function unlinkPurchase(
 ): Promise<Result<true>> {
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!idOk(planId) || !idOk(expenseId)) return notFound();
-  const repo = createFoodRepository(deps.db, ctx.householdId);
+  const repo = createFoodRepository(deps.db, ctx);
   return (await repo.unlinkPurchase(planId, expenseId)) ? ok(true as const) : notFound();
 }
 
@@ -225,7 +226,7 @@ export async function listDietHistory(
   range: FoodRange,
 ): Promise<Result<FoodChange[]>> {
   if (!can(ctx.role, "data:read")) return forbidden();
-  const repo = createFoodRepository(deps.db, ctx.householdId);
+  const repo = createFoodRepository(deps.db, ctx);
   const changes = buildChanges(await repo.historyPlans(range.animalId));
   return ok(changes.filter((change) => inRange(change.date, range.from, range.to)));
 }
@@ -236,7 +237,7 @@ export async function investigate(
   range: FoodRange,
 ): Promise<Result<InvestigationEntry[]>> {
   if (!can(ctx.role, "data:read")) return forbidden();
-  const repo = createFoodRepository(deps.db, ctx.householdId);
+  const repo = createFoodRepository(deps.db, ctx);
   const changes = buildChanges(await repo.historyPlans(range.animalId)).filter((change) =>
     inRange(change.date, range.from, range.to),
   );
@@ -251,6 +252,6 @@ export async function foodMarkersForAnimal(
   animalId: string,
 ): Promise<FoodChange[]> {
   if (!can(ctx.role, "data:read") || !idOk(animalId)) return [];
-  const repo = createFoodRepository(deps.db, ctx.householdId);
+  const repo = createFoodRepository(deps.db, ctx);
   return buildChanges(await repo.historyPlans(animalId));
 }

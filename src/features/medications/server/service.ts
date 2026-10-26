@@ -1,3 +1,4 @@
+import { scopeDb } from "@/db/scope";
 import type { Database, DbExecutor } from "@/db/client";
 import { createAttachmentsRepository } from "@/features/files";
 import { can, type Ctx } from "@/features/households";
@@ -59,7 +60,7 @@ async function loggedSlots(
   now: Date,
   deps: MedicationDeps,
 ): Promise<Set<number>> {
-  const doses = await createMedicationsRepository(tx, ctx.householdId).dosesBetween(
+  const doses = await createMedicationsRepository(tx, ctx).dosesBetween(
     medicationId,
     new Date(now.getTime() - staleHours(deps) * HOUR_MS),
     new Date(now.getTime() + 48 * HOUR_MS),
@@ -96,8 +97,8 @@ export async function createMedication(
   if (!parsed.success) return err("validation", "Invalid medication");
   const value = parsed.data;
   const now = clock(deps);
-  return deps.db.transaction(async (tx) => {
-    const medical = createMedicalRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const medical = createMedicalRepository(tx, ctx);
     if (!(await medical.animalExists(value.animalId))) return err("not_found", "Animal not found");
     const recordValues = {
       animalId: value.animalId,
@@ -123,7 +124,7 @@ export async function createMedication(
       record = await medical.insert(recordValues, { createdBy: ctx.userId });
     }
     if (!record) return notFound();
-    const repo = createMedicationsRepository(tx, ctx.householdId);
+    const repo = createMedicationsRepository(tx, ctx);
     const id = await repo.insert({
       animalId: value.animalId,
       medicalRecordId: record.id,
@@ -150,12 +151,12 @@ export async function updateMedication(
   if (!parsed.success) return err("validation", "Invalid medication");
   const value = parsed.data;
   const now = clock(deps);
-  return deps.db.transaction(async (tx) => {
-    const repo = createMedicationsRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createMedicationsRepository(tx, ctx);
     const existing = await repo.find(medicationId);
     if (!existing) return notFound();
     if (existing.animalId !== value.animalId) return err("validation", "Animal cannot change");
-    await createMedicalRepository(tx, ctx.householdId).update(existing.medicalRecordId, {
+    await createMedicalRepository(tx, ctx).update(existing.medicalRecordId, {
       animalId: existing.animalId,
       type: "medication",
       title: value.name,
@@ -182,12 +183,12 @@ export async function deleteMedication(
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!uuidSchema.safeParse(medicationId).success) return notFound();
   const at = clock(deps);
-  return deps.db.transaction(async (tx) => {
-    const repo = createMedicationsRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createMedicationsRepository(tx, ctx);
     const existing = await repo.find(medicationId);
     if (!existing || !(await repo.softDelete(medicationId, at))) return notFound();
-    await createMedicalRepository(tx, ctx.householdId).softDelete(existing.medicalRecordId, at);
-    await createAttachmentsRepository(tx, ctx.householdId).softDelete(
+    await createMedicalRepository(tx, ctx).softDelete(existing.medicalRecordId, at);
+    await createAttachmentsRepository(tx, ctx).softDelete(
       { type: "medical_record", id: existing.medicalRecordId },
       undefined,
       at,
@@ -205,13 +206,13 @@ export async function restoreMedication(
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!uuidSchema.safeParse(medicationId).success) return notFound();
   const now = clock(deps);
-  return deps.db.transaction(async (tx) => {
-    const repo = createMedicationsRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createMedicationsRepository(tx, ctx);
     const deleted = await repo.findDeleted(medicationId);
     if (!deleted) return notFound();
     await repo.restore(medicationId);
-    await createMedicalRepository(tx, ctx.householdId).restore(deleted.medicalRecordId);
-    await createAttachmentsRepository(tx, ctx.householdId).restoreWithOwner(
+    await createMedicalRepository(tx, ctx).restore(deleted.medicalRecordId);
+    await createAttachmentsRepository(tx, ctx).restoreWithOwner(
       { type: "medical_record", id: deleted.medicalRecordId },
       deleted.deletedAt,
     );
@@ -229,7 +230,7 @@ export async function listMedications(
 ): Promise<Result<MedicationView[]>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (filter.animalId && !uuidSchema.safeParse(filter.animalId).success) return ok([]);
-  return ok(await createMedicationsRepository(deps.db, ctx.householdId).list(filter));
+  return ok(await createMedicationsRepository(deps.db, ctx).list(filter));
 }
 
 // Lets the health-record page offer "create medication" only for unlinked placeholder records.
@@ -240,7 +241,7 @@ export async function findMedicationForRecord(
 ): Promise<Result<{ id: string } | null>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (!uuidSchema.safeParse(recordId).success) return ok(null);
-  const id = await createMedicationsRepository(deps.db, ctx.householdId).idForRecord(recordId);
+  const id = await createMedicationsRepository(deps.db, ctx).idForRecord(recordId);
   return ok(id ? { id } : null);
 }
 
@@ -249,7 +250,7 @@ export async function listDeletedMedications(
   ctx: Ctx,
 ): Promise<Result<MedicationView[]>> {
   if (!can(ctx.role, "data:write")) return forbidden();
-  return ok(await createMedicationsRepository(deps.db, ctx.householdId).listDeleted());
+  return ok(await createMedicationsRepository(deps.db, ctx).listDeleted());
 }
 
 export type MedicationDetail = {
@@ -266,7 +267,7 @@ export async function getMedication(
 ): Promise<Result<MedicationDetail>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (!uuidSchema.safeParse(medicationId).success) return notFound();
-  const repo = createMedicationsRepository(deps.db, ctx.householdId);
+  const repo = createMedicationsRepository(deps.db, ctx);
   const medication = await repo.find(medicationId);
   if (!medication) return notFound();
   const now = clock(deps);
@@ -313,7 +314,7 @@ export async function listDueDoses(
   const now = clock(deps);
   const from = new Date(now.getTime() - missedHours(deps) * HOUR_MS);
   const to = new Date(now.getTime() + UPCOMING_MINUTES * 60_000);
-  const repo = createMedicationsRepository(deps.db, ctx.householdId);
+  const repo = createMedicationsRepository(deps.db, ctx);
   const list =
     filter.animalId && !uuidSchema.safeParse(filter.animalId).success
       ? []
@@ -370,7 +371,7 @@ export async function getMedicationDashboard(
   const today = utcToLocalParts(now, ctx.timezone).date;
   const dayStart = localDayStart(today, ctx.timezone);
   const dayEnd = localDayStart(addDays(today, 1), ctx.timezone);
-  const repo = createMedicationsRepository(deps.db, ctx.householdId);
+  const repo = createMedicationsRepository(deps.db, ctx);
   const [list, logged, missed] = await Promise.all([
     repo.list({ ...filter, limit: DASHBOARD_MEDICATION_LIMIT }),
     repo.dosesInWindow(dayStart, dayEnd, DASHBOARD_MEDICATION_LIMIT * 12),
@@ -433,8 +434,8 @@ export async function logDose(
   const parsed = doseInputSchema.safeParse(input);
   if (!parsed.success) return err("validation", "Invalid dose");
   const now = clock(deps);
-  return deps.db.transaction(async (tx) => {
-    const repo = createMedicationsRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createMedicationsRepository(tx, ctx);
     const medication = await repo.find(medicationId);
     if (!medication) return notFound();
     const schedule = medication.schedule;
@@ -464,7 +465,7 @@ export async function logDose(
       loggedBy: ctx.userId,
       note: parsed.data.note?.trim() ? parsed.data.note.trim() : null,
     });
-    await createRemindersRepository(tx, ctx.householdId).markDone(
+    await createRemindersRepository(tx, ctx).markDone(
       { sourceType: "medication_dose", sourceId: medicationId },
       scheduledAt,
     );

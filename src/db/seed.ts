@@ -14,8 +14,8 @@ const ids = {
 };
 
 async function main(): Promise<void> {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set");
+  const url = process.env.DATABASE_OWNER_URL ?? process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_OWNER_URL is not set");
   if (process.env.NODE_ENV === "production") throw new Error("Refusing to seed in production");
 
   const { db, pool } = createDatabase(url);

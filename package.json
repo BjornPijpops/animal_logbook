@@ -24,6 +24,7 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:roles": "tsx --env-file-if-exists=.env.local src/db/setup-roles.ts",
     "db:seed": "tsx --env-file-if-exists=.env.local src/db/seed.ts",
     "vapid": "web-push generate-vapid-keys",
     "ci": "npm run lint && npm run typecheck && npm run test && npm run build",

@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import {
   and,
   asc,
@@ -72,7 +73,9 @@ const planColumns = {
   deletedAt: foodPlans.deletedAt,
 };
 
-export function createFoodRepository(db: DbExecutor, householdId: string) {
+export function createFoodRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const planScope = (extra: SQL[] = []): SQL =>
     and(eq(foodPlans.householdId, householdId), ...extra) ?? sql`true`;
 

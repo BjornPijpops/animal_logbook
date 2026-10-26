@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { appointments } from "@/db/schema";
@@ -16,7 +17,9 @@ export type AppointmentValues = {
   followUpDate: string | null;
 };
 
-export function createAppointmentsRepository(db: DbExecutor, householdId: string) {
+export function createAppointmentsRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const inHousehold = eq(appointments.householdId, householdId);
   const live = and(inHousehold, isNull(appointments.deletedAt));
 

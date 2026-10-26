@@ -1,5 +1,7 @@
 import { spawn } from "node:child_process";
 import { describe, expect, it } from "vitest";
+import { roleUrl } from "@/db/roles";
+import { TEST_WORKER_PASSWORD } from "@/test/roles";
 
 // A cold tsx start plus pg-boss setup took about 12s on a CI runner, so allow generous headroom.
 const START_TIMEOUT_MS = 45_000;
@@ -10,11 +12,18 @@ describe("worker entry point", () => {
   it("starts and logs a heartbeat without exiting", async () => {
     const url = process.env.TEST_DATABASE_URL;
     if (!url) throw new Error("TEST_DATABASE_URL is not set");
+    const workerUrl = roleUrl(url, "animal_worker", TEST_WORKER_PASSWORD);
     const child = spawn(
       process.execPath,
       ["node_modules/tsx/dist/cli.mjs", "src/worker/index.ts"],
       {
-        env: { ...process.env, DATABASE_URL: url },
+        env: {
+          ...process.env,
+          // As deployed: pg-boss as the owner, everything else as the narrow worker role.
+          DATABASE_OWNER_URL: url,
+          DATABASE_URL: workerUrl,
+          WORKER_DATABASE_URL: workerUrl,
+        },
         stdio: ["ignore", "pipe", "pipe"],
       },
     );

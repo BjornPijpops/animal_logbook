@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, desc, eq, ilike, inArray, isNotNull, isNull, lte, or, sql } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { animals, attachments, documents, files } from "@/db/schema";
@@ -28,7 +29,9 @@ export type DocumentFilter = {
 
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, (c) => `\\${c}`);
 
-export function createDocumentsRepository(db: DbExecutor, householdId: string) {
+export function createDocumentsRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const live = and(eq(documents.householdId, householdId), isNull(documents.deletedAt));
 
   return {

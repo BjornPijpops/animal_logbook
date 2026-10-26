@@ -55,7 +55,7 @@ export async function getDashboard(
   const now = (deps.now ?? (() => new Date()))();
   const today = utcToLocalParts(now, ctx.timezone).date;
   const [year, month] = today.split("-").map(Number);
-  const repo = createDashboardRepository(deps.db, ctx.householdId);
+  const repo = createDashboardRepository(deps.db, ctx);
   const medicationDeps = { db: deps.db, now: () => now };
   const fetch = LIST_LIMIT + 1;
 

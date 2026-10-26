@@ -2,7 +2,9 @@ import { execSync } from "node:child_process";
 import { Client } from "pg";
 
 const DATABASE_URL =
-  process.env.DATABASE_URL ?? "postgres://animal:animal@localhost:5432/animal_logbook";
+  process.env.DATABASE_OWNER_URL ??
+  process.env.DATABASE_URL ??
+  "postgres://animal:animal@localhost:5432/animal_logbook";
 
 export async function withDb<T>(run: (client: Client) => Promise<T>): Promise<T> {
   const client = new Client({ connectionString: DATABASE_URL });

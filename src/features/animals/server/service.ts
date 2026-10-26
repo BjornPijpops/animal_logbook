@@ -1,3 +1,4 @@
+import { scopeDb } from "@/db/scope";
 import { randomUUID, createHash } from "node:crypto";
 import { sql } from "drizzle-orm";
 import type { Database } from "@/db/client";
@@ -59,7 +60,7 @@ export function toAnimalValues(input: AnimalInput): AnimalValues {
 
 export async function listAnimals(deps: AnimalDeps, ctx: Ctx): Promise<Result<AnimalListItem[]>> {
   if (!can(ctx.role, "data:read")) return forbidden();
-  return ok(await createAnimalsRepository(deps.db, ctx.householdId).list());
+  return ok(await createAnimalsRepository(deps.db, ctx).list());
 }
 
 export async function getAnimalFormHints(
@@ -67,7 +68,7 @@ export async function getAnimalFormHints(
   ctx: Ctx,
 ): Promise<Result<{ speciesOther: string[]; breeds: string[] }>> {
   if (!can(ctx.role, "data:read")) return forbidden();
-  return ok(await createAnimalsRepository(deps.db, ctx.householdId).usedValues());
+  return ok(await createAnimalsRepository(deps.db, ctx).usedValues());
 }
 
 export type AnimalOverview = {
@@ -85,11 +86,11 @@ export async function getAnimalOverview(
 ): Promise<Result<AnimalOverview>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (!uuidSchema.safeParse(animalId).success) return notFound();
-  const animal = await createAnimalsRepository(deps.db, ctx.householdId).find(animalId);
+  const animal = await createAnimalsRepository(deps.db, ctx).find(animalId);
   if (!animal) return notFound();
   const [photos, weights] = await Promise.all([
-    createPhotosRepository(deps.db, ctx.householdId).listForAnimal(animalId),
-    createWeightsRepository(deps.db, ctx.householdId).listForAnimal(animalId),
+    createPhotosRepository(deps.db, ctx).listForAnimal(animalId),
+    createWeightsRepository(deps.db, ctx).listForAnimal(animalId),
   ]);
   return ok({ animal, photos, weights, currentWeightGrams: weights[0]?.weightGrams ?? null });
 }
@@ -108,10 +109,10 @@ export async function getEmergencyCard(
 ): Promise<Result<EmergencyCard>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (!uuidSchema.safeParse(animalId).success) return notFound();
-  const animal = await createAnimalsRepository(deps.db, ctx.householdId).find(animalId);
+  const animal = await createAnimalsRepository(deps.db, ctx).find(animalId);
   if (!animal) return notFound();
-  const photos = await createPhotosRepository(deps.db, ctx.householdId).listForAnimal(animalId);
-  const members = await createMembersRepository(deps.db, ctx.householdId).list();
+  const photos = await createPhotosRepository(deps.db, ctx).listForAnimal(animalId);
+  const members = await createMembersRepository(deps.db, ctx).list();
   const allergies = await getAllergySummaries(
     { db: deps.db, ...(deps.now ? { now: deps.now } : {}) },
     ctx,
@@ -130,9 +131,9 @@ export async function getEmergencyCard(
 export async function listEmergencyUrls(deps: AnimalDeps, ctx: Ctx): Promise<Result<string[]>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   const urls: string[] = [];
-  for (const animal of await createAnimalsRepository(deps.db, ctx.householdId).list()) {
+  for (const animal of await createAnimalsRepository(deps.db, ctx).list()) {
     urls.push(`/animals/${animal.id}/emergency`);
-    const photos = await createPhotosRepository(deps.db, ctx.householdId).listForAnimal(animal.id);
+    const photos = await createPhotosRepository(deps.db, ctx).listForAnimal(animal.id);
     const primary = photos.find((p) => p.isPrimary);
     if (primary) urls.push(`/api/files/${primary.fileId}`);
   }
@@ -147,9 +148,7 @@ export async function createAnimal(
   if (!can(ctx.role, "data:write")) return forbidden();
   const parsed = animalInputSchema.safeParse(rawInput);
   if (!parsed.success) return err("validation", "Invalid animal");
-  return ok(
-    await createAnimalsRepository(deps.db, ctx.householdId).insert(toAnimalValues(parsed.data)),
-  );
+  return ok(await createAnimalsRepository(deps.db, ctx).insert(toAnimalValues(parsed.data)));
 }
 
 export async function updateAnimal(
@@ -163,7 +162,7 @@ export async function updateAnimal(
   if (!parsed.success || !uuidSchema.safeParse(animalId).success) {
     return err("validation", "Invalid animal");
   }
-  const row = await createAnimalsRepository(deps.db, ctx.householdId).update(
+  const row = await createAnimalsRepository(deps.db, ctx).update(
     animalId,
     toAnimalValues(parsed.data),
   );
@@ -177,7 +176,7 @@ export async function deleteAnimal(
 ): Promise<Result<true>> {
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!uuidSchema.safeParse(animalId).success) return notFound();
-  const deleted = await createAnimalsRepository(deps.db, ctx.householdId).softDelete(animalId);
+  const deleted = await createAnimalsRepository(deps.db, ctx).softDelete(animalId);
   return deleted ? ok(true) : notFound();
 }
 
@@ -189,7 +188,7 @@ export async function addPhoto(
 ): Promise<Result<true>> {
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!uuidSchema.safeParse(animalId).success) return notFound();
-  if (!(await createAnimalsRepository(deps.db, ctx.householdId).find(animalId))) return notFound();
+  if (!(await createAnimalsRepository(deps.db, ctx).find(animalId))) return notFound();
 
   const processed = await processImage(bytes, { maxBytes: deps.maxUploadBytes });
   if (!processed.ok) return processed;
@@ -208,15 +207,15 @@ export async function addPhoto(
   for (const v of variants) await deps.storage.put(v.storageKey, v.data);
 
   try {
-    return await deps.db.transaction(async (tx) => {
+    return await scopeDb(deps.db, ctx).transaction(async (tx) => {
       // Serialises uploads per animal so the photo limit and "first photo is primary" hold.
       await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${animalId}, 0))`);
-      const photos = createPhotosRepository(tx, ctx.householdId);
+      const photos = createPhotosRepository(tx, ctx);
       const existing = await photos.listForAnimal(animalId);
       if (existing.length >= MAX_PHOTOS_PER_ANIMAL) {
         throw new LimitReached();
       }
-      const filesRepo = createFilesRepository(tx, ctx.householdId);
+      const filesRepo = createFilesRepository(tx, ctx);
       for (const v of variants) {
         await filesRepo.insert({
           id: v.id,
@@ -256,8 +255,8 @@ export async function setPrimaryPhoto(
   if (!uuidSchema.safeParse(animalId).success || !uuidSchema.safeParse(photoId).success) {
     return notFound();
   }
-  return deps.db.transaction(async (tx) => {
-    const photos = createPhotosRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const photos = createPhotosRepository(tx, ctx);
     if (!(await photos.find(animalId, photoId))) return notFound();
     await photos.clearPrimary(animalId);
     await photos.setPrimary(animalId, photoId);
@@ -276,14 +275,14 @@ export async function deletePhoto(
   if (!uuidSchema.safeParse(animalId).success || !uuidSchema.safeParse(photoId).success) {
     return notFound();
   }
-  const keys = await deps.db.transaction(async (tx) => {
-    const photos = createPhotosRepository(tx, ctx.householdId);
+  const keys = await scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const photos = createPhotosRepository(tx, ctx);
     const photo = await photos.find(animalId, photoId);
     if (!photo) return null;
     const fileIds = [photo.fileId, photo.thumbFileId];
     const storageKeys = await photos.storageKeys(fileIds);
     await photos.softDelete(animalId, photoId);
-    await createFilesRepository(tx, ctx.householdId).softDelete(fileIds);
+    await createFilesRepository(tx, ctx).softDelete(fileIds);
     if (photo.isPrimary) {
       const next = (await photos.listForAnimal(animalId))[0];
       if (next) await photos.setPrimary(animalId, next.id);
@@ -313,9 +312,9 @@ export async function addWeight(
   const weightGrams = toGrams(parsed.data.weight, parsed.data.unit);
   if (weightGrams < 1) return err("validation", "Invalid weight");
 
-  if (!(await createAnimalsRepository(deps.db, ctx.householdId).find(animalId))) return notFound();
+  if (!(await createAnimalsRepository(deps.db, ctx).find(animalId))) return notFound();
   return ok(
-    await createWeightsRepository(deps.db, ctx.householdId).insert({
+    await createWeightsRepository(deps.db, ctx).insert({
       animalId,
       measuredAt,
       weightGrams,
@@ -335,10 +334,7 @@ export async function deleteWeight(
   if (!uuidSchema.safeParse(animalId).success || !uuidSchema.safeParse(entryId).success) {
     return notFound();
   }
-  const deleted = await createWeightsRepository(deps.db, ctx.householdId).softDelete(
-    animalId,
-    entryId,
-  );
+  const deleted = await createWeightsRepository(deps.db, ctx).softDelete(animalId, entryId);
   return deleted ? ok(true) : notFound();
 }
 

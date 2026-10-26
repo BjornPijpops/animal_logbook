@@ -1,6 +1,8 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Client, Pool } from "pg";
+import { configureRoles } from "@/db/roles";
+import { TEST_APP_PASSWORD, TEST_WORKER_PASSWORD } from "./roles";
 
 // Creates the test database if needed, applies migrations, and starts every run from empty tables.
 export default async function setup(): Promise<void> {
@@ -22,6 +24,7 @@ export default async function setup(): Promise<void> {
 
   const pool = new Pool({ connectionString: url });
   await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
+  await configureRoles(pool, { app: TEST_APP_PASSWORD, worker: TEST_WORKER_PASSWORD });
   await pool.query("TRUNCATE users, households, rate_limits RESTART IDENTITY CASCADE");
   await pool.end();
 }

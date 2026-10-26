@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { attachmentOwnerType, attachments, files } from "@/db/schema";
@@ -15,7 +16,9 @@ export type AttachmentView = {
   createdAt: Date;
 };
 
-export function createAttachmentsRepository(db: DbExecutor, householdId: string) {
+export function createAttachmentsRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const live = (owner: AttachmentOwner) =>
     and(
       eq(attachments.householdId, householdId),

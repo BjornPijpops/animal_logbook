@@ -32,7 +32,7 @@ async function world() {
 
 async function addFile(householdId: string, userId: string, recordId: string) {
   const id = randomUUID();
-  await createFilesRepository(db, householdId).insert({
+  await createFilesRepository(db, { householdId, userId }).insert({
     id,
     storageKey: `${householdId}/${id}`,
     mimeType: "application/pdf",
@@ -40,7 +40,7 @@ async function addFile(householdId: string, userId: string, recordId: string) {
     checksumSha256: "a".repeat(64),
     uploadedBy: userId,
   });
-  await createAttachmentsRepository(db, householdId).insert(
+  await createAttachmentsRepository(db, { householdId, userId }).insert(
     { type: "medical_record", id: recordId },
     id,
   );
@@ -82,12 +82,22 @@ describe("tenant isolation: medical records", () => {
 
   it("repository queries are scoped by household", async () => {
     const w = await world();
-    expect(await createMedicalRepository(db, w.householdB.id).find(w.recordId)).toBeNull();
     expect(
-      await createMedicalRepository(db, w.householdB.id).listUnlinkedVaccinations(w.animalA),
+      await createMedicalRepository(db, { householdId: w.householdB.id, userId: w.ownerB.id }).find(
+        w.recordId,
+      ),
+    ).toBeNull();
+    expect(
+      await createMedicalRepository(db, {
+        householdId: w.householdB.id,
+        userId: w.ownerB.id,
+      }).listUnlinkedVaccinations(w.animalA),
     ).toEqual([]);
     expect(
-      await createMedicalRepository(db, w.householdB.id).activeAllergies([w.animalA], "2024-01-01"),
+      await createMedicalRepository(db, {
+        householdId: w.householdB.id,
+        userId: w.ownerB.id,
+      }).activeAllergies([w.animalA], "2024-01-01"),
     ).toEqual([]);
   });
 
@@ -148,7 +158,10 @@ describe("attachments follow the record", () => {
     const w = await world();
     await addFile(w.householdA.id, w.ownerA.id, w.recordId);
     await addFile(w.householdA.id, w.ownerA.id, w.recordId);
-    const attachments = createAttachmentsRepository(db, w.householdA.id);
+    const attachments = createAttachmentsRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
     const owner = { type: "medical_record", id: w.recordId } as const;
     const [first] = await attachments.list(owner);
     if (!first) throw new Error("setup failed");

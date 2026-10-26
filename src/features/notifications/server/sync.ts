@@ -1,4 +1,5 @@
 import type { DbExecutor } from "@/db/client";
+import type { Tenant } from "@/db/scope";
 import { reminderDueAt } from "@/lib/dates";
 import { createRemindersRepository, type ReminderSourceKey } from "./reminders.repository";
 
@@ -6,12 +7,12 @@ import { createRemindersRepository, type ReminderSourceKey } from "./reminders.r
 // cancels it. Callers pass their transaction so source and reminder change together.
 export async function syncDateReminder(
   db: DbExecutor,
-  household: { householdId: string; timezone: string },
+  household: Tenant & { timezone: string },
   key: ReminderSourceKey,
   desired: { date: string | null; animalId: string | null; title: string },
 ): Promise<void> {
   const dueAt = desired.date ? reminderDueAt(desired.date, household.timezone) : null;
-  await createRemindersRepository(db, household.householdId).sync(key, {
+  await createRemindersRepository(db, household).sync(key, {
     dueAt,
     animalId: desired.animalId,
     title: desired.title,

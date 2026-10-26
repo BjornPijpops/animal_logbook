@@ -61,7 +61,10 @@ describe("tenant isolation: documents, attachments and files", () => {
 
   it("repositories scoped to B never return or modify A's rows", async () => {
     const w = await world();
-    const docsB = createDocumentsRepository(db, w.householdB.id);
+    const docsB = createDocumentsRepository(db, {
+      householdId: w.householdB.id,
+      userId: w.ownerB.id,
+    });
     expect(await docsB.find(w.docId)).toBeNull();
     expect(await docsB.softDelete(w.docId)).toBe(false);
     expect(
@@ -75,12 +78,15 @@ describe("tenant isolation: documents, attachments and files", () => {
     ).toBeNull();
 
     const owner = { type: "document", id: w.docId } as const;
-    const attachmentsB = createAttachmentsRepository(db, w.householdB.id);
+    const attachmentsB = createAttachmentsRepository(db, {
+      householdId: w.householdB.id,
+      userId: w.ownerB.id,
+    });
     expect(await attachmentsB.list(owner)).toEqual([]);
     expect(await attachmentsB.softDelete(owner)).toEqual([]);
 
     const fileId = w.detail.attachments[0]?.fileId ?? "";
-    const filesB = createFilesRepository(db, w.householdB.id);
+    const filesB = createFilesRepository(db, { householdId: w.householdB.id, userId: w.ownerB.id });
     expect(await filesB.find(fileId)).toBeNull();
     expect(await filesB.usedBytes()).toBe(0);
 

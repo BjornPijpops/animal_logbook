@@ -113,7 +113,7 @@ describe("animal profile", () => {
     expect(list.ok && list.value.find((a) => a.id === animal.id)).toBeUndefined();
     const [row] = await db.select().from(animals).where(eq(animals.id, animal.id));
     expect(row?.deletedAt).not.toBeNull();
-    expect(await createAnimalsRepository(db, ctx.householdId).find(animal.id)).toBeNull();
+    expect(await createAnimalsRepository(db, ctx).find(animal.id)).toBeNull();
   });
 
   it("refuses to add photos or weights to a deleted animal", async () => {

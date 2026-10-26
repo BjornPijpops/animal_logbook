@@ -22,7 +22,10 @@ const deps = () => ({
 
 async function setup() {
   const world = await seedTwoHouseholds(db);
-  const invitesB = createInvitesRepository(db, world.householdB.id);
+  const invitesB = createInvitesRepository(db, {
+    householdId: world.householdB.id,
+    userId: world.ownerB.id,
+  });
   const inviteB = await invitesB.create({
     email: "guest-b@example.test",
     role: "viewer",
@@ -43,35 +46,58 @@ async function setup() {
 describe("tenant isolation: repositories", () => {
   it("members.list only returns the household's own members", async () => {
     const w = await setup();
-    const a = await createMembersRepository(db, w.householdA.id).list();
+    const a = await createMembersRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    }).list();
     expect(a.map((m) => m.userId)).toEqual([w.ownerA.id]);
   });
 
   it("members.findRole and members.remove cannot reach another household's member", async () => {
     const w = await setup();
-    const repoA = createMembersRepository(db, w.householdA.id);
+    const repoA = createMembersRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
     expect(await repoA.findRole(w.ownerB.id)).toBeNull();
     expect(await repoA.remove(w.ownerB.id)).toBe(false);
-    expect(await createMembersRepository(db, w.householdB.id).findRole(w.ownerB.id)).toBe("owner");
+    expect(
+      await createMembersRepository(db, {
+        householdId: w.householdB.id,
+        userId: w.ownerB.id,
+      }).findRole(w.ownerB.id),
+    ).toBe("owner");
   });
 
   it("invites.listPending never shows another household's invites", async () => {
     const w = await setup();
-    const listA = await createInvitesRepository(db, w.householdA.id).listPending(new Date());
+    const listA = await createInvitesRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    }).listPending(new Date());
     expect(listA).toEqual([]);
-    const listB = await createInvitesRepository(db, w.householdB.id).listPending(new Date());
+    const listB = await createInvitesRepository(db, {
+      householdId: w.householdB.id,
+      userId: w.ownerB.id,
+    }).listPending(new Date());
     expect(listB.map((i) => i.id)).toEqual([w.inviteB.id]);
   });
 
   it("invites.revoke and invites.markAccepted cannot touch another household's invite", async () => {
     const w = await setup();
-    const repoA = createInvitesRepository(db, w.householdA.id);
+    const repoA = createInvitesRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
     expect(await repoA.revoke(w.inviteB.id, new Date())).toBe(false);
     expect(await repoA.markAccepted(w.inviteB.id, new Date())).toBe(false);
     expect(await repoA.findOpenByEmail("guest-b@example.test")).toBeNull();
-    expect(await createInvitesRepository(db, w.householdB.id).listPending(new Date())).toHaveLength(
-      1,
-    );
+    expect(
+      await createInvitesRepository(db, {
+        householdId: w.householdB.id,
+        userId: w.ownerB.id,
+      }).listPending(new Date()),
+    ).toHaveLength(1);
   });
 });
 
@@ -91,9 +117,17 @@ describe("tenant isolation: services and context", () => {
       role: "viewer",
     });
     expect(result.ok).toBe(true);
-    const pendingB = await listPendingInvites(deps(), { ...w.ctxA, householdId: w.householdB.id });
+    const pendingB = await listPendingInvites(deps(), {
+      ...w.ctxA,
+      householdId: w.householdB.id,
+      userId: w.ownerB.id,
+    });
     expect(pendingB.ok && pendingB.value.map((i) => i.email)).toEqual(["guest-b@example.test"]);
-    const membersB = await listMembers(deps(), { ...w.ctxA, householdId: w.householdB.id });
+    const membersB = await listMembers(deps(), {
+      ...w.ctxA,
+      householdId: w.householdB.id,
+      userId: w.ownerB.id,
+    });
     expect(membersB.ok && membersB.value).toHaveLength(1);
   });
 

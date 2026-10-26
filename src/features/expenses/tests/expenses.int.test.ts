@@ -339,7 +339,10 @@ describe("tenant isolation: expenses", () => {
     expect(list.ok && list.value.total).toBe(0);
     const csv = await exportExpensesCsv(deps, w.ctxB, ALL_TIME);
     expect(csv.ok && csv.value.csv).not.toContain("Kibble");
-    const repoB = createExpensesRepository(db, w.householdB.id);
+    const repoB = createExpensesRepository(db, {
+      householdId: w.householdB.id,
+      userId: w.ownerB.id,
+    });
     expect(await repoB.years()).toEqual([]);
   });
 

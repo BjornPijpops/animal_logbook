@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { files } from "@/db/schema";
@@ -22,7 +23,9 @@ const columns = {
   originalName: files.originalName,
 };
 
-export function createFilesRepository(db: DbExecutor, householdId: string) {
+export function createFilesRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   return {
     async insert(
       input: Omit<FileRow, "householdId" | "originalName"> & {

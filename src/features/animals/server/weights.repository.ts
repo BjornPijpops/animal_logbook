@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { weightEntries } from "@/db/schema";
@@ -18,7 +19,9 @@ const columns = {
   note: weightEntries.note,
 };
 
-export function createWeightsRepository(db: DbExecutor, householdId: string) {
+export function createWeightsRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const live = and(eq(weightEntries.householdId, householdId), isNull(weightEntries.deletedAt));
 
   return {

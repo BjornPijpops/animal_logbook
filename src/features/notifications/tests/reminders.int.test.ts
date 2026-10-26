@@ -12,7 +12,10 @@ const at = (iso: string) => new Date(iso);
 describe("reminders repository", () => {
   it("is idempotent: syncing the same date repeatedly keeps one row", async () => {
     const w = await seedTwoHouseholds(db);
-    const repo = createRemindersRepository(db, w.householdA.id);
+    const repo = createRemindersRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
     const key = { sourceType: "follow_up", sourceId: randomUUID() } as const;
     const desired = { dueAt: at("2025-01-10T08:00:00Z"), animalId: null, title: "Vet" };
     await Promise.all([repo.sync(key, desired), repo.sync(key, desired), repo.sync(key, desired)]);
@@ -22,7 +25,10 @@ describe("reminders repository", () => {
 
   it("cancels the old row when the date changes and revives it when it changes back", async () => {
     const w = await seedTwoHouseholds(db);
-    const repo = createRemindersRepository(db, w.householdA.id);
+    const repo = createRemindersRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
     const key = { sourceType: "follow_up", sourceId: randomUUID() } as const;
     const first = at("2025-01-10T08:00:00Z");
     const second = at("2025-01-20T08:00:00Z");
@@ -41,7 +47,10 @@ describe("reminders repository", () => {
 
   it("never reopens or cancels a reminder that was already done", async () => {
     const w = await seedTwoHouseholds(db);
-    const repo = createRemindersRepository(db, w.householdA.id);
+    const repo = createRemindersRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
     const key = { sourceType: "follow_up", sourceId: randomUUID() } as const;
     const due = at("2025-01-10T08:00:00Z");
     await repo.sync(key, { dueAt: due, animalId: null, title: "Vet" });
@@ -60,15 +69,24 @@ describe("reminders repository", () => {
   it("tenant isolation: another household cannot read or cancel a reminder", async () => {
     const w = await seedTwoHouseholds(db);
     const key = { sourceType: "vaccination_due", sourceId: randomUUID() } as const;
-    await createRemindersRepository(db, w.householdA.id).sync(key, {
-      dueAt: at("2025-01-10T08:00:00Z"),
-      animalId: null,
-      title: "Rabies",
+    await createRemindersRepository(db, { householdId: w.householdA.id, userId: w.ownerA.id }).sync(
+      key,
+      {
+        dueAt: at("2025-01-10T08:00:00Z"),
+        animalId: null,
+        title: "Rabies",
+      },
+    );
+    const other = createRemindersRepository(db, {
+      householdId: w.householdB.id,
+      userId: w.ownerB.id,
     });
-    const other = createRemindersRepository(db, w.householdB.id);
     expect(await other.listForSource(key)).toEqual([]);
     await other.cancel(key);
-    const rows = await createRemindersRepository(db, w.householdA.id).listForSource(key);
+    const rows = await createRemindersRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    }).listForSource(key);
     expect(rows.map((r) => r.cancelledAt)).toEqual([null]);
   });
 });
@@ -78,7 +96,10 @@ describe("syncDateReminder", () => {
     const w = await seedTwoHouseholds(db);
     const household = { householdId: w.householdA.id, timezone: "America/New_York" };
     const key = { sourceType: "follow_up", sourceId: randomUUID() } as const;
-    const repo = createRemindersRepository(db, w.householdA.id);
+    const repo = createRemindersRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
 
     await syncDateReminder(db, household, key, {
       date: "2024-02-29",

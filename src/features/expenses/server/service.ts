@@ -1,3 +1,4 @@
+import { scopeDb } from "@/db/scope";
 import type { Database } from "@/db/client";
 import { createAttachmentsRepository, type AttachmentView } from "@/features/files";
 import { can, type Ctx } from "@/features/households";
@@ -69,8 +70,8 @@ export async function createExpense(
   const parsed = expenseInputSchema.safeParse(input);
   const values = parsed.success ? toValues(parsed.data) : null;
   if (!values) return err("validation", "Invalid expense");
-  return deps.db.transaction(async (tx) => {
-    const repo = createExpensesRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createExpensesRepository(tx, ctx);
     const resolved = await resolveLinks(repo, values);
     if (!resolved.ok) return resolved;
     const row = await repo.insertManual(resolved.value, ctx.userId);
@@ -89,8 +90,8 @@ export async function updateExpense(
   const parsed = expenseInputSchema.safeParse(input);
   const values = parsed.success ? toValues(parsed.data) : null;
   if (!values) return err("validation", "Invalid expense");
-  return deps.db.transaction(async (tx) => {
-    const repo = createExpensesRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createExpensesRepository(tx, ctx);
     const existing = await repo.find(expenseId);
     if (!existing || existing.deletedAt) return notFound();
     if (existing.appointmentId) return linked();
@@ -109,13 +110,13 @@ export async function deleteExpense(
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!idOk(expenseId)) return notFound();
   const at = (deps.now ?? (() => new Date()))();
-  return deps.db.transaction(async (tx) => {
-    const repo = createExpensesRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createExpensesRepository(tx, ctx);
     const existing = await repo.find(expenseId);
     if (!existing) return notFound();
     if (existing.appointmentId) return linked();
     if (!(await repo.softDeleteManual(expenseId, at))) return notFound();
-    await createAttachmentsRepository(tx, ctx.householdId).softDelete(
+    await createAttachmentsRepository(tx, ctx).softDelete(
       { type: "expense", id: expenseId },
       undefined,
       at,
@@ -131,14 +132,14 @@ export async function restoreExpense(
 ): Promise<Result<true>> {
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!idOk(expenseId)) return notFound();
-  return deps.db.transaction(async (tx) => {
-    const repo = createExpensesRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createExpensesRepository(tx, ctx);
     const existing = await repo.find(expenseId);
     if (!existing) return notFound();
     if (existing.appointmentId) return linked();
     const deletedAt = await repo.restoreManual(expenseId);
     if (!deletedAt) return notFound();
-    await createAttachmentsRepository(tx, ctx.householdId).restoreWithOwner(
+    await createAttachmentsRepository(tx, ctx).restoreWithOwner(
       { type: "expense", id: expenseId },
       deletedAt,
     );
@@ -155,11 +156,11 @@ export async function getExpense(
 ): Promise<Result<ExpenseDetail>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (!idOk(expenseId)) return notFound();
-  const expense = await createExpensesRepository(deps.db, ctx.householdId).find(expenseId);
+  const expense = await createExpensesRepository(deps.db, ctx).find(expenseId);
   if (!expense) return notFound();
   const attachments = expense.appointmentId
     ? []
-    : await createAttachmentsRepository(deps.db, ctx.householdId).list({
+    : await createAttachmentsRepository(deps.db, ctx).list({
         type: "expense",
         id: expenseId,
       });
@@ -175,7 +176,7 @@ export async function listExpenses(
   page: number,
 ): Promise<Result<ExpensePage>> {
   if (!can(ctx.role, "data:read")) return forbidden();
-  const repo = createExpensesRepository(deps.db, ctx.householdId);
+  const repo = createExpensesRepository(deps.db, ctx);
   const total = await repo.count(filter);
   const pages = Math.max(1, Math.ceil(total / EXPENSES_PAGE_SIZE));
   const current = Math.min(Math.max(1, Math.trunc(page) || 1), pages);
@@ -191,7 +192,7 @@ export async function listDeletedExpenses(
   ctx: Ctx,
 ): Promise<Result<ExpenseListRow[]>> {
   if (!can(ctx.role, "data:write")) return forbidden();
-  return ok(await createExpensesRepository(deps.db, ctx.householdId).listDeletedManual());
+  return ok(await createExpensesRepository(deps.db, ctx).listDeletedManual());
 }
 
 export type ExpenseSummary = {
@@ -207,7 +208,7 @@ export async function getExpenseSummary(
   filter: ExpenseFilter,
 ): Promise<Result<ExpenseSummary>> {
   if (!can(ctx.role, "data:read")) return forbidden();
-  const repo = createExpensesRepository(deps.db, ctx.householdId);
+  const repo = createExpensesRepository(deps.db, ctx);
   const [years, monthly, yearly, categories] = await Promise.all([
     repo.years(),
     repo.monthly(filter),
@@ -227,7 +228,7 @@ export async function exportExpensesCsv(
 ): Promise<Result<CsvExport>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   const limit = deps.exportLimit ?? EXPORT_LIMIT;
-  const rows = await createExpensesRepository(deps.db, ctx.householdId).list(filter, {
+  const rows = await createExpensesRepository(deps.db, ctx).list(filter, {
     limit: limit + 1,
     offset: 0,
   });

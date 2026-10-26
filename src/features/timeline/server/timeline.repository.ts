@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import type { DbExecutor } from "@/db/client";
@@ -34,7 +35,9 @@ type Page = { limit: number; offset: number; timezone: string };
 
 // Appointments and medical records are read as one list. Dates are compared as household-local
 // calendar days so a late-evening visit lands on the day the household experienced it.
-export function createTimelineRepository(db: DbExecutor, householdId: string) {
+export function createTimelineRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   return {
     async list(
       query: TimelineQuery,

@@ -68,11 +68,20 @@ describe("tenant isolation: appointments", () => {
     const w = await world();
     await createAppointment(deps, w.ctxB, appointmentInput(w.animalB, { cost: "999" }));
     const range = { from: "2000-01-01", to: "2100-01-01" };
-    const a = await createExpensesRepository(db, w.householdA.id).totals(range);
-    const b = await createExpensesRepository(db, w.householdB.id).totals(range);
+    const a = await createExpensesRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    }).totals(range);
+    const b = await createExpensesRepository(db, {
+      householdId: w.householdB.id,
+      userId: w.ownerB.id,
+    }).totals(range);
     expect(a.flatMap((t) => t.totalMinor)).not.toContain(99900);
     expect(b.flatMap((t) => t.totalMinor)).toContain(99900);
-    const foreign = await createExpensesRepository(db, w.householdA.id).findByAppointment(
+    const foreign = await createExpensesRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    }).findByAppointment(
       (await db.select().from(expenses).where(eq(expenses.householdId, w.householdB.id)))[0]
         ?.appointmentId ?? "",
     );

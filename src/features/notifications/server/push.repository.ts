@@ -1,3 +1,4 @@
+import { scopeDb } from "@/db/scope";
 import { and, eq } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { pushSubscriptions } from "@/db/schema";
@@ -12,7 +13,8 @@ export type PushSubscriptionInput = {
 
 // Scoped by user, never by household: a subscription is one person's device, so no query here can
 // return another member's subscription.
-export function createPushRepository(db: DbExecutor, userId: string) {
+export function createPushRepository(executor: DbExecutor, userId: string) {
+  const db = scopeDb(executor, { userId });
   const mine = eq(pushSubscriptions.userId, userId);
   return {
     async upsert(input: PushSubscriptionInput): Promise<void> {
