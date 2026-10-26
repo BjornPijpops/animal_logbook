@@ -8,6 +8,8 @@ const messageSchema = z.object({ Text: z.string() });
 export const PASSWORD = "correct-horse-battery";
 
 export async function expectNoA11yViolations(page: Page) {
+  // Next streams <head> metadata; scanning before it lands reports a false "missing title".
+  await expect(page).toHaveTitle(/.+/);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();
