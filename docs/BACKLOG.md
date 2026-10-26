@@ -7,7 +7,9 @@ Ideas for after V1. Optional paid adapters may be listed here but must never be 
 - Per-animal sharing (not whole household), vet/clinic read-only links
 - Multiple households per user with a switcher
 - Weight/growth percentile curves per breed (data sourced from free datasets, not medical advice)
-- Recurring appointments and recurring expenses
+- Recurring appointments
+- Recurring expenses, for example insurance premiums (no scheduler in V1)
+- Cost splitting between animals (one expense shared across several animals)
 - Feeding stock tracker ("food runs out on ...")
 - Pedigree/litter tracking, multiple owners on one animal record
 - Calendar feed (iCal, signed URL)

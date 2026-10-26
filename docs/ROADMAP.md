@@ -35,7 +35,7 @@ Schedules (times/day, weekdays, every N days, as-needed), dose log, Web Push + e
 
 ## Phase 6: Expenses
 
-Manual entry, auto-link from appointments/medication/food, monthly/annual/per-category charts, CSV export.
+Manual entry with receipts, auto-link from appointments (medication link now, food link in Phase 7), monthly/annual/per-category views with table alternatives, CSV export. Decisions: ADR 0012.
 **Accept**: no double counting between appointment cost and expense; totals correct per currency; CSV round-trips; money never uses floats.
 
 ## Phase 7: Food tracking
