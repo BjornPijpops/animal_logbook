@@ -4,7 +4,7 @@ import { getEnv } from "@/lib/env";
 import { LocalDiskAdapter } from "@/lib/storage/local-disk";
 import { errorReporter } from "@/lib/error-reporter";
 import { logger } from "@/lib/logger";
-import { registerJobs } from "./jobs";
+import { HEARTBEAT_QUEUE, registerJobs } from "./jobs";
 import { buildReminderDeps } from "./reminder-deps";
 
 async function main(): Promise<void> {
@@ -26,6 +26,8 @@ async function main(): Promise<void> {
     },
     buildReminderDeps(db, env),
   );
+  // Beat once right away so a healthy start is visible (and testable) without waiting for the cron.
+  await boss.send(HEARTBEAT_QUEUE, {});
   logger.info("worker started");
 
   const shutdown = async (signal: string) => {
