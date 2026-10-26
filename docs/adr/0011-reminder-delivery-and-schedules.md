@@ -47,5 +47,5 @@ a reminder is a convenience, not a guarantee, and it must never invent medical a
 
 - Real browser push cannot be end-to-end tested; the `PushSender` seam is exercised with a fake
   push service in integration tests instead.
-- Medication records created with the Phase 4 placeholder have no medication row and are not linked.
+- Phase 4 placeholder medication records can be adopted from their health page ("Create medication from this record"): the record, its dates and attachments are kept and a medication row is linked to it.
 - Email delivery is at-least-once in the crash window described above.

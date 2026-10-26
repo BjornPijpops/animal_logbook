@@ -438,7 +438,11 @@
     "delete": "Delete record",
     "deleteConfirm": "Delete this record? You can restore it from the timeline.",
     "restore": "Restore",
-    "back": "Back to the timeline"
+    "back": "Back to the timeline",
+    "placeholderHint": "This is a plain note. Create a medication from it to add a dosage, schedule and reminders. The record, its dates and attachments are kept.",
+    "createMedicationFromRecord": "Create medication from this record",
+    "managedByMedications": "This record is managed from the Medications page.",
+    "openMedication": "Open medication"
   },
   "appointments": {
     "title": "Appointment",
@@ -674,7 +678,8 @@
       "duplicate_time": "Each time can only be used once.",
       "times_required": "Add at least one time.",
       "weekdays_required": "Choose at least one day.",
-      "interval_required": "Enter a number between 2 and 365."
+      "interval_required": "Enter a number between 2 and 365.",
+      "conflict": "This record already has a medication."
     },
     "adherence": {
       "title": "Adherence",
@@ -686,6 +691,7 @@
       "missed": "Missed",
       "showTable": "Show as table",
       "date": "Date"
-    }
+    },
+    "fromRecordHint": "Name, dates and notes come from the existing record. Add the dosage and schedule."
   }
 }

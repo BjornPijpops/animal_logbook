@@ -63,7 +63,6 @@ Ideas for after V1. Optional paid adapters may be listed here but must never be 
 ## From Phase 5
 
 - Multiple schedules per medication (for example a tapering dose).
-- Link legacy placeholder medication records to a medication.
 - Low-stock warnings and refill reminders (Phase 8 dashboard).
 - Per-reminder lead time and snooze.
 - In-app notification inbox (the `notifications` table is still unused).

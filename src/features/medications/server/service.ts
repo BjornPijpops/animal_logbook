@@ -82,10 +82,13 @@ async function syncReminders(
   );
 }
 
+// With `fromRecordId` the medication adopts an existing placeholder record (Phase 4) instead of
+// creating a new one, so old entries and their attachments keep their history.
 export async function createMedication(
   deps: MedicationDeps,
   ctx: Ctx,
   input: unknown,
+  fromRecordId?: string,
 ): Promise<Result<{ id: string }>> {
   if (!can(ctx.role, "data:write")) return forbidden();
   const parsed = medicationInputSchema.safeParse(input);
@@ -95,19 +98,30 @@ export async function createMedication(
   return deps.db.transaction(async (tx) => {
     const medical = createMedicalRepository(tx, ctx.householdId);
     if (!(await medical.animalExists(value.animalId))) return err("not_found", "Animal not found");
-    const record = await medical.insert(
-      {
-        animalId: value.animalId,
-        type: "medication",
-        title: value.name,
-        startedOn: value.startedOn,
-        endedOn: nullable(value.endedOn),
-        severity: null,
-        nextDueOn: null,
-        notes: nullable(value.notes),
-      },
-      { createdBy: ctx.userId },
-    );
+    const recordValues = {
+      animalId: value.animalId,
+      type: "medication" as const,
+      title: value.name,
+      startedOn: value.startedOn,
+      endedOn: nullable(value.endedOn),
+      severity: null,
+      nextDueOn: null,
+      notes: nullable(value.notes),
+    };
+    let record: { id: string } | null;
+    if (fromRecordId) {
+      if (!uuidSchema.safeParse(fromRecordId).success) return notFound();
+      const existing = await medical.find(fromRecordId);
+      if (!existing || existing.type !== "medication") return notFound();
+      if (existing.animalId !== value.animalId) return err("validation", "Animal cannot change");
+      if (await medical.isManagedMedication(fromRecordId)) {
+        return err("conflict", "Record already has a medication");
+      }
+      record = await medical.update(fromRecordId, recordValues);
+    } else {
+      record = await medical.insert(recordValues, { createdBy: ctx.userId });
+    }
+    if (!record) return notFound();
     const repo = createMedicationsRepository(tx, ctx.householdId);
     const id = await repo.insert({
       animalId: value.animalId,
@@ -215,6 +229,18 @@ export async function listMedications(
   if (!can(ctx.role, "data:read")) return forbidden();
   if (filter.animalId && !uuidSchema.safeParse(filter.animalId).success) return ok([]);
   return ok(await createMedicationsRepository(deps.db, ctx.householdId).list(filter));
+}
+
+// Lets the health-record page offer "create medication" only for unlinked placeholder records.
+export async function findMedicationForRecord(
+  deps: MedicationDeps,
+  ctx: Ctx,
+  recordId: string,
+): Promise<Result<{ id: string } | null>> {
+  if (!can(ctx.role, "data:read")) return forbidden();
+  if (!uuidSchema.safeParse(recordId).success) return ok(null);
+  const id = await createMedicationsRepository(deps.db, ctx.householdId).idForRecord(recordId);
+  return ok(id ? { id } : null);
 }
 
 export async function listDeletedMedications(

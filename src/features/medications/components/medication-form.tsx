@@ -19,9 +19,14 @@ import { createMedicationAction, updateMedicationAction } from "../server/action
 
 export type AnimalOption = { id: string; name: string };
 
-type Props = { animals: AnimalOption[]; defaults: MedicationInput; medicationId?: string };
+type Props = {
+  animals: AnimalOption[];
+  defaults: MedicationInput;
+  medicationId?: string;
+  fromRecordId?: string;
+};
 
-const ERROR_KEYS = ["validation", "not_found", "forbidden"] as const;
+const ERROR_KEYS = ["validation", "not_found", "forbidden", "conflict"] as const;
 const errorKey = (code: string) => ERROR_KEYS.find((k) => k === code) ?? "other";
 const FIELD_MESSAGES = [
   "before_start",
@@ -31,7 +36,7 @@ const FIELD_MESSAGES = [
   "interval_required",
 ] as const;
 
-export function MedicationForm({ animals, defaults, medicationId }: Props) {
+export function MedicationForm({ animals, defaults, medicationId, fromRecordId }: Props) {
   const t = useTranslations("medications");
   const tc = useTranslations("common");
   const [status, setStatus] = useState<"idle" | "saved" | { error: string }>("idle");
@@ -74,7 +79,7 @@ export function MedicationForm({ animals, defaults, medicationId }: Props) {
     };
     const result = medicationId
       ? await updateMedicationAction(medicationId, cleaned)
-      : await createMedicationAction(cleaned);
+      : await createMedicationAction(cleaned, fromRecordId);
     if (!result) return;
     setStatus(result.ok ? "saved" : { error: t(`errors.${errorKey(result.code)}`) });
   }
@@ -85,7 +90,11 @@ export function MedicationForm({ animals, defaults, medicationId }: Props) {
       {typeof status === "object" ? <Alert tone="error">{status.error}</Alert> : null}
       <Field id="animalId" label={t("fields.animal")} error={fieldError("animalId")}>
         {(aria) => (
-          <Select {...aria} {...register("animalId")} disabled={Boolean(medicationId)}>
+          <Select
+            {...aria}
+            {...register("animalId")}
+            disabled={Boolean(medicationId ?? fromRecordId)}
+          >
             <option value="">{t("fields.choose")}</option>
             {animals.map((animal) => (
               <option key={animal.id} value={animal.id}>

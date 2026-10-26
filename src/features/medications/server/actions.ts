@@ -21,11 +21,15 @@ function refresh(id?: string) {
   if (id) revalidatePath(`/medications/${id}`);
 }
 
-export async function createMedicationAction(input: unknown): Promise<MedicationActionResult> {
+export async function createMedicationAction(
+  input: unknown,
+  fromRecordId?: string,
+): Promise<MedicationActionResult> {
   const { ctx } = await requireHouseholdAccess();
-  const result = await createMedication(getMedicationDeps(), ctx, input);
+  const result = await createMedication(getMedicationDeps(), ctx, input, fromRecordId);
   if (!result.ok) return { ok: false, code: result.error.code };
   refresh();
+  if (fromRecordId) revalidatePath(`/health/${fromRecordId}`);
   redirect(`/medications/${result.value.id}`);
 }
 
