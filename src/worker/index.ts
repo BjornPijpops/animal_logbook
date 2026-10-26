@@ -36,6 +36,7 @@ async function main(): Promise<void> {
       exportStorage: new LocalDiskAdapter(env.EXPORT_DIR),
       fileStorage: new LocalDiskAdapter(env.UPLOAD_DIR),
       ttlHours: env.EXPORT_TTL_HOURS,
+      maxBytes: env.EXPORT_MAX_MB * 1024 * 1024,
     },
   );
   // Beat once right away so a healthy start is visible (and testable) without waiting for the cron.

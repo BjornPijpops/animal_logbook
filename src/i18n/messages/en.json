@@ -1017,7 +1017,8 @@
       "conflict": "An export is already being prepared.",
       "validation": "Enter your password.",
       "not_found": "That item no longer exists.",
-      "unauthenticated": "Please sign in again."
+      "unauthenticated": "Please sign in again.",
+      "too_large": "Your files are larger than the export limit of this server. Delete some files, or ask the server administrator to raise EXPORT_MAX_MB."
     },
     "export": {
       "title": "Export household data",

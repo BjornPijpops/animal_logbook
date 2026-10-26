@@ -16,6 +16,7 @@ function jobDeps(parts: ReturnType<typeof makeDeps>, now: () => Date, ttlHours =
     exportStorage: parts.exportStorage,
     fileStorage: parts.fileStorage,
     ttlHours,
+    maxBytes: 50 * 1024 * 1024,
     now,
   };
 }
@@ -232,5 +233,32 @@ describe("export expiry", () => {
 
     const second = await expireExports({ db, exportStorage: parts.exportStorage, now: () => now });
     expect(second.expired + second.stale + second.strayFiles).toBe(0);
+  });
+});
+
+describe("export size cap", () => {
+  it("refuses a request over the limit with a clear error, and builds nothing", async () => {
+    const parts = makeDeps(db);
+    const w = await world(db, parts.fileStorage);
+    // The seeded household holds a few dozen bytes; a limit of 1 byte is exceeded.
+    const small = { ...parts.deps, exportMaxBytes: 1 };
+    const result = await requestExport(small, w.ctx.owner, TEST_PASSWORD);
+    expect(!result.ok && result.error.message).toBe("export_too_large");
+    expect(await listExports(parts.deps, w.ctx.owner)).toHaveLength(0);
+  });
+
+  it("fails a queued export that grew past the limit instead of building it", async () => {
+    const parts = makeDeps(db);
+    const w = await world(db, parts.fileStorage);
+    const requested = await requestExport(parts.deps, w.ctx.owner, TEST_PASSWORD);
+    expect(requested.ok).toBe(true);
+    const result = await processPendingExports({
+      ...jobDeps(parts, () => new Date()),
+      maxBytes: 1,
+    });
+    expect(result.failed).toBeGreaterThanOrEqual(1);
+    const [row] = await listExports(parts.deps, w.ctx.owner);
+    expect(row?.status).toBe("failed");
+    expect(parts.exportStorage.keys()).toHaveLength(0);
   });
 });

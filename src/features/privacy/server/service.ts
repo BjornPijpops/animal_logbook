@@ -19,6 +19,7 @@ import {
   markDeletionPending,
   type DeletionDeps,
 } from "./account-deletion";
+import { EXPORT_TOO_LARGE, exportedFileBytes } from "./export-build";
 import { STALE_AFTER_MS } from "./export-jobs";
 import { confirmPassword } from "./reauth";
 
@@ -28,6 +29,7 @@ export type PrivacyDeps = {
   fileStorage: StorageAdapter;
   exportStorage: StorageAdapter;
   exportTtlHours: number;
+  exportMaxBytes: number;
   now?: () => Date;
 };
 
@@ -67,6 +69,9 @@ export async function requestExport(
   if (!limit.allowed) return err("rate_limited", "Too many export requests, try again later");
   const confirmed = await confirmPassword(deps, ctx, password);
   if (!confirmed.ok) return confirmed;
+  if ((await exportedFileBytes(deps.db, ctx.householdId)) > deps.exportMaxBytes) {
+    return err("validation", EXPORT_TOO_LARGE);
+  }
 
   const now = nowOf(deps);
   return scopeDb(deps.db, ctx).transaction(async (tx) => {

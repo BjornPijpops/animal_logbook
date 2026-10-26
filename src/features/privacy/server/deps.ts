@@ -13,5 +13,6 @@ export function getPrivacyDeps(): PrivacyDeps {
     fileStorage: getStorage(),
     exportStorage: getExportStorage(),
     exportTtlHours: getEnv().EXPORT_TTL_HOURS,
+    exportMaxBytes: getEnv().EXPORT_MAX_MB * 1024 * 1024,
   };
 }

@@ -21,6 +21,7 @@ export function makeDeps(db: Database, now?: () => Date) {
     fileStorage,
     exportStorage,
     exportTtlHours: 24,
+    exportMaxBytes: 50 * 1024 * 1024,
     ...(now ? { now } : {}),
   };
   return { deps, fileStorage, exportStorage };

@@ -4,13 +4,14 @@ import { scopeDb } from "@/db/scope";
 import { dataExports } from "@/db/schema";
 import { logger } from "@/lib/logger";
 import type { StorageAdapter } from "@/lib/storage/types";
-import { buildHouseholdExport } from "./export-build";
+import { buildHouseholdExport, ExportTooLargeError } from "./export-build";
 
 export type ExportJobDeps = {
   db: Database;
   exportStorage: StorageAdapter;
   fileStorage: StorageAdapter;
   ttlHours: number;
+  maxBytes: number;
   now?: () => Date;
 };
 
@@ -45,7 +46,7 @@ export async function processPendingExports(
     const storageKey = `${claimed.user_id}/${claimed.id}`;
     try {
       const built = await buildHouseholdExport(
-        { db: deps.db, fileStorage: deps.fileStorage, now },
+        { db: deps.db, fileStorage: deps.fileStorage, now, maxBytes: deps.maxBytes },
         { householdId: claimed.household_id, userId: claimed.user_id },
       );
       await deps.exportStorage.delete(storageKey);
@@ -62,7 +63,12 @@ export async function processPendingExports(
         .where(eq(dataExports.id, claimed.id));
       ready += 1;
     } catch (error) {
-      logger.error({ exportId: claimed.id, err: error }, "data export failed");
+      logger.error(
+        { exportId: claimed.id, err: error },
+        error instanceof ExportTooLargeError
+          ? "data export failed: files exceed EXPORT_MAX_MB"
+          : "data export failed",
+      );
       await db
         .update(dataExports)
         .set({ status: "failed", completedAt: now, expiresAt })

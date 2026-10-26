@@ -14,6 +14,7 @@ const schema = z.object({
   RETENTION_DAYS: z.coerce.number().int().min(0).default(30),
   AUDIT_RETENTION_DAYS: z.coerce.number().int().min(1).default(365),
   EXPORT_DIR: z.string().default("./data/exports"),
+  EXPORT_MAX_MB: z.coerce.number().int().min(1).default(300),
   EXPORT_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(24),
   VIRUS_SCANNER: z.enum(["none", "clamav"]).default("none"),
   CLAMAV_HOST: z.string().default("localhost"),
