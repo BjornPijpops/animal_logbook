@@ -4,12 +4,8 @@ import type { Database, Transaction } from "@/db/client";
 import type { Ctx } from "@/features/households";
 import { ok, type Result } from "@/lib/result";
 import type { StorageAdapter } from "@/lib/storage/types";
-import {
-  prepareUpload,
-  reject,
-  type UploadInput,
-  type UploadRejection,
-} from "@/lib/uploads/prepare-upload";
+import { prepareUpload, reject, type UploadInput } from "@/lib/uploads/prepare-upload";
+import type { UploadRejection } from "@/lib/uploads/rejections";
 import type { VirusScanner } from "@/lib/uploads/virus-scanner";
 import { logger } from "@/lib/logger";
 import { createAttachmentsRepository, type AttachmentOwner } from "./attachments.repository";

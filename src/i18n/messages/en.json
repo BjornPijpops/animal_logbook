@@ -2,9 +2,9 @@
   "common": {
     "appName": "Animal Logbook",
     "skipToContent": "Skip to content",
-    "loading": "Loading…",
+    "loading": "Loadingâ€¦",
     "save": "Save",
-    "saving": "Saving…",
+    "saving": "Savingâ€¦",
     "cancel": "Cancel",
     "email": "Email",
     "password": "Password",
@@ -29,14 +29,15 @@
     "household": "Household",
     "settings": "Settings",
     "signOut": "Sign out",
-    "animals": "Animals"
+    "animals": "Animals",
+    "documents": "Documents"
   },
   "auth": {
     "signUp": {
       "title": "Create your account",
       "description": "Keep everything about your animals in one place.",
       "submit": "Create account",
-      "submitting": "Creating account…",
+      "submitting": "Creating accountâ€¦",
       "checkEmailTitle": "Check your email",
       "checkEmailBody": "If this address can be registered, we sent a link to confirm it. Open the link to finish creating your account.",
       "haveAccount": "Already have an account?",
@@ -47,7 +48,7 @@
       "title": "Welcome back",
       "description": "Sign in to your Animal Logbook.",
       "submit": "Sign in",
-      "submitting": "Signing in…",
+      "submitting": "Signing inâ€¦",
       "forgot": "Forgot your password?",
       "noAccount": "New here?",
       "signUpLink": "Create an account",
@@ -212,6 +213,7 @@
     "notSet": "Not set",
     "age": "Age",
     "emergencyCard": "Emergency card",
+    "documentsLink": "Documents",
     "deleteAnimal": "Delete animal",
     "deleteConfirm": "Delete {name}? It will disappear from your household.",
     "errors": {
@@ -273,6 +275,90 @@
       "hint": "Stores the cards and primary photos in this browser. Removed when you sign out.",
       "enabled": "Emergency cards are saved for offline use.",
       "failed": "Could not save the cards offline. Check your connection."
+    }
+  },
+  "documents": {
+    "title": "Documents",
+    "add": "Add document",
+    "newTitle": "Add a document",
+    "empty": {
+      "title": "No documents yet",
+      "body": "Upload registration papers, vaccination records, insurance contracts, invoices and passports."
+    },
+    "noResults": "No documents match your filters.",
+    "viewerNote": "You have read-only access to this household.",
+    "filters": {
+      "title": "Filter documents",
+      "search": "Search",
+      "searchHint": "Title, notes or file name",
+      "animal": "Animal",
+      "allAnimals": "All animals",
+      "householdOnly": "Household only (no animal)",
+      "type": "Type",
+      "allTypes": "All types",
+      "expiring": "Expiring within 30 days or expired",
+      "apply": "Apply filters",
+      "reset": "Reset"
+    },
+    "types": {
+      "registration": "Registration papers",
+      "vaccination": "Vaccination document",
+      "insurance": "Insurance contract",
+      "invoice": "Vet invoice",
+      "passport": "Passport",
+      "other": "Other"
+    },
+    "fields": {
+      "file": "File",
+      "type": "Type",
+      "title": "Title",
+      "notes": "Notes",
+      "expiresOn": "Expiry date",
+      "animal": "Linked animal",
+      "noAnimal": "Household (no animal)"
+    },
+    "hints": {
+      "file": "PDF, JPEG, PNG or WebP, up to {max} MB.",
+      "expiresOn": "Optional. Shown as expiring when it is within 30 days."
+    },
+    "upload": "Upload document",
+    "uploading": "Uploadingâ€¦",
+    "save": "Save changes",
+    "expires": "Expires {date}",
+    "expired": "Expired",
+    "expiringSoon": "Expiring soon",
+    "linkedTo": "Animal: {name}",
+    "household": "Household document",
+    "download": "Download {name}",
+    "file": "File",
+    "uploaded": "Uploaded {date}",
+    "size": "Size",
+    "edit": "Details",
+    "saved": "Changes saved.",
+    "delete": "Delete document",
+    "deleteConfirm": "Delete \"{title}\"? It is removed from your household and its file is erased after the retention period.",
+    "page": "Page {page} of {pages}",
+    "previous": "Previous page",
+    "next": "Next page",
+    "results": "{count, plural, one {# document} other {# documents}}",
+    "back": "Back to documents",
+    "rejections": {
+      "empty": "The file is empty.",
+      "too_large": "The file is larger than the maximum upload size.",
+      "unsupported_type": "Only PDF, JPEG, PNG and WebP files are accepted.",
+      "type_mismatch": "The file does not match its name or type, so it was rejected.",
+      "corrupt": "The image could not be read.",
+      "quota_exceeded": "Your household has reached its storage limit.",
+      "infected": "The file was blocked by the virus scanner.",
+      "scan_unavailable": "The virus scanner is unavailable, so the file was not stored. Try again later."
+    },
+    "errors": {
+      "validation": "Please check the form and try again.",
+      "forbidden": "You only have read access, so you cannot change this.",
+      "not_found": "That document could not be found.",
+      "unauthenticated": "Please sign in again.",
+      "conflict": "That conflicts with existing data.",
+      "rate_limited": "Too many attempts. Please wait a moment."
     }
   }
 }

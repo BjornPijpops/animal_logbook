@@ -45,3 +45,14 @@ export const documentQuerySchema = z.object({
   page: z.number().int().min(1).max(10_000).default(1),
 });
 export type DocumentQuery = z.infer<typeof documentQuerySchema>;
+
+export type ExpiryStatus = "expired" | "soon" | "ok";
+
+// Both arguments are calendar dates (YYYY-MM-DD), so the comparison needs no timezone handling.
+export function expiryStatus(expiresOn: string | null, today: string): ExpiryStatus | null {
+  if (!expiresOn) return null;
+  if (expiresOn < today) return "expired";
+  const horizon = new Date(`${today}T12:00:00Z`);
+  horizon.setUTCDate(horizon.getUTCDate() + EXPIRING_SOON_DAYS);
+  return expiresOn <= horizon.toISOString().slice(0, 10) ? "soon" : "ok";
+}

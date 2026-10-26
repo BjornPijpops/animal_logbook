@@ -2,19 +2,8 @@ import { createHash } from "node:crypto";
 import { fileTypeFromBuffer } from "file-type";
 import sharp from "sharp";
 import { err, ok, type Result } from "@/lib/result";
+import { UPLOAD_REJECTIONS, type UploadRejection } from "./rejections";
 import { sanitizeFilename } from "./sanitize-filename";
-
-export const UPLOAD_REJECTIONS = [
-  "empty",
-  "too_large",
-  "unsupported_type",
-  "type_mismatch",
-  "corrupt",
-  "quota_exceeded",
-  "infected",
-  "scan_unavailable",
-] as const;
-export type UploadRejection = (typeof UPLOAD_REJECTIONS)[number];
 
 // Machine-readable reason carried in the error message of a validation failure.
 export const reject = (reason: UploadRejection) => err("validation", reason);
