@@ -1,83 +1,90 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1792964651877,
-      "tag": "0000_foundation",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1792996683692,
-      "tag": "0001_animals",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1792998695725,
-      "tag": "0002_user_phone",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1792998937790,
-      "tag": "0003_documents",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1793004530717,
-      "tag": "0004_appointments_medical",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1793011018295,
-      "tag": "0005_medications_reminders_delivery",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1793013859862,
-      "tag": "0006_expenses_manual",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1793017800371,
-      "tag": "0007_food_plans",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1793019768686,
-      "tag": "0008_dashboard_indexes",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1793023210763,
-      "tag": "0009_row_level_security",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1793024908032,
-      "tag": "0010_audit_and_exports",
-      "breakpoints": true
-    }
-  ]
+    "version":  "7",
+    "dialect":  "postgresql",
+    "entries":  [
+                    {
+                        "idx":  0,
+                        "version":  "7",
+                        "when":  1792964651877,
+                        "tag":  "0000_foundation",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  1,
+                        "version":  "7",
+                        "when":  1792996683692,
+                        "tag":  "0001_animals",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  2,
+                        "version":  "7",
+                        "when":  1792998695725,
+                        "tag":  "0002_user_phone",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  3,
+                        "version":  "7",
+                        "when":  1792998937790,
+                        "tag":  "0003_documents",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  4,
+                        "version":  "7",
+                        "when":  1793004530717,
+                        "tag":  "0004_appointments_medical",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  5,
+                        "version":  "7",
+                        "when":  1793011018295,
+                        "tag":  "0005_medications_reminders_delivery",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  6,
+                        "version":  "7",
+                        "when":  1793013859862,
+                        "tag":  "0006_expenses_manual",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  7,
+                        "version":  "7",
+                        "when":  1793017800371,
+                        "tag":  "0007_food_plans",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  8,
+                        "version":  "7",
+                        "when":  1793019768686,
+                        "tag":  "0008_dashboard_indexes",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  9,
+                        "version":  "7",
+                        "when":  1793023210763,
+                        "tag":  "0009_row_level_security",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  10,
+                        "version":  "7",
+                        "when":  1793024908032,
+                        "tag":  "0010_audit_and_exports",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  11,
+                        "version":  "7",
+                        "when":  1793030173777,
+                        "tag":  "0011_account_deletion_pending",
+                        "breakpoints":  true
+                    }
+                ]
 }

@@ -13,6 +13,7 @@ import { smtpMailer, type Mailer } from "@/lib/notify/email";
 import { PASSWORD_MIN_LENGTH } from "../schemas";
 import { accountAllowed } from "./account-limit";
 import { resetPasswordEmail, verificationEmail } from "./emails";
+import { isDeletionPending } from "./deletion-pending";
 import { buildSocialProviders } from "./providers";
 
 function createAuth(mailer: Mailer) {
@@ -67,6 +68,14 @@ function createAuth(mailer: Mailer) {
       },
     },
     databaseHooks: {
+      session: {
+        create: {
+          // An account pending deletion can never get a session, whichever way it tries to sign in.
+          before: async (session) => {
+            return (await isDeletionPending(getDb(), session.userId)) ? false : { data: session };
+          },
+        },
+      },
       user: {
         create: {
           before: async (user) => {

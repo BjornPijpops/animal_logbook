@@ -37,9 +37,15 @@ export const users = pgTable(
     phone: text("phone"),
     weightUnit: weightUnit("weight_unit").notNull().default("kg"),
     defaultCurrency: char("default_currency", { length: 3 }).notNull().default("EUR"),
+    deletionRequestedAt: timestamp("deletion_requested_at", { withTimezone: true }),
     ...timestamps,
   },
-  (t) => [uniqueIndex("users_email_lower_key").on(sql`lower(${t.email})`)],
+  (t) => [
+    uniqueIndex("users_email_lower_key").on(sql`lower(${t.email})`),
+    index("users_deletion_pending_idx")
+      .on(t.deletionRequestedAt)
+      .where(sql`${t.deletionRequestedAt} is not null`),
+  ],
 );
 
 export const sessions = pgTable(
