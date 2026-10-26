@@ -43,7 +43,8 @@ export async function householdTimezone(email: string): Promise<string> {
 
 // One generate + deliver pass of the worker, using the real email channel (Mailpit in dev and CI).
 export function runWorkerOnce() {
-  execSync("npm run worker:once", { stdio: "pipe" });
+  // Against the production image the pass must run inside the worker container, which owns the exports volume.
+  execSync(process.env.E2E_WORKER_ONCE ?? "npm run worker:once", { stdio: "pipe" });
 }
 
 // Rows for the dashboard test: dates are offset by several days so the household time zone never

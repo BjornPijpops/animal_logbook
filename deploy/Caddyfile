@@ -1,0 +1,22 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	# Caddy replaces any X-Forwarded-For sent by a client with the address it saw, and the app
+	# trusts the right-most entry (TRUSTED_PROXY=true). Nothing else to configure for a direct setup.
+	reverse_proxy web:3000 {
+		health_uri /api/health/live
+		health_interval 15s
+	}
+
+	# Behind Cloudflare Tunnel the peer is cloudflared, so take the real client from its header:
+	#   1. replace the reverse_proxy block above with the one below
+	#   2. publish nothing on 80/443 (the tunnel connects out) and point the tunnel at http://caddy:80
+	#   3. use `http://{$APP_DOMAIN}` as the site address, Cloudflare terminates TLS
+	# reverse_proxy web:3000 {
+	#	header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+	# }
+}

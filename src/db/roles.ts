@@ -22,6 +22,9 @@ export async function configureRoles(
     if (!quoted) throw new Error("could not quote password");
     await db.query(`ALTER ROLE ${role} WITH LOGIN PASSWORD ${quoted}`);
   }
+  // The readiness probe compares the applied migration count with the one this build expects.
+  await db.query(`GRANT USAGE ON SCHEMA drizzle TO ${APP_ROLE}, ${WORKER_ROLE}`);
+  await db.query(`GRANT SELECT ON drizzle.__drizzle_migrations TO ${APP_ROLE}, ${WORKER_ROLE}`);
 }
 
 export function roleUrl(ownerUrl: string, role: string, password: string): string {

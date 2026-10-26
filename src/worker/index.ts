@@ -1,12 +1,15 @@
+import { writeFile } from "node:fs/promises";
 import PgBoss from "pg-boss";
 import { createDatabase } from "@/db/client";
 import { assertRestrictedRole } from "@/db/role-safety";
 import { getEnv } from "@/lib/env";
+import { assertProductionEnv } from "@/lib/production-env";
 import { LocalDiskAdapter } from "@/lib/storage/local-disk";
 import { errorReporter } from "@/lib/error-reporter";
 import { logger } from "@/lib/logger";
 import { HEARTBEAT_QUEUE, registerJobs } from "./jobs";
 import { buildReminderDeps } from "./reminder-deps";
+import { createShutdown } from "./shutdown";
 
 async function main(): Promise<void> {
   // pg-boss owns its own schema, so it connects as the owner role. Everything else the worker does
@@ -18,6 +21,7 @@ async function main(): Promise<void> {
   const boss = new PgBoss(bossUrl);
   boss.on("error", (error) => errorReporter.report(error, { source: "pg-boss" }));
   await boss.start();
+  if (process.env.NODE_ENV === "production") assertProductionEnv(process.env);
   const env = getEnv();
   const { db, pool } = createDatabase(url);
   await assertRestrictedRole(pool);
@@ -43,11 +47,21 @@ async function main(): Promise<void> {
   await boss.send(HEARTBEAT_QUEUE, {});
   logger.info("worker started");
 
-  const shutdown = async (signal: string) => {
-    logger.info({ signal }, "worker stopping");
-    await boss.stop({ graceful: true });
-    process.exit(0);
-  };
+  // The container healthcheck reads this file; it goes stale if the event loop or pg-boss stalls.
+  const aliveFile = process.env.WORKER_ALIVE_FILE;
+  if (aliveFile) {
+    const touch = () => void writeFile(aliveFile, String(Date.now())).catch(() => undefined);
+    touch();
+    setInterval(touch, 30_000).unref();
+  }
+
+  const shutdown = createShutdown({
+    boss,
+    pools: [pool],
+    timeoutMs: Number(process.env.WORKER_STOP_TIMEOUT_MS ?? 20_000),
+    exit: (code) => process.exit(code),
+    log: (message, extra) => logger.info(extra ?? {}, message),
+  });
   process.on("SIGINT", () => void shutdown("SIGINT"));
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
 }

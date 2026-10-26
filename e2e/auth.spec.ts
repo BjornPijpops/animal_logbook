@@ -2,6 +2,7 @@ import { expect, test } from "./fixtures";
 import { expectNoA11yViolations } from "./helpers";
 import { z } from "zod";
 
+const ORIGIN = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 const MAILPIT = process.env.MAILPIT_URL ?? "http://localhost:8025";
 const searchSchema = z.object({ messages: z.array(z.object({ ID: z.string() })) });
 const messageSchema = z.object({ Text: z.string() });
@@ -89,7 +90,7 @@ test("repeated sign-in attempts from one client are rate limited", async ({ requ
   for (let i = 0; i < 5; i++) {
     const response = await request.post("/api/auth/sign-in/email", {
       data: { email: `nobody-${i}@example.test`, password: PASSWORD },
-      headers: { origin: "http://localhost:3000" },
+      headers: { origin: ORIGIN },
     });
     statuses.push(response.status());
   }
@@ -105,7 +106,11 @@ test("sign-in attempts for one account are limited even from many addresses", as
   for (let i = 0; i < 12; i++) {
     const response = await request.post("/api/auth/sign-in/email", {
       data: { email, password: PASSWORD },
-      headers: { origin: "http://localhost:3000", "x-forwarded-for": `10.9.${i}.1` },
+      headers: {
+        origin: ORIGIN,
+        "x-forwarded-for": `10.9.${i}.1`,
+        "x-test-client-ip": `10.9.${i}.1`,
+      },
     });
     statuses.push(response.status());
   }
