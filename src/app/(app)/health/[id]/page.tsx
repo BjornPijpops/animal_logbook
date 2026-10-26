@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getAnimalDeps, listAnimals } from "@/features/animals";
 import { AttachmentManager, MAX_ATTACHMENTS_PER_OWNER } from "@/features/files";
@@ -13,6 +14,7 @@ import {
   getMedicalRecord,
   MedicalForm,
 } from "@/features/medical";
+import { findMedicationForRecord, getMedicationDeps } from "@/features/medications";
 import { getEnv } from "@/lib/env";
 
 export default async function HealthRecordPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +32,9 @@ export default async function HealthRecordPage({ params }: { params: Promise<{ i
     : [];
   const animalName = options.find((o) => o.id === record.animalId)?.name;
   const type = asRecordType(record.type);
+  const linked =
+    type === "medication" ? await findMedicationForRecord(getMedicationDeps(), ctx, id) : null;
+  const medicationId = linked?.ok ? (linked.value?.id ?? null) : null;
   const day = (value: string) =>
     format.dateTime(new Date(`${value}T12:00:00Z`), { dateStyle: "medium", timeZone: "UTC" });
 
@@ -63,7 +68,27 @@ export default async function HealthRecordPage({ params }: { params: Promise<{ i
         }))}
       />
 
-      {canWrite ? (
+      {type === "medication" && medicationId ? (
+        <Card className="space-y-2">
+          <p className="text-sm">{t("managedByMedications")}</p>
+          <Link href={`/medications/${medicationId}`} className="text-primary text-sm underline">
+            {t("openMedication")}
+          </Link>
+        </Card>
+      ) : null}
+      {type === "medication" && !medicationId && canWrite ? (
+        <Card className="space-y-2">
+          <p className="text-sm">{t("placeholderHint")}</p>
+          <Link
+            href={`/medications/new?fromRecord=${id}`}
+            className={buttonVariants({ variant: "secondary" })}
+          >
+            {t("createMedicationFromRecord")}
+          </Link>
+        </Card>
+      ) : null}
+
+      {canWrite && !medicationId ? (
         <Card className="space-y-4">
           <h2 className="text-lg font-semibold">{t("save")}</h2>
           <MedicalForm
@@ -87,7 +112,7 @@ export default async function HealthRecordPage({ params }: { params: Promise<{ i
         </Card>
       ) : null}
 
-      {canWrite ? (
+      {canWrite && !medicationId ? (
         <Card>
           <DeleteMedicalRecordButton recordId={id} />
         </Card>

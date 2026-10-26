@@ -43,6 +43,13 @@
       "when": 1793011018295,
       "tag": "0005_medications_reminders_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793013859862,
+      "tag": "0006_expenses_manual",
+      "breakpoints": true
     }
   ]
 }

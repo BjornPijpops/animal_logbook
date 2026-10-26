@@ -31,7 +31,7 @@ export function expenseCategoryFor(type: AppointmentType): ExpenseCategory {
     case "medication":
       return "medication";
     case "training":
-      return "other";
+      return "training";
   }
 }
 

@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { getDb } from "@/db/client";
@@ -7,8 +8,10 @@ import { isValidTimeZone } from "@/lib/dates";
 import { getEnv } from "@/lib/env";
 import { errorReporter } from "@/lib/error-reporter";
 import { authIpOptions, proxyTrustFromEnv } from "@/lib/security/client-ip";
+import { createPostgresRateLimiter } from "@/lib/security/rate-limit";
 import { smtpMailer, type Mailer } from "@/lib/notify/email";
 import { PASSWORD_MIN_LENGTH } from "../schemas";
+import { accountAllowed } from "./account-limit";
 import { resetPasswordEmail, verificationEmail } from "./emails";
 import { buildSocialProviders } from "./providers";
 
@@ -75,6 +78,16 @@ function createAuth(mailer: Mailer) {
           },
         },
       },
+    },
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        const limiter = createPostgresRateLimiter(getDb());
+        if (!(await accountAllowed(limiter, ctx.path, ctx.body))) {
+          throw new APIError("TOO_MANY_REQUESTS", {
+            message: "Too many attempts for this account. Try again later.",
+          });
+        }
+      }),
     },
     rateLimit: { enabled: true, storage: "database", window: 60, max: 100 },
     socialProviders: buildSocialProviders(),

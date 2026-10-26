@@ -2,6 +2,7 @@ export { getMedicationDeps } from "./server/deps";
 export {
   createMedication,
   deleteMedication,
+  findMedicationForRecord,
   getMedication,
   listDeletedMedications,
   listDueDoses,

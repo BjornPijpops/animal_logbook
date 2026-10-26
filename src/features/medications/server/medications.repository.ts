@@ -135,6 +135,14 @@ export function createMedicationsRepository(db: DbExecutor, householdId: string)
       return rows.map(toView);
     },
 
+    async idForRecord(recordId: string): Promise<string | null> {
+      const [row] = await db
+        .select({ id: medications.id })
+        .from(medications)
+        .where(and(inHousehold, eq(medications.medicalRecordId, recordId)));
+      return row?.id ?? null;
+    },
+
     async setDosage(id: string, dosage: string): Promise<void> {
       await db
         .update(medications)

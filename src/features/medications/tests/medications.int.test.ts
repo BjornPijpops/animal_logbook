@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import { medicalRecords } from "@/db/schema";
 import { ctxFor, seedAnimal } from "@/features/animals/tests/helpers";
 import { createRemindersRepository } from "@/features/notifications";
-import { deleteMedicalRecord, restoreMedicalRecord, updateMedicalRecord } from "@/features/medical";
+import {
+  createMedicalRecord,
+  deleteMedicalRecord,
+  restoreMedicalRecord,
+  updateMedicalRecord,
+} from "@/features/medical";
+import { recordInput } from "@/features/medical/tests/helpers";
 import { addMember, createUser, seedTwoHouseholds, setupTestDatabase } from "@/test/db";
 import { eq } from "drizzle-orm";
 import type { MedicationInput } from "../schemas";
@@ -307,5 +313,66 @@ describe("medications: linked medical record", () => {
     await deleteMedication(w.deps, w.ctxA, w.id);
     results.push(await restoreMedicalRecord(medicalDeps, w.ctxA, recordId));
     expect(results.every((r) => !r.ok && r.error.code === "conflict")).toBe(true);
+  });
+});
+
+describe("medications: adopting a placeholder record", () => {
+  async function placeholder(w: Awaited<ReturnType<typeof world>>, type: "medication" | "illness") {
+    const created = await createMedicalRecord(
+      { db },
+      w.ctxA,
+      recordInput(w.animalA, { type, title: "Old pills", nextDueOn: "", startedOn: "2025-05-01" }),
+    );
+    if (!created.ok) throw new Error("setup failed");
+    return created.value.id;
+  }
+
+  it("links the existing record instead of creating a second one", async () => {
+    const w = await world();
+    const recordId = await placeholder(w, "medication");
+    const result = await createMedication(
+      w.deps,
+      w.ctxA,
+      input(w.animalA, { name: "Old pills", startedOn: "2025-05-01" }),
+      recordId,
+    );
+    expect(result.ok).toBe(true);
+    const detail = result.ok ? await getMedication(w.deps, w.ctxA, result.value.id) : null;
+    expect(detail?.ok && detail.value.medication.medicalRecordId).toBe(recordId);
+    const records = await db.select().from(medicalRecords).where(eq(medicalRecords.id, recordId));
+    expect(records).toHaveLength(1);
+    expect(await openDueAts(w.householdA.id, result.ok ? result.value.id : "")).not.toEqual([]);
+  });
+
+  it("rejects a second medication on the same record, other types and other households", async () => {
+    const w = await world();
+    const recordId = await placeholder(w, "medication");
+    expect((await createMedication(w.deps, w.ctxA, input(w.animalA), recordId)).ok).toBe(true);
+    expect(await createMedication(w.deps, w.ctxA, input(w.animalA), recordId)).toMatchObject({
+      ok: false,
+      error: { code: "conflict" },
+    });
+    const illness = await placeholder(w, "illness");
+    expect(await createMedication(w.deps, w.ctxA, input(w.animalA), illness)).toMatchObject({
+      ok: false,
+      error: { code: "not_found" },
+    });
+    const fresh = await placeholder(w, "medication");
+    expect(await createMedication(w.deps, w.ctxB, input(w.animalB), fresh)).toMatchObject({
+      ok: false,
+      error: { code: "not_found" },
+    });
+  });
+
+  it("is not allowed for viewers", async () => {
+    const w = await world();
+    const recordId = await placeholder(w, "medication");
+    const viewer = await createUser(db);
+    await addMember(db, w.householdA.id, viewer.id, "viewer");
+    const ctx = ctxFor(viewer, w.householdA, "viewer", "UTC");
+    expect(await createMedication(w.deps, ctx, input(w.animalA), recordId)).toMatchObject({
+      ok: false,
+      error: { code: "forbidden" },
+    });
   });
 });
