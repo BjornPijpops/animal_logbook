@@ -17,6 +17,7 @@ import { animals } from "./animals";
 import { users } from "./auth";
 import { appointments } from "./care";
 import { households } from "./households";
+import { foodPlans } from "./food";
 import { medications } from "./medication";
 
 export const expenseCategory = pgEnum("expense_category", [
@@ -49,7 +50,7 @@ export const expenses = pgTable(
     // At most one expense per appointment keeps appointment costs from being counted twice.
     appointmentId: uuid("appointment_id"),
     medicationId: uuid("medication_id"),
-    // Phase 7 adds the food_plans table and the foreign key; the column exists so links can start.
+    // A purchase logged from a food plan. Plans are only soft-deleted, so the link survives.
     foodPlanId: uuid("food_plan_id"),
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
@@ -73,6 +74,10 @@ export const expenses = pgTable(
     foreignKey({
       columns: [t.medicationId, t.householdId],
       foreignColumns: [medications.id, medications.householdId],
+    }),
+    foreignKey({
+      columns: [t.foodPlanId, t.householdId],
+      foreignColumns: [foodPlans.id, foodPlans.householdId],
     }),
     check("expenses_amount_check", sql`${t.amountMinor} >= 0`),
     index("expenses_household_date_idx")

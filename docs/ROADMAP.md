@@ -38,10 +38,10 @@ Schedules (times/day, weekdays, every N days, as-needed), dose log, Web Push + e
 Manual entry with receipts, auto-link from appointments (medication link now, food link in Phase 7), monthly/annual/per-category views with table alternatives, CSV export. Decisions: ADR 0012.
 **Accept**: no double counting between appointment cost and expense; totals correct per currency; CSV round-trips; money never uses floats.
 
-## Phase 7: Food tracking
+## Phase 7: Food tracking (done)
 
-Food plans, schedule, daily quantity, diet-change timeline over weight chart, allergy-investigation view.
-**Accept**: overlapping plans supported; timeline overlays plans on weight; investigation view lists food changes preceding allergy/illness records.
+Food plans, meal schedule with derived daily quantity, diet-change history, food markers on the weight chart, allergy-investigation view, "log a purchase" into expenses. Decisions: ADR 0013.
+**Accept**: overlapping plans supported; weight chart marks plan starts and ends with a table alternative; investigation view lists food changes next to allergy/illness/injury records without implying cause; no dietary advice.
 
 ## Phase 8: Dashboard + hardening
 

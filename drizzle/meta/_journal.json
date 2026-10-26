@@ -50,6 +50,13 @@
       "when": 1793013859862,
       "tag": "0006_expenses_manual",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793017800371,
+      "tag": "0007_food_plans",
+      "breakpoints": true
     }
   ]
 }

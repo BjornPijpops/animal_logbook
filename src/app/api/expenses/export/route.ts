@@ -19,12 +19,13 @@ export async function GET(request: Request): Promise<Response> {
   const csv = await exportExpensesCsv(getExpenseDeps(), ctx.value, filter);
   if (!csv.ok) return new Response("Forbidden", { status: 403 });
   const name = filter.year === null ? "expenses" : `expenses-${filter.year}`;
-  return new Response(csv.value, {
+  return new Response(csv.value.csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${name}.csv"`,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
+      ...(csv.value.truncated ? { "X-Export-Truncated": "true" } : {}),
     },
   });
 }

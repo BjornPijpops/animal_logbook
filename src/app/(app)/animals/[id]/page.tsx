@@ -11,6 +11,7 @@ import {
   PhotoManager,
   WeightPanel,
 } from "@/features/animals";
+import { foodMarkersForAnimal, getFoodDeps } from "@/features/food";
 import { can, requireHouseholdAccess } from "@/features/households";
 
 const linkClass =
@@ -26,6 +27,7 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
   const { animal, photos, weights } = result.value;
   const unit = await getPreferredWeightUnit(deps, user.id);
   const canWrite = can(ctx.role, "data:write");
+  const foodChanges = await foodMarkersForAnimal(getFoodDeps(), ctx, id);
 
   return (
     <div className="space-y-6">
@@ -44,6 +46,9 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
         </Link>
         <Link href={`/timeline?animal=${id}`} className={linkClass}>
           {t("healthLink")}
+        </Link>
+        <Link href={`/food?animal=${id}`} className={linkClass}>
+          {t("foodLink")}
         </Link>
         <Link href={`/documents?animal=${id}`} className={linkClass}>
           {t("documentsLink")}
@@ -80,6 +85,7 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
         unit={unit}
         canWrite={canWrite}
         today={new Date().toISOString().slice(0, 10)}
+        foodChanges={foodChanges.map(({ date, kind, label }) => ({ date, kind, label }))}
         entries={weights.map((w) => ({
           id: w.id,
           measuredAt: w.measuredAt.toISOString(),

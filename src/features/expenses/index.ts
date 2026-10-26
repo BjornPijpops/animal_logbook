@@ -10,12 +10,13 @@ export {
   type MonthTotal,
   type YearTotal,
 } from "./server/expenses.repository";
-export { buildExpensesCsv, CSV_BOM, csvCell } from "./server/csv";
+export { buildExpensesCsv, CSV_BOM, csvCell, csvNumberCell } from "./server/csv";
 export { getExpenseDeps } from "./server/deps";
 export {
   createExpense,
   deleteExpense,
   exportExpensesCsv,
+  EXPORT_LIMIT,
   EXPENSES_PAGE_SIZE,
   getExpense,
   getExpenseSummary,

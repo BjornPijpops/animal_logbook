@@ -49,7 +49,8 @@ describe("migration 0005_medications_reminders_delivery", () => {
         ).rows.map((row) => row.table_name);
       expect(await tables()).toContain("medication_doses");
 
-      // 0006 depends on 0005, so it is reversed first.
+      // Later migrations depend on 0005, so they are reversed first.
+      await runAll(pool, "./drizzle/down/0007_food_plans.down.sql");
       await runAll(pool, "./drizzle/down/0006_expenses_manual.down.sql");
       await runAll(pool, `./drizzle/down/${MIGRATION}.down.sql`);
       const after = await tables();
@@ -71,6 +72,7 @@ describe("migration 0005_medications_reminders_delivery", () => {
 
       await runAll(pool, `./drizzle/${MIGRATION}.sql`);
       await runAll(pool, "./drizzle/0006_expenses_manual.sql");
+      await runAll(pool, "./drizzle/0007_food_plans.sql");
       expect(await tables()).toContain("medication_doses");
     });
   });
@@ -148,6 +150,55 @@ describe("migration 0006_expenses_manual", () => {
       await runAll(pool, "./drizzle/0006_expenses_manual.sql");
       const row = await pool.query<{ category: string }>("SELECT category::text FROM expenses");
       expect(row.rows[0]?.category).toBe("training");
+    });
+  });
+});
+
+describe("migration 0007_food_plans", () => {
+  const tableNames = async (pool: Pool) =>
+    (
+      await pool.query<{ table_name: string }>(
+        "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
+      )
+    ).rows.map((row) => row.table_name);
+
+  it("adds food tables and the expense link, reverses cleanly and clears orphans on re-apply", async () => {
+    await withScratchDatabase(async (pool) => {
+      expect(await tableNames(pool)).toEqual(expect.arrayContaining(["food_plans", "food_meals"]));
+
+      await runAll(pool, "./drizzle/down/0007_food_plans.down.sql");
+      expect(await tableNames(pool)).not.toContain("food_plans");
+      const type = await pool.query("SELECT 1 FROM pg_type WHERE typname = 'food_type'");
+      expect(type.rowCount).toBe(0);
+
+      const user = await pool.query<{ id: string }>(
+        "INSERT INTO users (name, email, email_verified) VALUES ('U', 'u3@example.test', true) RETURNING id",
+      );
+      const household = await pool.query<{ id: string }>(
+        "INSERT INTO households (name, created_by) VALUES ('H', $1) RETURNING id",
+        [user.rows[0]?.id],
+      );
+      const householdId = household.rows[0]?.id;
+      await pool.query(
+        `INSERT INTO expenses (household_id, category, incurred_on, amount_minor, currency, description, food_plan_id)
+         VALUES ($1, 'food', '2025-01-01', 500, 'EUR', 'Orphan', gen_random_uuid())`,
+        [householdId],
+      );
+
+      await runAll(pool, "./drizzle/0007_food_plans.sql");
+      const row = await pool.query<{ food_plan_id: string | null; amount_minor: number }>(
+        "SELECT food_plan_id, amount_minor FROM expenses",
+      );
+      expect(row.rows[0]).toEqual({ food_plan_id: null, amount_minor: 500 });
+      expect(await tableNames(pool)).toContain("food_meals");
+
+      await expect(
+        pool.query(
+          `INSERT INTO expenses (household_id, category, incurred_on, amount_minor, currency, description, food_plan_id)
+           VALUES ($1, 'food', '2025-01-01', 1, 'EUR', 'Bad link', gen_random_uuid())`,
+          [householdId],
+        ),
+      ).rejects.toThrow();
     });
   });
 });

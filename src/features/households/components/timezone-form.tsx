@@ -26,6 +26,7 @@ export function TimezoneForm({ timezone, zones }: { timezone: string; zones: str
       <h2 className="text-lg font-semibold">{t("title")}</h2>
       {status === "saved" ? <Alert tone="success">{t("saved")}</Alert> : null}
       {status === "error" ? <Alert tone="error">{t("error")}</Alert> : null}
+      <p className="border-border bg-muted rounded-lg border p-3 text-sm">{t("warning")}</p>
       <Field id="household-timezone" label={t("label")} hint={t("hint")}>
         {(aria) => (
           <Select {...aria} value={value} onChange={(event) => setValue(event.target.value)}>

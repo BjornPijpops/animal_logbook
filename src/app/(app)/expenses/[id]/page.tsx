@@ -57,6 +57,15 @@ export default async function ExpensePage({ params }: { params: Promise<{ id: st
         </Card>
       ) : null}
 
+      {expense.foodPlanId ? (
+        <Link
+          href={`/food/${expense.foodPlanId}`}
+          className="text-primary inline-block text-sm underline"
+        >
+          {t("openFoodPlan")}
+        </Link>
+      ) : null}
+
       {!manual ? (
         <Card className="space-y-2">
           <h2 className="text-lg font-semibold">{t("linkedTitle")}</h2>

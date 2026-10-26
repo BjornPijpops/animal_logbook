@@ -42,6 +42,7 @@ export type ManualExpenseValues = {
   description: string;
   notes: string | null;
   medicationId: string | null;
+  foodPlanId?: string | null;
 };
 
 // `year` is a calendar year of the household-local `incurred_on` date; null means all years.

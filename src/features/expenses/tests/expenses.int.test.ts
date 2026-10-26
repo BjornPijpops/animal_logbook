@@ -338,7 +338,7 @@ describe("tenant isolation: expenses", () => {
     const list = await listExpenses(deps, w.ctxB, ALL_TIME, 1);
     expect(list.ok && list.value.total).toBe(0);
     const csv = await exportExpensesCsv(deps, w.ctxB, ALL_TIME);
-    expect(csv.ok && csv.value).not.toContain("Kibble");
+    expect(csv.ok && csv.value.csv).not.toContain("Kibble");
     const repoB = createExpensesRepository(db, w.householdB.id);
     expect(await repoB.years()).toEqual([]);
   });
@@ -367,6 +367,24 @@ describe("tenant isolation: expenses", () => {
   });
 });
 
+describe("csv export cap", () => {
+  it("tells the user when the export is cut short instead of truncating silently", async () => {
+    const w = await world();
+    for (let i = 0; i < 4; i += 1) {
+      await createExpense(deps, w.ctxA, expenseInput({ description: `Item ${i}` }));
+    }
+    const capped = await exportExpensesCsv({ db, exportLimit: 3 }, w.ctxA, ALL_TIME);
+    if (!capped.ok) throw new Error("export failed");
+    expect(capped.value.truncated).toBe(true);
+    expect(capped.value.csv.slice(1).startsWith("# Export truncated: only the first 3")).toBe(true);
+    expect(capped.value.csv.match(/Item \d/g)).toHaveLength(3);
+
+    const full = await exportExpensesCsv({ db, exportLimit: 4 }, w.ctxA, ALL_TIME);
+    expect(full.ok && full.value.truncated).toBe(false);
+    expect(full.ok && full.value.csv).not.toContain("Export truncated");
+  });
+});
+
 describe("viewers", () => {
   it("can read and export their household's expenses but not write", async () => {
     const w = await world();
@@ -377,7 +395,7 @@ describe("viewers", () => {
     const list = await listExpenses(deps, w.ctxViewer, ALL_TIME, 1);
     expect(list.ok && list.value.total).toBeGreaterThan(0);
     const csv = await exportExpensesCsv(deps, w.ctxViewer, ALL_TIME);
-    expect(csv.ok && csv.value).toContain("Kibble");
+    expect(csv.ok && csv.value.csv).toContain("Kibble");
 
     expect(code(await createExpense(deps, w.ctxViewer, expenseInput()))).toBe("forbidden");
     expect(code(await updateExpense(deps, w.ctxViewer, id, expenseInput()))).toBe("forbidden");

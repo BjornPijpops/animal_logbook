@@ -69,3 +69,9 @@ Ideas for after V1. Optional paid adapters may be listed here but must never be 
 - Per-reminder lead time and snooze.
 - In-app notification inbox (the `notifications` table is still unused).
 - A real-browser push E2E against a local push service.
+
+## From Phase 7
+
+- Feeding reminders (meal times). Not built in V1; the meal schedule already stores times of day.
+- Transition helpers for gradual diet changes (V1 only stores a free-text note).
+- Weight-versus-food correlation statistics. V1 only shows events side by side.
