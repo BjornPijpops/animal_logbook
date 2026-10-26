@@ -178,14 +178,6 @@ export function AnimalForm({ animalId, defaults, hints }: Props) {
       </Field>
 
       <Field
-        id="allergyInfo"
-        label={t("fields.allergyInfo")}
-        hint={t("hints.allergyInfo")}
-        error={fieldError("allergyInfo")}
-      >
-        {(aria) => <Textarea {...aria} maxLength={2000} {...register("allergyInfo")} />}
-      </Field>
-      <Field
         id="emergencyNotes"
         label={t("fields.emergencyNotes")}
         hint={t("hints.emergencyNotes")}

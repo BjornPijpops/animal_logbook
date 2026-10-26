@@ -10,6 +10,8 @@ export {
   inviteMemberAction,
   removeMemberAction,
   revokeInviteAction,
+  updateTimezoneAction,
 } from "./server/actions";
+export { TimezoneForm } from "./components/timezone-form";
 export { HouseholdPanel } from "./components/household-panel";
 export { AcceptInviteButton } from "./components/accept-invite-button";

@@ -100,6 +100,15 @@
   },
   "household": {
     "title": "Household",
+    "timezone": {
+      "title": "Time zone",
+      "label": "Household time zone",
+      "hint": "Appointment times are shown in this zone and reminders are sent at 09:00 in it.",
+      "current": "Time zone: {zone}",
+      "save": "Save time zone",
+      "saved": "Time zone saved.",
+      "error": "Could not save the time zone."
+    },
     "members": "Members",
     "you": "(you)",
     "remove": "Remove",
@@ -197,12 +206,10 @@
       "chipNumber": "Chip number",
       "registrationNumber": "Registration number",
       "sterilizedLabel": "Sterilized",
-      "allergyInfo": "Allergies",
       "emergencyNotes": "Emergency notes"
     },
     "hints": {
       "breed": "Pick a suggestion or type any breed.",
-      "allergyInfo": "Information you enter yourself. It is not veterinary advice.",
       "emergencyNotes": "Shown on the emergency card, e.g. your vet's phone number."
     },
     "save": "Save animal",
@@ -365,5 +372,63 @@
       "conflict": "That conflicts with existing data.",
       "rate_limited": "Too many attempts. Please wait a moment."
     }
+  },
+  "medical": {
+    "title": "Health record",
+    "add": "Add health record",
+    "newTitle": "Add a health record",
+    "viewerNote": "You have read-only access to this household.",
+    "disclaimer": "Information you enter yourself. It is not veterinary advice.",
+    "types": {
+      "vaccination": "Vaccination",
+      "surgery": "Surgery",
+      "illness": "Illness",
+      "injury": "Injury",
+      "allergy": "Allergy",
+      "medication": "Medication"
+    },
+    "severity": {
+      "mild": "Mild",
+      "moderate": "Moderate",
+      "severe": "Severe"
+    },
+    "fields": {
+      "animal": "Animal",
+      "type": "Type",
+      "date": "Date",
+      "startedOn": "Start date",
+      "endedOn": "End date",
+      "severity": "Severity",
+      "nextDueOn": "Next due",
+      "notes": "Notes",
+      "none": "Not specified"
+    },
+    "titleLabel": {
+      "vaccination": "Vaccine",
+      "surgery": "Procedure",
+      "illness": "Diagnosis",
+      "injury": "Injury",
+      "allergy": "Allergen",
+      "medication": "Medication name"
+    },
+    "hints": {
+      "nextDueOn": "A reminder is created for this date.",
+      "endedOn": "Leave empty if it is ongoing.",
+      "medication": "Medication schedules and dose logs arrive in a later update. For now this is a note."
+    },
+    "errors": {
+      "not_applicable": "This field does not apply to this type.",
+      "before_start": "This date cannot be before the start date.",
+      "validation": "Please check the highlighted fields.",
+      "not_found": "That record or animal could not be found.",
+      "forbidden": "You do not have permission to do that.",
+      "other": "Something went wrong. Please try again."
+    },
+    "save": "Save record",
+    "create": "Add record",
+    "saved": "Saved.",
+    "delete": "Delete record",
+    "deleteConfirm": "Delete this record? You can restore it from the timeline.",
+    "restore": "Restore"
   }
 }

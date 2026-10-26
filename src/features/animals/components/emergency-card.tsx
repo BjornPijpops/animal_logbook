@@ -7,6 +7,7 @@ import type { EmergencyCard as EmergencyCardData } from "../server/service";
 export function EmergencyCard({ card }: { card: EmergencyCardData }) {
   const t = useTranslations("animals");
   const te = useTranslations("animals.emergency");
+  const tm = useTranslations("medical");
   const format = useFormatter();
   const { animal } = card;
 
@@ -57,7 +58,19 @@ export function EmergencyCard({ card }: { card: EmergencyCardData }) {
         <h3 id="allergies-heading" className="font-semibold">
           {te("allergies")}
         </h3>
-        <p className="whitespace-pre-wrap">{animal.allergyInfo ?? te("none")}</p>
+        {card.allergies.length === 0 ? (
+          <p>{te("none")}</p>
+        ) : (
+          <ul className="list-disc pl-5">
+            {card.allergies.map((allergy) => (
+              <li key={allergy.title}>
+                {allergy.severity
+                  ? `${allergy.title} (${tm(`severity.${allergy.severity}`)})`
+                  : allergy.title}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {animal.emergencyNotes ? (

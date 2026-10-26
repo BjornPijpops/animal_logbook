@@ -3,7 +3,7 @@ import type { Mailer } from "@/lib/notify/email";
 import { err, ok, type Result } from "@/lib/result";
 import type { RateLimiter } from "@/lib/security/rate-limit";
 import { generateToken, hashToken } from "@/lib/security/tokens";
-import { inviteMemberSchema, uuidSchema } from "../schemas";
+import { inviteMemberSchema, timezoneSchema, uuidSchema } from "../schemas";
 import { can } from "./can";
 import type { Ctx } from "./context";
 import {
@@ -11,6 +11,7 @@ import {
   createInvitesRepository,
   type InviteRow,
 } from "./invites.repository";
+import { setHouseholdTimezone } from "./households.repository";
 import { createMembersRepository, type MemberRow } from "./members.repository";
 
 export type HouseholdDeps = {
@@ -134,4 +135,16 @@ export async function acceptInvite(
     await members.add(user.id, invite.role);
     return ok({ householdId: invite.householdId });
   });
+}
+
+export async function updateHouseholdTimezone(
+  deps: Pick<HouseholdDeps, "db">,
+  ctx: Ctx,
+  input: unknown,
+): Promise<Result<{ timezone: string }>> {
+  if (!can(ctx.role, "members:manage")) return err("forbidden", "Not allowed");
+  const parsed = timezoneSchema.safeParse(input);
+  if (!parsed.success) return err("validation", "Unknown time zone");
+  await setHouseholdTimezone(deps.db, ctx.householdId, parsed.data);
+  return ok({ timezone: parsed.data });
 }

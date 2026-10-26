@@ -50,7 +50,6 @@ export const animals = pgTable(
     chipNumber: text("chip_number"),
     registrationNumber: text("registration_number"),
     sterilized: boolean("sterilized"),
-    allergyInfo: text("allergy_info"),
     emergencyNotes: text("emergency_notes"),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     ...timestamps,

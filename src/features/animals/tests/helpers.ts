@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import { randomUUID } from "node:crypto";
 import type { Ctx } from "@/features/households";
-import type { AnimalDeps } from "../server/service";
+import { createAnimal, type AnimalDeps } from "../server/service";
 import type { AnimalInput } from "../schemas";
 import type { Database } from "@/db/client";
 import { createMemoryStorage } from "@/test/db";
@@ -19,10 +19,17 @@ export function makeAnimalDeps(db: Database, now?: () => Date) {
 
 export function ctxFor(
   user: { id: string },
-  household: { id: string; name: string },
+  household: { id: string; name: string; timezone?: string },
   role: Ctx["role"],
+  timezone = household.timezone ?? "UTC",
 ): Ctx {
-  return { userId: user.id, householdId: household.id, householdName: household.name, role };
+  return {
+    userId: user.id,
+    householdId: household.id,
+    householdName: household.name,
+    timezone,
+    role,
+  };
 }
 
 export function animalInput(overrides: Partial<AnimalInput> = {}): AnimalInput {
@@ -38,7 +45,6 @@ export function animalInput(overrides: Partial<AnimalInput> = {}): AnimalInput {
     chipNumber: "981000000000001",
     registrationNumber: "",
     sterilized: "yes",
-    allergyInfo: "Chicken",
     emergencyNotes: "Call the vet on 555-0100",
     ...overrides,
   };
@@ -57,4 +63,10 @@ export async function jpegWithGps(): Promise<Buffer> {
       },
     })
     .toBuffer();
+}
+
+export async function seedAnimal(db: Database, ctx: Ctx, name = "Rex"): Promise<string> {
+  const created = await createAnimal(makeAnimalDeps(db).deps, ctx, animalInput({ name }));
+  if (!created.ok) throw new Error(`animal setup failed: ${created.error.message}`);
+  return created.value.id;
 }

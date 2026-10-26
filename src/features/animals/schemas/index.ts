@@ -60,7 +60,6 @@ export const animalInputSchema = z
     chipNumber: text(32),
     registrationNumber: text(64),
     sterilized: z.enum(STERILIZED),
-    allergyInfo: text(2000),
     emergencyNotes: text(2000),
   })
   .refine((v) => v.species !== "other" || v.speciesOther.length > 0, {
@@ -110,6 +109,5 @@ export const EMPTY_ANIMAL_INPUT: AnimalInput = {
   chipNumber: "",
   registrationNumber: "",
   sterilized: "unknown",
-  allergyInfo: "",
   emergencyNotes: "",
 };
