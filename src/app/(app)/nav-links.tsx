@@ -3,6 +3,7 @@
 import {
   CalendarClock,
   FileText,
+  Utensils,
   Wallet,
   Home,
   PawPrint,
@@ -21,6 +22,7 @@ const items = [
   { href: "/timeline", key: "timeline", icon: CalendarClock },
   { href: "/medications", key: "medications", icon: Pill },
   { href: "/expenses", key: "expenses", icon: Wallet },
+  { href: "/food", key: "food", icon: Utensils },
   { href: "/documents", key: "documents", icon: FileText },
   { href: "/household", key: "household", icon: Users },
   { href: "/settings", key: "settings", icon: Settings },

@@ -10,6 +10,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -38,15 +39,21 @@ export type WeightView = {
   note: string | null;
 };
 
+// Supplied by the page so this feature does not depend on the food feature.
+export type FoodChangeMarker = { date: string; kind: "started" | "ended"; label: string };
+
 type Props = {
   animalId: string;
   unit: WeightUnit;
   entries: WeightView[];
   today: string;
   canWrite: boolean;
+  foodChanges?: FoodChangeMarker[];
 };
 
-export function WeightPanel({ animalId, unit, entries, today, canWrite }: Props) {
+const dayMs = (date: string) => Date.parse(`${date}T00:00:00Z`);
+
+export function WeightPanel({ animalId, unit, entries, today, canWrite, foodChanges = [] }: Props) {
   const t = useTranslations("animals.weight");
   const ta = useTranslations("animals");
   const tc = useTranslations("common");
@@ -72,6 +79,8 @@ export function WeightPanel({ animalId, unit, entries, today, canWrite }: Props)
 
   const formatDate = (iso: string) =>
     format.dateTime(new Date(iso), { dateStyle: "medium", timeZone: "UTC" });
+  const formatTick = (ms: number) =>
+    format.dateTime(new Date(ms), { dateStyle: "medium", timeZone: "UTC" });
   const formatWeight = (grams: number) => `${fromGrams(grams, unit)} ${unit}`;
 
   async function onSubmit(values: WeightInput) {
@@ -87,7 +96,9 @@ export function WeightPanel({ animalId, unit, entries, today, canWrite }: Props)
 
   const chartData = [...entries]
     .reverse()
-    .map((e) => ({ label: formatDate(e.measuredAt), value: fromGrams(e.weightGrams, unit) }));
+    .map((e) => ({ time: Date.parse(e.measuredAt), value: fromGrams(e.weightGrams, unit) }));
+  const times = [...chartData.map((d) => d.time), ...foodChanges.map((c) => dayMs(c.date))];
+  const domain: [number, number] = [Math.min(...times), Math.max(...times)];
   const latest = entries[0];
 
   return (
@@ -105,14 +116,30 @@ export function WeightPanel({ animalId, unit, entries, today, canWrite }: Props)
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+              <XAxis
+                dataKey="time"
+                type="number"
+                scale="time"
+                domain={domain}
+                tickFormatter={formatTick}
+                tick={{ fontSize: 12 }}
+              />
               <YAxis
                 unit={` ${unit}`}
                 width={64}
                 tick={{ fontSize: 12 }}
                 domain={["auto", "auto"]}
               />
-              <Tooltip />
+              <Tooltip labelFormatter={(value) => formatTick(Number(value))} />
+              {foodChanges.map((change, index) => (
+                <ReferenceLine
+                  key={`${change.date}-${change.kind}-${change.label}`}
+                  x={dayMs(change.date)}
+                  stroke="var(--muted-foreground)"
+                  strokeDasharray="4 4"
+                  label={{ value: String(index + 1), position: "top", fontSize: 12 }}
+                />
+              ))}
               <Line
                 type="monotone"
                 dataKey="value"
@@ -123,6 +150,40 @@ export function WeightPanel({ animalId, unit, entries, today, canWrite }: Props)
               />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+      ) : null}
+
+      {foodChanges.length > 0 ? (
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold">{t("foodChanges.title")}</h3>
+          <p className="text-muted-foreground text-sm">{t("foodChanges.note")}</p>
+          <table className="w-full text-sm">
+            <caption className="sr-only">{t("foodChanges.caption")}</caption>
+            <thead>
+              <tr className="text-left">
+                <th scope="col" className="py-1 pr-2 font-medium">
+                  {t("foodChanges.marker")}
+                </th>
+                <th scope="col" className="py-1 pr-2 font-medium">
+                  {t("columnDate")}
+                </th>
+                <th scope="col" className="py-1 font-medium">
+                  {t("foodChanges.change")}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-border divide-y">
+              {foodChanges.map((change, index) => (
+                <tr key={`${change.date}-${change.kind}-${change.label}`}>
+                  <td className="py-1 pr-2">{index + 1}</td>
+                  <td className="py-1 pr-2">{formatDate(`${change.date}T00:00:00Z`)}</td>
+                  <td className="py-1 break-words">
+                    {t(`foodChanges.${change.kind}`, { label: change.label })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : null}
 
