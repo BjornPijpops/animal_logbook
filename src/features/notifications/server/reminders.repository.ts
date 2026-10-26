@@ -1,4 +1,4 @@
-import { and, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, ne, notInArray, sql } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { reminders, reminderSource } from "@/db/schema";
 
@@ -64,6 +64,56 @@ export function createRemindersRepository(db: DbExecutor, householdId: string) {
           set: { title: desired.title, animalId: desired.animalId, cancelledAt: null },
           setWhere: isNull(reminders.doneAt),
         });
+    },
+
+    // Several reminders per source (one per scheduled dose): inside [from, to) the open reminders
+    // become exactly `dueAts`. Done and expired rows are history and never revived.
+    async reconcile(
+      key: ReminderSourceKey,
+      range: { from: Date; to: Date },
+      desired: { dueAts: Date[]; animalId: string | null; title: string },
+    ): Promise<void> {
+      const open = and(
+        forSource(key),
+        isNull(reminders.doneAt),
+        isNull(reminders.cancelledAt),
+        isNull(reminders.expiredAt),
+        gte(reminders.dueAt, range.from),
+      );
+      await db
+        .update(reminders)
+        .set({ cancelledAt: sql`now()` })
+        .where(
+          and(
+            open,
+            desired.dueAts.length > 0 ? notInArray(reminders.dueAt, desired.dueAts) : undefined,
+          ),
+        );
+      const rows = desired.dueAts
+        .filter((dueAt) => dueAt >= range.from && dueAt < range.to)
+        .map((dueAt) => ({
+          householdId,
+          ...key,
+          animalId: desired.animalId,
+          title: desired.title,
+          dueAt,
+        }));
+      if (rows.length === 0) return;
+      await db
+        .insert(reminders)
+        .values(rows)
+        .onConflictDoUpdate({
+          target: [reminders.sourceType, reminders.sourceId, reminders.dueAt],
+          set: { title: desired.title, animalId: desired.animalId, cancelledAt: null },
+          setWhere: and(isNull(reminders.doneAt), isNull(reminders.expiredAt)),
+        });
+    },
+
+    async markDone(key: ReminderSourceKey, dueAt: Date): Promise<void> {
+      await db
+        .update(reminders)
+        .set({ doneAt: sql`now()` })
+        .where(and(forSource(key), eq(reminders.dueAt, dueAt), isNull(reminders.doneAt)));
     },
 
     async cancel(key: ReminderSourceKey): Promise<void> {

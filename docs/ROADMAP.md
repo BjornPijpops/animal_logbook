@@ -45,5 +45,5 @@ Food plans, schedule, daily quantity, diet-change timeline over weight chart, al
 
 ## Phase 8: Dashboard + hardening
 
-Per-animal and household dashboards (upcoming, overdue vaccinations, low medication), GDPR export (JSON + zip) and account deletion, performance and security pass, full E2E suite, `Dockerfile` + `docker-compose.prod.yml` + deployment guide.
-**Accept**: LCP < 2.5s on throttled mobile profile; export contains all user data and files; deletion leaves no rows or files; security-reviewer audit has no open high findings; `docker compose -f docker-compose.prod.yml up` works from a clean checkout.
+Per-animal and household dashboards (upcoming, overdue vaccinations, low medication), GDPR export (JSON + zip) and account deletion, performance and security pass, full E2E suite, retention/purge of soft-deleted care rows (appointments, medical records, linked expenses, plus their reminders) past a configurable retention period, mirroring the files purge job, `Dockerfile` + `docker-compose.prod.yml` + deployment guide.
+**Accept**: LCP < 2.5s on throttled mobile profile; export contains all user data and files; deletion leaves no rows or files; soft-deleted care rows past retention are purged idempotently; security-reviewer audit has no open high findings; `docker compose -f docker-compose.prod.yml up` works from a clean checkout.

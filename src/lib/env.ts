@@ -21,6 +21,14 @@ const schema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   SMTP_SECURE: booleanString.default(false),
   EMAIL_FROM: z.string().default("Animal Logbook <no-reply@localhost>"),
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default("mailto:admin@localhost"),
+  ALLOW_LOCAL_PUSH_ENDPOINTS: booleanString.default(false),
+  REMINDER_STALE_WINDOW_HOURS: z.coerce.number().int().min(1).max(168).default(24),
+  DOSE_MISSED_AFTER_HOURS: z.coerce.number().int().min(1).max(72).default(4),
+  TRUSTED_PROXY: booleanString.default(false),
+  TRUSTED_PROXY_CIDRS: z.string().optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });
 

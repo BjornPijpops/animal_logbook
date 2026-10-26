@@ -7,7 +7,7 @@ import { restoreMedicalRecordAction } from "../server/actions";
 
 export function RestoreMedicalRecordButton({ id, title }: { id: string; title: string }) {
   const t = useTranslations("medical");
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   return (
     <>
@@ -18,7 +18,7 @@ export function RestoreMedicalRecordButton({ id, title }: { id: string; title: s
         onClick={() =>
           startTransition(async () => {
             const result = await restoreMedicalRecordAction(id);
-            setFailed(!result.ok);
+            setFailed(result.ok ? null : result.code);
           })
         }
       >
@@ -26,7 +26,7 @@ export function RestoreMedicalRecordButton({ id, title }: { id: string; title: s
       </Button>
       {failed ? (
         <span role="alert" className="text-destructive text-sm">
-          {t("errors.other")}
+          {failed === "conflict" ? t("errors.conflict") : t("errors.other")}
         </span>
       ) : null}
     </>

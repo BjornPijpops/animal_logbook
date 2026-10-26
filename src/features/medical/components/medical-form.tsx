@@ -25,7 +25,7 @@ type Props = {
   recordId?: string;
 };
 
-const ERROR_KEYS = ["validation", "not_found", "forbidden"] as const;
+const ERROR_KEYS = ["validation", "not_found", "forbidden", "conflict"] as const;
 const errorKey = (code: string) => ERROR_KEYS.find((k) => k === code) ?? "other";
 
 export function MedicalForm({ animals, defaults, recordId }: Props) {

@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { can, type Action, type Role } from "./can";
 
 const cases: [Role, Action, boolean][] = [

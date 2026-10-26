@@ -10,6 +10,7 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
+    "worker:once": "tsx --env-file-if-exists=.env.local src/worker/run-once.ts",
     "worker": "tsx --env-file-if-exists=.env.local src/worker/index.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

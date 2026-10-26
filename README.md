@@ -4,7 +4,7 @@ Self-hosted, mobile-first PWA to manage everything about your animals: profiles,
 
 **100% free and open source**: no paid services, no API keys, no external CDNs. See [ADR 0008](docs/adr/0008-free-only-policy.md).
 
-Status: **Phase 4 (appointments + medical history) complete**: appointments with cost (linked to one expense), follow-up reminders, multi-file attachments, typed health records with vaccination linking, allergies derived from records, and a filterable household timeline, plus **Phase 3 (document vault)**: documents with types, expiry, search/filter, validated uploads (magic bytes, quota, optional ClamAV) and protected downloads, plus **Phase 2 (animals)**: animal profiles, photos (EXIF stripped, thumbnails), weight history and chart, printable emergency card with opt-in offline cache, on top of the Phase 1 foundation: sign up/in/out with email verification and password reset, households with member invites and roles, PWA shell, worker heartbeat, CI. See [docs/ROADMAP.md](docs/ROADMAP.md).
+Status: **Phase 5 (medications + reminders) complete**: medications with schedules (daily, weekdays, every N days, as needed), dose log, adherence chart, and reminders delivered by the worker over email and Web Push (see ADR 0011), plus **Phase 4 (appointments + medical history)**: appointments with cost (linked to one expense), follow-up reminders, multi-file attachments, typed health records with vaccination linking, allergies derived from records, and a filterable household timeline, plus **Phase 3 (document vault)**: documents with types, expiry, search/filter, validated uploads (magic bytes, quota, optional ClamAV) and protected downloads, plus **Phase 2 (animals)**: animal profiles, photos (EXIF stripped, thumbnails), weight history and chart, printable emergency card with opt-in offline cache, on top of the Phase 1 foundation: sign up/in/out with email verification and password reset, households with member invites and roles, PWA shell, worker heartbeat, CI. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Quick start
 
@@ -23,6 +23,8 @@ npm run worker                 # in a second terminal
 | Script                                  | Purpose                                                                                |
 | --------------------------------------- | -------------------------------------------------------------------------------------- |
 | `dev`, `build`, `start`                 | Next.js                                                                                |
+| `worker:once`                           | One reminder generate + deliver pass (manual checks and E2E)                           |
+| `vapid`                                 | Generate VAPID keys for Web Push                                                       |
 | `worker`                                | pg-boss worker process                                                                 |
 | `lint`, `typecheck`, `format`           | Quality                                                                                |
 | `test`, `test:unit`, `test:integration` | Vitest (integration needs Docker Postgres)                                             |
@@ -47,6 +49,10 @@ npm run worker                 # in a second terminal
 ## Using Copilot in this repo
 
 Work one phase per chat session. Start with `/plan-phase`, build in slices (`/new-feature-slice`), and finish with `/review-changes` and `/security-checklist`.
+
+### Reminders and push
+
+The worker generates dose reminders and sends them by email (Mailpit in dev) and Web Push. Generate VAPID keys with `npm run vapid` and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` in `.env.local`; without them push stays off and email still works. Reminders older than `REMINDER_STALE_WINDOW_HOURS` (24) are never sent. Reminders are a convenience, not medical advice or a delivery guarantee.
 
 ### Documents and virus scanning
 

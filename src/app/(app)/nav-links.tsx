@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, FileText, Home, PawPrint, Settings, Users } from "lucide-react";
+import { CalendarClock, FileText, Home, PawPrint, Pill, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -10,6 +10,7 @@ const items = [
   { href: "/", key: "home", icon: Home },
   { href: "/animals", key: "animals", icon: PawPrint },
   { href: "/timeline", key: "timeline", icon: CalendarClock },
+  { href: "/medications", key: "medications", icon: Pill },
   { href: "/documents", key: "documents", icon: FileText },
   { href: "/household", key: "household", icon: Users },
   { href: "/settings", key: "settings", icon: Settings },

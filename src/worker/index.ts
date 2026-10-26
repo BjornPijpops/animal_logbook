@@ -5,6 +5,7 @@ import { LocalDiskAdapter } from "@/lib/storage/local-disk";
 import { errorReporter } from "@/lib/error-reporter";
 import { logger } from "@/lib/logger";
 import { registerJobs } from "./jobs";
+import { buildReminderDeps } from "./reminder-deps";
 
 async function main(): Promise<void> {
   const url = process.env.DATABASE_URL;
@@ -14,14 +15,16 @@ async function main(): Promise<void> {
   boss.on("error", (error) => errorReporter.report(error, { source: "pg-boss" }));
   await boss.start();
   const env = getEnv();
+  const { db } = createDatabase(url);
   await registerJobs(
     boss,
     {},
     {
-      db: createDatabase(url).db,
+      db,
       storage: new LocalDiskAdapter(env.UPLOAD_DIR),
       retentionDays: env.FILE_RETENTION_DAYS,
     },
+    buildReminderDeps(db, env),
   );
   logger.info("worker started");
 

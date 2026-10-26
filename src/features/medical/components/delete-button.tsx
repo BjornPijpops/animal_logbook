@@ -8,11 +8,15 @@ import { deleteMedicalRecordAction } from "../server/actions";
 
 export function DeleteMedicalRecordButton({ recordId }: { recordId: string }) {
   const t = useTranslations("medical");
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   return (
     <div className="space-y-2">
-      {failed ? <Alert tone="error">{t("errors.other")}</Alert> : null}
+      {failed ? (
+        <Alert tone="error">
+          {failed === "conflict" ? t("errors.conflict") : t("errors.other")}
+        </Alert>
+      ) : null}
       <Button
         variant="destructive"
         disabled={pending}
@@ -20,7 +24,7 @@ export function DeleteMedicalRecordButton({ recordId }: { recordId: string }) {
           if (!window.confirm(t("deleteConfirm"))) return;
           startTransition(async () => {
             const result = await deleteMedicalRecordAction(recordId);
-            if (result && !result.ok) setFailed(true);
+            if (result && !result.ok) setFailed(result.code);
           });
         }}
       >

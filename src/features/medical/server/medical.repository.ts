@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNotNull, isNull, or, gte } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
-import { animals, medicalRecords } from "@/db/schema";
+import { animals, medicalRecords, medications } from "@/db/schema";
 import type { MedicalRecordType, Severity } from "../schemas";
 
 export type MedicalRecordRow = typeof medicalRecords.$inferSelect;
@@ -116,6 +116,15 @@ export function createMedicalRepository(db: DbExecutor, householdId: string) {
         .where(and(inHousehold, eq(medicalRecords.id, id), isNotNull(medicalRecords.deletedAt)))
         .returning();
       return row ?? null;
+    },
+
+    // Records created by the medications feature are edited there, not as plain records.
+    async isManagedMedication(id: string): Promise<boolean> {
+      const [row] = await db
+        .select({ id: medications.id })
+        .from(medications)
+        .where(and(eq(medications.householdId, householdId), eq(medications.medicalRecordId, id)));
+      return Boolean(row);
     },
 
     async animalExists(animalId: string): Promise<boolean> {

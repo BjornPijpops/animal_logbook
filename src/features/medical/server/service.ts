@@ -16,6 +16,7 @@ export type MedicalDeps = { db: Database; now?: () => Date };
 
 const forbidden = () => err("forbidden", "Not allowed");
 const notFound = () => err("not_found", "Record not found");
+const managedElsewhere = () => err("conflict", "Managed from the medications page");
 const nullable = (value: string) => (value === "" ? null : value);
 
 export function toRecordValues(input: MedicalRecordInput): MedicalRecordValues {
@@ -81,6 +82,7 @@ export async function updateMedicalRecord(
   return deps.db.transaction(async (tx) => {
     const repo = createMedicalRepository(tx, ctx.householdId);
     if (!(await repo.animalExists(values.animalId))) return err("not_found", "Animal not found");
+    if (await repo.isManagedMedication(recordId)) return managedElsewhere();
     const row = await repo.update(recordId, values);
     if (!row) return notFound();
     await syncDueReminder(tx, ctx, row);
@@ -99,6 +101,7 @@ export async function deleteMedicalRecord(
   return deps.db.transaction(async (tx) => {
     const repo = createMedicalRepository(tx, ctx.householdId);
     const row = await repo.find(recordId);
+    if (row && (await repo.isManagedMedication(recordId))) return managedElsewhere();
     if (!row || !(await repo.softDelete(recordId, at))) return notFound();
     await createAttachmentsRepository(tx, ctx.householdId).softDelete(
       { type: "medical_record", id: recordId },
@@ -121,6 +124,7 @@ export async function restoreMedicalRecord(
     const repo = createMedicalRepository(tx, ctx.householdId);
     const deleted = await repo.findDeleted(recordId);
     if (!deleted?.deletedAt) return notFound();
+    if (await repo.isManagedMedication(recordId)) return managedElsewhere();
     const row = await repo.restore(recordId);
     if (!row) return notFound();
     await createAttachmentsRepository(tx, ctx.householdId).restoreWithOwner(

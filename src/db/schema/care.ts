@@ -202,6 +202,8 @@ export const reminders = pgTable(
     claimedAt: timestamp("claimed_at", { withTimezone: true }),
     doneAt: timestamp("done_at", { withTimezone: true }),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    // Set instead of delivering when the reminder is older than the stale window.
+    expiredAt: timestamp("expired_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -212,7 +214,7 @@ export const reminders = pgTable(
     }),
     index("reminders_due_idx")
       .on(t.dueAt)
-      .where(sql`${t.doneAt} is null and ${t.cancelledAt} is null`),
+      .where(sql`${t.doneAt} is null and ${t.cancelledAt} is null and ${t.expiredAt} is null`),
     index("reminders_source_idx").on(t.householdId, t.sourceType, t.sourceId),
   ],
 );

@@ -45,8 +45,8 @@ export default defineConfig([
         "error",
         {
           patterns: featureNames.map((name) => ({
-            regex: `^@/features/${name}/.+`,
-            message: `Import from "@/features/${name}" (its index.ts) instead.`,
+            regex: `^@/features/${name}/(?!worker$).+`,
+            message: `Import from "@/features/${name}" (its index.ts) instead; worker code may use "@/features/${name}/worker".`,
           })),
         },
       ],
