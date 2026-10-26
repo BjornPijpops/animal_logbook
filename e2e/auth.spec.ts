@@ -96,3 +96,19 @@ test("repeated sign-in attempts from one client are rate limited", async ({ requ
   expect(statuses.at(-1)).toBe(429);
   expect(statuses.slice(0, 3)).not.toContain(429);
 });
+
+test("sign-in attempts for one account are limited even from many addresses", async ({
+  request,
+}) => {
+  const email = `target-${Date.now()}@example.test`;
+  const statuses: number[] = [];
+  for (let i = 0; i < 12; i++) {
+    const response = await request.post("/api/auth/sign-in/email", {
+      data: { email, password: PASSWORD },
+      headers: { origin: "http://localhost:3000", "x-forwarded-for": `10.9.${i}.1` },
+    });
+    statuses.push(response.status());
+  }
+  expect(statuses.slice(0, 10)).not.toContain(429);
+  expect(statuses.at(-1)).toBe(429);
+});
