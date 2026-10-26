@@ -117,6 +117,8 @@ export default async function ExpensesPage({
                 aria-current={v === view ? "page" : undefined}
                 className={cn(
                   buttonVariants({ variant: v === view ? "primary" : "secondary" }),
+                  // No colour transition, so axe never samples a half-faded tab after navigating.
+                  "transition-none",
                   v === view && "hover:bg-primary",
                 )}
               >
