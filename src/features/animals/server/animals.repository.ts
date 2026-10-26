@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { animalPhotos, animals } from "@/db/schema";
@@ -9,7 +10,9 @@ export type AnimalValues = Omit<
 >;
 export type AnimalListItem = AnimalRow & { thumbFileId: string | null };
 
-export function createAnimalsRepository(db: DbExecutor, householdId: string) {
+export function createAnimalsRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const mine = (id: string) =>
     and(eq(animals.householdId, householdId), eq(animals.id, id), isNull(animals.deletedAt));
 

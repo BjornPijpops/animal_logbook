@@ -62,7 +62,7 @@ async function world() {
 const key = (id: string) => ({ sourceType: "medication_dose" as const, sourceId: id });
 
 async function openDueAts(householdId: string, id: string): Promise<string[]> {
-  const rows = await createRemindersRepository(db, householdId).listForSource(key(id));
+  const rows = await createRemindersRepository(db, { householdId }).listForSource(key(id));
   return rows
     .filter((row) => !row.doneAt && !row.cancelledAt)
     .map((row) => row.dueAt.toISOString())
@@ -70,7 +70,7 @@ async function openDueAts(householdId: string, id: string): Promise<string[]> {
 }
 
 const DOSES = (householdId: string, id: string) =>
-  createMedicationsRepository(db, householdId).dosesBetween(
+  createMedicationsRepository(db, { householdId }).dosesBetween(
     id,
     new Date("2025-06-01T00:00:00Z"),
     new Date("2025-06-30T00:00:00Z"),
@@ -89,7 +89,10 @@ describe("medications: reminders", () => {
     const w = await world();
     await generateDoseReminders(db, { now: T0, staleWindowHours: 24 });
     await generateDoseReminders(db, { now: T0, staleWindowHours: 24 });
-    const rows = await createRemindersRepository(db, w.householdA.id).listForSource(key(w.id));
+    const rows = await createRemindersRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    }).listForSource(key(w.id));
     expect(rows).toHaveLength(2);
   });
 
@@ -109,7 +112,10 @@ describe("medications: reminders", () => {
     const w = await world();
     expect((await deleteMedication(w.deps, w.ctxA, w.id)).ok).toBe(true);
     expect(await openDueAts(w.householdA.id, w.id)).toEqual([]);
-    const med = createMedicationsRepository(db, w.householdA.id);
+    const med = createMedicationsRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
     const deleted = await med.findDeleted(w.id);
     const [record] = await db
       .select()
@@ -262,7 +268,10 @@ describe("medications: tenant isolation", () => {
 
   it("repository reads are scoped by household", async () => {
     const w = await world();
-    const repoB = createMedicationsRepository(db, w.householdB.id);
+    const repoB = createMedicationsRepository(db, {
+      householdId: w.householdB.id,
+      userId: w.ownerB.id,
+    });
     expect(await repoB.find(w.id)).toBeNull();
     expect(await repoB.list({})).toEqual([]);
   });

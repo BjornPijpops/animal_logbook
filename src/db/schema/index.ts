@@ -6,3 +6,4 @@ export * from "./care";
 export * from "./medication";
 export * from "./expenses";
 export * from "./food";
+export * from "./privacy";

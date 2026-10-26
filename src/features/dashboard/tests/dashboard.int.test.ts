@@ -206,6 +206,22 @@ describe("dashboard: medications", () => {
     expect(d2.medications.dueToday).toHaveLength(1);
   });
 
+  it("caps due doses at 20 and says when there are more", async () => {
+    const w = await world();
+    const early = new Date("2025-06-10T05:00:00.000Z");
+    for (let i = 0; i < 21; i += 1) {
+      const made = await createMedication(
+        { db, now: () => early },
+        w.ctxA,
+        medInput(w.animalA, { name: `Med ${i}`, times: ["08:00"] }),
+      );
+      expect(made.ok).toBe(true);
+    }
+    const d = await dash(w.ctxA);
+    expect(d.medications.dueToday).toHaveLength(20);
+    expect(d.medications.dueMore).toBe(true);
+  });
+
   it("lists missed doses from the last 7 days only, and courses ending within 7 days", async () => {
     const w = await world();
     const created = await createMedication(
@@ -365,7 +381,7 @@ describe("dashboard: tenant isolation and roles", () => {
       expect(view.documents.items).toEqual([]);
       expect(view.dietChanges.items).toEqual([]);
       expect(view.spending.totals).toEqual([]);
-      expect(view.medications).toEqual({ dueToday: [], missed: [], ending: [] });
+      expect(view.medications).toEqual({ dueToday: [], dueMore: false, missed: [], ending: [] });
     }
     const own = await dash(w.ctxB);
     expect(own.appointments.items).toHaveLength(1);

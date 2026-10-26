@@ -1,15 +1,19 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSessionUser } from "@/features/auth";
 import { errorReporter } from "@/lib/error-reporter";
 import type { AppErrorCode, Result } from "@/lib/result";
 import { tokenSchema } from "../schemas";
-import { requireHouseholdAccess } from "./access";
+import { ACTIVE_HOUSEHOLD_COOKIE, requireHouseholdAccess } from "./access";
 import { getHouseholdDeps } from "./deps";
 import {
   acceptInvite,
+  changeMemberRole,
+  leaveHousehold,
+  transferOwnership,
   inviteMember,
   removeMember,
   revokeInvite,
@@ -52,6 +56,13 @@ export async function acceptInviteAction(token: string): Promise<ActionResult> {
   if (!parsed.success) return { ok: false, code: "validation" };
   const result = await acceptInvite(getHouseholdDeps(), user, parsed.data);
   if (!result.ok) return { ok: false, code: result.error.code };
+  (await cookies()).set(ACTIVE_HOUSEHOLD_COOKIE, result.value.householdId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
   redirect("/household");
 }
 
@@ -60,4 +71,23 @@ export async function updateTimezoneAction(timezone: string): Promise<ActionResu
   const result = await updateHouseholdTimezone(getHouseholdDeps(), ctx, timezone);
   if (result.ok) revalidatePath("/", "layout");
   return result.ok ? { ok: true } : { ok: false, code: result.error.code };
+}
+
+export async function changeMemberRoleAction(userId: string, role: string): Promise<ActionResult> {
+  const { ctx } = await requireHouseholdAccess();
+  return toActionResult(await changeMemberRole(getHouseholdDeps(), ctx, userId, role));
+}
+
+export async function transferOwnershipAction(userId: string): Promise<ActionResult> {
+  const { ctx } = await requireHouseholdAccess();
+  const result = toActionResult(await transferOwnership(getHouseholdDeps(), ctx, userId));
+  if (result.ok) revalidatePath("/", "layout");
+  return result;
+}
+
+export async function leaveHouseholdAction(): Promise<ActionResult> {
+  const { ctx } = await requireHouseholdAccess();
+  const result = await leaveHousehold(getHouseholdDeps(), ctx);
+  if (!result.ok) return { ok: false, code: result.error.code };
+  redirect("/");
 }

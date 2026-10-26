@@ -1,7 +1,10 @@
 import { randomUUID } from "node:crypto";
+import { hashPassword } from "better-auth/crypto";
 import { afterAll } from "vitest";
-import { createDatabase, type Database } from "@/db/client";
-import { householdMembers, households, users } from "@/db/schema";
+import { createTestDatabase, type Database } from "@/db/client";
+import { roleUrl } from "@/db/roles";
+import { TEST_APP_PASSWORD, TEST_WORKER_PASSWORD } from "./roles";
+import { accounts, householdMembers, households, users } from "@/db/schema";
 import type { Mailer, EmailMessage } from "@/lib/notify/email";
 import type { StorageAdapter } from "@/lib/storage/types";
 
@@ -10,9 +13,14 @@ type Role = "owner" | "editor" | "viewer";
 export function setupTestDatabase(): Database {
   const url = process.env.TEST_DATABASE_URL;
   if (!url) throw new Error("TEST_DATABASE_URL is not set");
-  const { db, pool } = createDatabase(url);
+  // The handle itself is the owner (fixtures bypass RLS); scoped handles run as the app/worker roles.
+  const { db, pools } = createTestDatabase({
+    owner: url,
+    app: roleUrl(url, "animal_app", TEST_APP_PASSWORD),
+    worker: roleUrl(url, "animal_worker", TEST_WORKER_PASSWORD),
+  });
   afterAll(async () => {
-    await pool.end();
+    await Promise.all(pools.map((pool) => pool.end()));
   });
   return db;
 }
@@ -93,4 +101,16 @@ export function createFakeMailer(): Mailer & { sent: EmailMessage[] } {
       sent.push(message);
     },
   };
+}
+
+export const TEST_PASSWORD = "correct horse battery staple";
+
+// Gives a fixture user a credential account, so re-confirmation can be tested.
+export async function setPassword(db: Database, userId: string, password = TEST_PASSWORD) {
+  await db.insert(accounts).values({
+    userId,
+    accountId: userId,
+    providerId: "credential",
+    password: await hashPassword(password),
+  });
 }

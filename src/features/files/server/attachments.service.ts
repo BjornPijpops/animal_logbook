@@ -1,3 +1,4 @@
+import { scopeDb } from "@/db/scope";
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import type { DbExecutor } from "@/db/client";
@@ -102,7 +103,7 @@ export async function addAttachment(
   const owner = parsed.data;
   return withUpload(deps, ctx, file, async (tx, attach) => {
     if (!(await ownerExists(tx, ctx.householdId, owner.type, owner.id))) return notFound();
-    const current = await createAttachmentsRepository(tx, ctx.householdId).list(owner);
+    const current = await createAttachmentsRepository(tx, ctx).list(owner);
     if (current.length >= MAX_ATTACHMENTS_PER_OWNER) return err("conflict", "too_many_attachments");
     await attach(owner);
     return ok({ owner });
@@ -118,11 +119,13 @@ export async function removeAttachment(
   if (!can(ctx.role, "data:write")) return forbidden();
   const parsed = ownerSchema.safeParse(rawOwner);
   if (!parsed.success || !z.uuid().safeParse(attachmentId).success) return notFound();
-  if (!(await ownerExists(deps.db, ctx.householdId, parsed.data.type, parsed.data.id))) {
+  if (
+    !(await ownerExists(scopeDb(deps.db, ctx), ctx.householdId, parsed.data.type, parsed.data.id))
+  ) {
     return notFound();
   }
-  const deleted = await deps.db.transaction((tx) =>
-    createAttachmentsRepository(tx, ctx.householdId).softDelete(parsed.data, [attachmentId]),
+  const deleted = await scopeDb(deps.db, ctx).transaction((tx) =>
+    createAttachmentsRepository(tx, ctx).softDelete(parsed.data, [attachmentId]),
   );
   return deleted.length > 0 ? ok(true as const) : notFound();
 }
@@ -135,5 +138,5 @@ export async function listAttachments(
   if (!can(ctx.role, "data:read")) return forbidden();
   const parsed = ownerSchema.safeParse(rawOwner);
   if (!parsed.success) return notFound();
-  return ok(await createAttachmentsRepository(deps.db, ctx.householdId).list(parsed.data));
+  return ok(await createAttachmentsRepository(deps.db, ctx).list(parsed.data));
 }

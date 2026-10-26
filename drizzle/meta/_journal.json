@@ -64,6 +64,20 @@
       "when": 1793019768686,
       "tag": "0008_dashboard_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793023210763,
+      "tag": "0009_row_level_security",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793024908032,
+      "tag": "0010_audit_and_exports",
+      "breakpoints": true
     }
   ]
 }

@@ -113,7 +113,10 @@ describe("appointments", () => {
     expect(linked).toHaveLength(1);
     expect(linked[0]).toMatchObject({ amountMinor: 6000, category: "grooming", deletedAt: null });
 
-    const totals = await createExpensesRepository(db, w.householdA.id).totals(range);
+    const totals = await createExpensesRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    }).totals(range);
     expect(totals.filter((t) => t.category === "grooming").map((t) => t.totalMinor)).toEqual([
       6000,
     ]);
@@ -128,7 +131,12 @@ describe("appointments", () => {
 
     await updateAppointment(deps, w.ctx, id, appointmentInput(w.animalId, { cost: "" }));
     expect((await liveExpenses(w.householdA.id, id))[0]?.deletedAt).not.toBeNull();
-    expect(await createExpensesRepository(db, w.householdA.id).totals(range)).toEqual([]);
+    expect(
+      await createExpensesRepository(db, {
+        householdId: w.householdA.id,
+        userId: w.ownerA.id,
+      }).totals(range),
+    ).toEqual([]);
 
     await updateAppointment(deps, w.ctx, id, appointmentInput(w.animalId, { cost: "10" }));
     const again = await liveExpenses(w.householdA.id, id);
@@ -142,8 +150,14 @@ describe("appointments", () => {
     const created = await createAppointment(deps, w.ctx, appointmentInput(w.animalId));
     if (!created.ok) throw new Error("create failed");
     const id = created.value.id;
-    const expensesRepo = createExpensesRepository(db, w.householdA.id);
-    const reminderRepo = createRemindersRepository(db, w.householdA.id);
+    const expensesRepo = createExpensesRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
+    const reminderRepo = createRemindersRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
     const open = async () =>
       (await reminderRepo.listForSource({ sourceType: "follow_up", sourceId: id })).filter(
         (r) => r.cancelledAt === null,
@@ -174,7 +188,12 @@ describe("appointments", () => {
     await updateAppointment(deps, w.ctx, id, appointmentInput(w.animalId, { cost: "" }));
     await deleteAppointment(deps, w.ctx, id);
     await restoreAppointment(deps, w.ctx, id);
-    expect(await createExpensesRepository(db, w.householdA.id).totals(range)).toEqual([]);
+    expect(
+      await createExpensesRepository(db, {
+        householdId: w.householdA.id,
+        userId: w.ownerA.id,
+      }).totals(range),
+    ).toEqual([]);
   });
 
   it("follow-up date reminders are created, moved and cancelled idempotently", async () => {
@@ -182,7 +201,10 @@ describe("appointments", () => {
     const created = await createAppointment(deps, w.ctx, appointmentInput(w.animalId));
     if (!created.ok) throw new Error("create failed");
     const id = created.value.id;
-    const repo = createRemindersRepository(db, w.householdA.id);
+    const repo = createRemindersRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    });
     const key = { sourceType: "follow_up", sourceId: id } as const;
 
     const first = await repo.listForSource(key);

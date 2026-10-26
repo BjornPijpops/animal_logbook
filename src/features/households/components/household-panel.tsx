@@ -12,9 +12,12 @@ import { Input, Select } from "@/components/ui/input";
 import type { AppErrorCode } from "@/lib/result";
 import { inviteMemberSchema, type InviteMemberInput } from "../schemas";
 import {
+  changeMemberRoleAction,
   inviteMemberAction,
+  leaveHouseholdAction,
   removeMemberAction,
   revokeInviteAction,
+  transferOwnershipAction,
   type ActionResult,
 } from "../server/actions";
 
@@ -82,14 +85,39 @@ export function HouseholdPanel({ currentUserId, canManage, members, invites }: P
                 </p>
               </div>
               {canManage && m.role !== "owner" ? (
-                <Button
-                  variant="destructive"
-                  disabled={pending}
-                  aria-label={t("removeLabel", { name: m.name })}
-                  onClick={() => run(() => removeMemberAction(m.userId))}
-                >
-                  {t("remove")}
-                </Button>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <Select
+                    aria-label={t("changeRoleLabel", { name: m.name })}
+                    value={m.role}
+                    disabled={pending}
+                    onChange={(event) =>
+                      run(() => changeMemberRoleAction(m.userId, event.target.value))
+                    }
+                  >
+                    <option value="viewer">{tc("role.viewer")}</option>
+                    <option value="editor">{tc("role.editor")}</option>
+                  </Select>
+                  <Button
+                    variant="secondary"
+                    disabled={pending}
+                    aria-label={t("makeOwnerLabel", { name: m.name })}
+                    onClick={() => {
+                      if (window.confirm(t("makeOwnerConfirm", { name: m.name }))) {
+                        run(() => transferOwnershipAction(m.userId));
+                      }
+                    }}
+                  >
+                    {t("makeOwner")}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={pending}
+                    aria-label={t("removeLabel", { name: m.name })}
+                    onClick={() => run(() => removeMemberAction(m.userId))}
+                  >
+                    {t("remove")}
+                  </Button>
+                </div>
               ) : null}
             </li>
           ))}
@@ -151,7 +179,20 @@ export function HouseholdPanel({ currentUserId, canManage, members, invites }: P
           </Card>
         </>
       ) : (
-        <p className="text-muted-foreground text-sm">{t("ownerOnly")}</p>
+        <>
+          <p className="text-muted-foreground text-sm">{t("ownerOnly")}</p>
+          <Card>
+            <Button
+              variant="destructive"
+              disabled={pending}
+              onClick={() => {
+                if (window.confirm(t("leaveConfirm"))) run(() => leaveHouseholdAction());
+              }}
+            >
+              {t("leave")}
+            </Button>
+          </Card>
+        </>
       )}
     </div>
   );

@@ -1,3 +1,4 @@
+import { scopeDb } from "@/db/scope";
 import type { Database, DbExecutor } from "@/db/client";
 import { createExpensesRepository, type ExpenseCategory } from "@/features/expenses";
 import { createAttachmentsRepository, type AttachmentView } from "@/features/files";
@@ -57,7 +58,7 @@ export function toAppointmentValues(
 
 // The appointment's cost lives in exactly one expense row so spending totals count it once.
 async function syncExpense(tx: DbExecutor, ctx: Ctx, row: AppointmentRow): Promise<void> {
-  const expenses = createExpensesRepository(tx, ctx.householdId);
+  const expenses = createExpensesRepository(tx, ctx);
   if (row.deletedAt || row.costMinor === null || row.currency === null) {
     await expenses.softDeleteForAppointment(row.id);
     return;
@@ -98,9 +99,7 @@ async function vaccinationChoiceValid(
 ): Promise<boolean> {
   if (choice === "" || choice === "new") return true;
   if (!animalId) return false;
-  const candidates = await createMedicalRepository(tx, ctx.householdId).listUnlinkedVaccinations(
-    animalId,
-  );
+  const candidates = await createMedicalRepository(tx, ctx).listUnlinkedVaccinations(animalId);
   return candidates.some((candidate) => candidate.id === choice);
 }
 
@@ -113,7 +112,7 @@ async function linkVaccination(
   choice: Choice,
 ): Promise<void> {
   if (choice === "" || row.type !== "vaccination" || !row.animalId) return;
-  const medical = createMedicalRepository(tx, ctx.householdId);
+  const medical = createMedicalRepository(tx, ctx);
   if (await medical.findLinkedVaccination(row.id)) return;
   if (choice === "new") {
     await medical.insert(
@@ -143,17 +142,17 @@ export async function createAppointment(
   if (!parsed.success) return err("validation", "Invalid appointment");
   const values = toAppointmentValues(parsed.data, ctx.timezone);
   if (!values) return err("validation", "Invalid appointment time");
-  return deps.db.transaction(async (tx) => {
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
     if (
       values.animalId &&
-      !(await createMedicalRepository(tx, ctx.householdId).animalExists(values.animalId))
+      !(await createMedicalRepository(tx, ctx).animalExists(values.animalId))
     ) {
       return err("not_found", "Animal not found");
     }
     if (!(await vaccinationChoiceValid(tx, ctx, values.animalId, parsed.data.vaccinationRecord))) {
       return err("not_found", "Vaccination record not found");
     }
-    const row = await createAppointmentsRepository(tx, ctx.householdId).insert(values, ctx.userId);
+    const row = await createAppointmentsRepository(tx, ctx).insert(values, ctx.userId);
     await linkVaccination(tx, ctx, row, parsed.data.vaccinationRecord);
 
     await syncExpense(tx, ctx, row);
@@ -174,20 +173,17 @@ export async function updateAppointment(
   if (!parsed.success) return err("validation", "Invalid appointment");
   const values = toAppointmentValues(parsed.data, ctx.timezone);
   if (!values) return err("validation", "Invalid appointment time");
-  return deps.db.transaction(async (tx) => {
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
     if (
       values.animalId &&
-      !(await createMedicalRepository(tx, ctx.householdId).animalExists(values.animalId))
+      !(await createMedicalRepository(tx, ctx).animalExists(values.animalId))
     ) {
       return err("not_found", "Animal not found");
     }
     if (!(await vaccinationChoiceValid(tx, ctx, values.animalId, parsed.data.vaccinationRecord))) {
       return err("not_found", "Vaccination record not found");
     }
-    const row = await createAppointmentsRepository(tx, ctx.householdId).update(
-      appointmentId,
-      values,
-    );
+    const row = await createAppointmentsRepository(tx, ctx).update(appointmentId, values);
     if (!row) return notFound();
     await linkVaccination(tx, ctx, row, parsed.data.vaccinationRecord);
 
@@ -205,11 +201,11 @@ export async function deleteAppointment(
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!idOk(appointmentId)) return notFound();
   const at = (deps.now ?? (() => new Date()))();
-  return deps.db.transaction(async (tx) => {
-    const repo = createAppointmentsRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createAppointmentsRepository(tx, ctx);
     const row = await repo.find(appointmentId);
     if (!row || !(await repo.softDelete(appointmentId, at))) return notFound();
-    await createAttachmentsRepository(tx, ctx.householdId).softDelete(
+    await createAttachmentsRepository(tx, ctx).softDelete(
       { type: "appointment", id: appointmentId },
       undefined,
       at,
@@ -228,13 +224,13 @@ export async function restoreAppointment(
 ): Promise<Result<true>> {
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!idOk(appointmentId)) return notFound();
-  return deps.db.transaction(async (tx) => {
-    const repo = createAppointmentsRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createAppointmentsRepository(tx, ctx);
     const deleted = await repo.findDeleted(appointmentId);
     if (!deleted?.deletedAt) return notFound();
     const row = await repo.restore(appointmentId);
     if (!row) return notFound();
-    await createAttachmentsRepository(tx, ctx.householdId).restoreWithOwner(
+    await createAttachmentsRepository(tx, ctx).restoreWithOwner(
       { type: "appointment", id: appointmentId },
       deleted.deletedAt,
     );
@@ -257,16 +253,14 @@ export async function getAppointment(
 ): Promise<Result<AppointmentDetail>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (!idOk(appointmentId)) return notFound();
-  const appointment = await createAppointmentsRepository(deps.db, ctx.householdId).find(
-    appointmentId,
-  );
+  const appointment = await createAppointmentsRepository(deps.db, ctx).find(appointmentId);
   if (!appointment) return notFound();
   const [attachments, linked] = await Promise.all([
-    createAttachmentsRepository(deps.db, ctx.householdId).list({
+    createAttachmentsRepository(deps.db, ctx).list({
       type: "appointment",
       id: appointmentId,
     }),
-    createMedicalRepository(deps.db, ctx.householdId).findLinkedVaccination(appointmentId),
+    createMedicalRepository(deps.db, ctx).findLinkedVaccination(appointmentId),
   ]);
   return ok({ appointment, attachments, vaccinationRecordId: linked?.id ?? null });
 }

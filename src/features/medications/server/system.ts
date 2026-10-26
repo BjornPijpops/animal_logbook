@@ -40,7 +40,9 @@ async function activeTargets(db: Database): Promise<Target[]> {
     );
   const targets: Target[] = [];
   for (const row of rows) {
-    const medication = await createMedicationsRepository(db, row.householdId).find(row.id);
+    const medication = await createMedicationsRepository(db, { householdId: row.householdId }).find(
+      row.id,
+    );
     if (medication?.schedule && medication.schedule.kind !== "as_needed") {
       targets.push({
         household: { householdId: row.householdId, timezone: row.timezone },
@@ -57,7 +59,7 @@ export async function generateDoseReminders(
 ): Promise<{ medications: number }> {
   const targets = await activeTargets(db);
   for (const { household, medication } of targets) {
-    const logged = await createMedicationsRepository(db, household.householdId).dosesBetween(
+    const logged = await createMedicationsRepository(db, household).dosesBetween(
       medication.id,
       new Date(options.now.getTime() - options.staleWindowHours * HOUR_MS),
       new Date(options.now.getTime() + 48 * HOUR_MS),

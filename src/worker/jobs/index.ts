@@ -1,6 +1,13 @@
 import type PgBoss from "pg-boss";
 import type { Database } from "@/db/client";
 import { purgeFiles, type PurgeReport } from "@/features/files/worker";
+import { purgeAuditLog } from "@/features/audit/worker";
+import {
+  expireExports,
+  processPendingExports,
+  type ExportJobDeps,
+} from "@/features/privacy/worker";
+import { purgeSoftDeleted } from "@/features/retention/worker";
 import { logger } from "@/lib/logger";
 import {
   DOSES_MISSED_QUEUE,
@@ -17,12 +24,27 @@ export * from "./reminders";
 export const HEARTBEAT_QUEUE = "heartbeat";
 export const FILE_PURGE_QUEUE = "files-purge";
 
-export type PurgeJobDeps = { db: Database; storage: StorageAdapter; retentionDays: number };
+export const EXPORT_PROCESS_QUEUE = "exports-process";
+export const EXPORT_EXPIRE_QUEUE = "exports-expire";
+
+export type PurgeJobDeps = {
+  db: Database;
+  storage: StorageAdapter;
+  retentionDays: number;
+  auditRetentionDays?: number;
+};
 type Hooks = { onHeartbeat?: () => void; onPurge?: (report: PurgeReport) => void };
 
 export async function runPurgeJob(deps: PurgeJobDeps, now = new Date()): Promise<PurgeReport> {
+  // Rows first, so files that lose their last reference are swept in the same run.
+  const retention = await purgeSoftDeleted(deps, { now, retentionDays: deps.retentionDays });
+  logger.info(retention, "retention purge finished");
   const report = await purgeFiles(deps, { now, retentionDays: deps.retentionDays });
   logger.info(report, "file purge finished");
+  if (deps.auditRetentionDays !== undefined) {
+    const audit = await purgeAuditLog(deps.db, { now, retentionDays: deps.auditRetentionDays });
+    logger.info(audit, "audit log purge finished");
+  }
   return report;
 }
 
@@ -33,6 +55,7 @@ export async function registerJobs(
   hooks: Hooks = {},
   purge?: PurgeJobDeps,
   reminders?: ReminderJobDeps,
+  exports?: ExportJobDeps,
 ): Promise<void> {
   await boss.createQueue(HEARTBEAT_QUEUE);
   await boss.schedule(HEARTBEAT_QUEUE, "* * * * *");
@@ -64,6 +87,20 @@ export async function registerJobs(
     await boss.schedule(REMINDERS_DELIVER_QUEUE, "* * * * *");
     await boss.work(REMINDERS_DELIVER_QUEUE, async () => {
       await runDeliverJob(reminders);
+    });
+  }
+
+  if (exports) {
+    await boss.createQueue(EXPORT_PROCESS_QUEUE);
+    await boss.schedule(EXPORT_PROCESS_QUEUE, "* * * * *");
+    await boss.work(EXPORT_PROCESS_QUEUE, async () => {
+      const result = await processPendingExports(exports);
+      if (result.ready + result.failed > 0) logger.info(result, "data exports processed");
+    });
+    await boss.createQueue(EXPORT_EXPIRE_QUEUE);
+    await boss.schedule(EXPORT_EXPIRE_QUEUE, "*/30 * * * *");
+    await boss.work(EXPORT_EXPIRE_QUEUE, async () => {
+      await expireExports(exports);
     });
   }
 }

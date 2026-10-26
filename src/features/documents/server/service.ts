@@ -1,3 +1,4 @@
+import { scopeDb } from "@/db/scope";
 import { randomUUID } from "node:crypto";
 import {
   createAttachmentsRepository,
@@ -58,7 +59,7 @@ export async function listDocuments(
   const query: DocumentQuery = parsed.data;
   const now = (deps.now ?? (() => new Date()))();
   const horizon = new Date(now.getTime() + EXPIRING_SOON_DAYS * 24 * 3600 * 1000);
-  const { items, total } = await createDocumentsRepository(deps.db, ctx.householdId).list({
+  const { items, total } = await createDocumentsRepository(deps.db, ctx).list({
     q: query.q,
     animal: query.animal,
     type: query.type,
@@ -83,9 +84,9 @@ export async function getDocument(
 ): Promise<Result<DocumentDetail>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (!idOk(documentId)) return notFound();
-  const document = await createDocumentsRepository(deps.db, ctx.householdId).find(documentId);
+  const document = await createDocumentsRepository(deps.db, ctx).find(documentId);
   if (!document) return notFound();
-  const attachments = await createAttachmentsRepository(deps.db, ctx.householdId).list({
+  const attachments = await createAttachmentsRepository(deps.db, ctx).list({
     type: "document",
     id: document.id,
   });
@@ -105,7 +106,7 @@ export async function createDocument(
   const id = randomUUID();
 
   return withUpload(deps, ctx, file, async (tx, attach) => {
-    const documents = createDocumentsRepository(tx, ctx.householdId);
+    const documents = createDocumentsRepository(tx, ctx);
     if (values.animalId && !(await documents.animalExists(values.animalId))) {
       return err("validation", "invalid_input");
     }
@@ -126,7 +127,7 @@ export async function updateDocument(
   if (!parsed.success) return err("validation", "invalid_input");
   if (!idOk(documentId)) return notFound();
   const values = toDocumentValues(parsed.data);
-  const documents = createDocumentsRepository(deps.db, ctx.householdId);
+  const documents = createDocumentsRepository(deps.db, ctx);
   if (values.animalId && !(await documents.animalExists(values.animalId))) {
     return err("validation", "invalid_input");
   }
@@ -142,10 +143,10 @@ export async function deleteDocument(
 ): Promise<Result<true>> {
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!idOk(documentId)) return notFound();
-  return deps.db.transaction(async (tx) => {
-    const removed = await createDocumentsRepository(tx, ctx.householdId).softDelete(documentId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const removed = await createDocumentsRepository(tx, ctx).softDelete(documentId);
     if (!removed) return notFound();
-    await createAttachmentsRepository(tx, ctx.householdId).softDelete({
+    await createAttachmentsRepository(tx, ctx).softDelete({
       type: "document",
       id: documentId,
     });

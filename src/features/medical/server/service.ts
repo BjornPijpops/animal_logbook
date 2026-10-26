@@ -1,3 +1,4 @@
+import { scopeDb } from "@/db/scope";
 import type { Database, DbExecutor } from "@/db/client";
 import { createAttachmentsRepository, type AttachmentView } from "@/features/files";
 import { can, type Ctx } from "@/features/households";
@@ -59,8 +60,8 @@ export async function createMedicalRecord(
   const parsed = medicalRecordInputSchema.safeParse(input);
   if (!parsed.success) return err("validation", "Invalid record");
   const values = toRecordValues(parsed.data);
-  return deps.db.transaction(async (tx) => {
-    const repo = createMedicalRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createMedicalRepository(tx, ctx);
     if (!(await repo.animalExists(values.animalId))) return err("not_found", "Animal not found");
     const row = await repo.insert(values, { createdBy: ctx.userId });
     await syncDueReminder(tx, ctx, row);
@@ -79,8 +80,8 @@ export async function updateMedicalRecord(
   const parsed = medicalRecordInputSchema.safeParse(input);
   if (!parsed.success) return err("validation", "Invalid record");
   const values = toRecordValues(parsed.data);
-  return deps.db.transaction(async (tx) => {
-    const repo = createMedicalRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createMedicalRepository(tx, ctx);
     if (!(await repo.animalExists(values.animalId))) return err("not_found", "Animal not found");
     if (await repo.isManagedMedication(recordId)) return managedElsewhere();
     const row = await repo.update(recordId, values);
@@ -98,12 +99,12 @@ export async function deleteMedicalRecord(
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!uuidSchema.safeParse(recordId).success) return notFound();
   const at = (deps.now ?? (() => new Date()))();
-  return deps.db.transaction(async (tx) => {
-    const repo = createMedicalRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createMedicalRepository(tx, ctx);
     const row = await repo.find(recordId);
     if (row && (await repo.isManagedMedication(recordId))) return managedElsewhere();
     if (!row || !(await repo.softDelete(recordId, at))) return notFound();
-    await createAttachmentsRepository(tx, ctx.householdId).softDelete(
+    await createAttachmentsRepository(tx, ctx).softDelete(
       { type: "medical_record", id: recordId },
       undefined,
       at,
@@ -120,14 +121,14 @@ export async function restoreMedicalRecord(
 ): Promise<Result<true>> {
   if (!can(ctx.role, "data:write")) return forbidden();
   if (!uuidSchema.safeParse(recordId).success) return notFound();
-  return deps.db.transaction(async (tx) => {
-    const repo = createMedicalRepository(tx, ctx.householdId);
+  return scopeDb(deps.db, ctx).transaction(async (tx) => {
+    const repo = createMedicalRepository(tx, ctx);
     const deleted = await repo.findDeleted(recordId);
     if (!deleted?.deletedAt) return notFound();
     if (await repo.isManagedMedication(recordId)) return managedElsewhere();
     const row = await repo.restore(recordId);
     if (!row) return notFound();
-    await createAttachmentsRepository(tx, ctx.householdId).restoreWithOwner(
+    await createAttachmentsRepository(tx, ctx).restoreWithOwner(
       { type: "medical_record", id: recordId },
       deleted.deletedAt,
     );
@@ -145,9 +146,9 @@ export async function getMedicalRecord(
 ): Promise<Result<MedicalRecordDetail>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   if (!uuidSchema.safeParse(recordId).success) return notFound();
-  const record = await createMedicalRepository(deps.db, ctx.householdId).find(recordId);
+  const record = await createMedicalRepository(deps.db, ctx).find(recordId);
   if (!record) return notFound();
-  const attachments = await createAttachmentsRepository(deps.db, ctx.householdId).list({
+  const attachments = await createAttachmentsRepository(deps.db, ctx).list({
     type: "medical_record",
     id: recordId,
   });
@@ -164,10 +165,7 @@ export async function getAllergySummaries(
 ): Promise<Result<Record<string, AllergySummary[]>>> {
   if (!can(ctx.role, "data:read")) return forbidden();
   const today = utcToLocalParts((deps.now ?? (() => new Date()))(), ctx.timezone).date;
-  const rows = await createMedicalRepository(deps.db, ctx.householdId).activeAllergies(
-    animalIds,
-    today,
-  );
+  const rows = await createMedicalRepository(deps.db, ctx).activeAllergies(animalIds, today);
   const summaries: Record<string, AllergySummary[]> = {};
   for (const row of rows) {
     (summaries[row.animalId] ??= []).push({ title: row.title, severity: row.severity });
@@ -187,6 +185,6 @@ export async function listLinkableVaccinations(
   ctx: Ctx,
 ): Promise<Result<LinkableVaccination[]>> {
   if (!can(ctx.role, "data:read")) return forbidden();
-  const rows = await createMedicalRepository(deps.db, ctx.householdId).listUnlinkedVaccinations();
+  const rows = await createMedicalRepository(deps.db, ctx).listUnlinkedVaccinations();
   return ok(rows.map(({ id, animalId, title, startedOn }) => ({ id, animalId, title, startedOn })));
 }

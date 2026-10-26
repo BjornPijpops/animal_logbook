@@ -12,3 +12,5 @@ export const uuidSchema = z.uuid();
 export const tokenSchema = z.string().min(20).max(200);
 
 export const timezoneSchema = z.string().refine(isValidTimeZone);
+
+export const memberRoleSchema = z.enum(["editor", "viewer"]);

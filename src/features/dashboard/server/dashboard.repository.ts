@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import {
   and,
   asc,
@@ -58,7 +59,9 @@ export type DashboardDietChange = {
 
 // Every query is scoped to one household, optionally one animal, and ends in LIMIT. Callers ask
 // for `limit` rows and the service trims, so "more exist" can be shown without counting.
-export function createDashboardRepository(db: DbExecutor, householdId: string) {
+export function createDashboardRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const animalScope = (
     column: Parameters<typeof eq>[0],
     animalId: string | null,

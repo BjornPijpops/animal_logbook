@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, eq, gte, isNull, ne, notInArray, sql } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { reminders, reminderSource } from "@/db/schema";
@@ -29,7 +30,9 @@ const columns = {
 
 export type ReminderSourceKey = { sourceType: ReminderSource; sourceId: string };
 
-export function createRemindersRepository(db: DbExecutor, householdId: string) {
+export function createRemindersRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const forSource = (key: ReminderSourceKey) =>
     and(
       eq(reminders.householdId, householdId),

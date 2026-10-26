@@ -28,3 +28,4 @@ npm-debug.log*
 .idea/*
 !.idea/runConfigurations
 .DS_Store
+/data/exports/

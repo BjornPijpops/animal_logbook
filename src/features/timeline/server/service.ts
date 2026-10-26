@@ -20,10 +20,11 @@ export async function listTimeline(
   if (!can(ctx.role, "data:read")) return err("forbidden", "Not allowed");
   const parsed = timelineQuerySchema.safeParse(rawQuery);
   if (!parsed.success) return err("validation", "Invalid filter");
-  const { items, total } = await createTimelineRepository(deps.db, ctx.householdId).list(
-    parsed.data,
-    { limit: PAGE_SIZE, offset: (parsed.data.page - 1) * PAGE_SIZE, timezone: ctx.timezone },
-  );
+  const { items, total } = await createTimelineRepository(deps.db, ctx).list(parsed.data, {
+    limit: PAGE_SIZE,
+    offset: (parsed.data.page - 1) * PAGE_SIZE,
+    timezone: ctx.timezone,
+  });
   return ok({
     items,
     total,

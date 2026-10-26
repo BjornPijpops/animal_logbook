@@ -12,7 +12,8 @@ Status: **Phase 8a (dashboard + navigation)**: household and per-animal dashboar
 cp .env.example .env.local     # PowerShell: Copy-Item .env.example .env.local
 docker compose up -d           # Postgres + Mailpit (UI: http://localhost:8025)
 npm install
-npm run db:migrate
+npm run db:migrate             # as the owner role (DATABASE_OWNER_URL); also creates the app/worker roles
+npm run db:roles               # gives animal_app / animal_worker their passwords
 npm run db:seed                # optional: alice@example.test / bob@example.test, password "password1234"
 npm run dev                    # http://localhost:3000
 npm run worker                 # in a second terminal
@@ -29,9 +30,22 @@ npm run worker                 # in a second terminal
 | `lint`, `typecheck`, `format`           | Quality                                                                                |
 | `test`, `test:unit`, `test:integration` | Vitest (integration needs Docker Postgres)                                             |
 | `test:e2e`                              | Playwright + axe (needs Mailpit running; first run: `npx playwright install chromium`) |
-| `db:generate`, `db:migrate`, `db:seed`  | Drizzle                                                                                |
+| `db:generate`, `db:migrate`, `db:seed`  | Drizzle (run as the owner role)                                                        |
+| `db:roles`                              | Set passwords for the restricted `animal_app` and `animal_worker` roles                |
 | `vapid`                                 | Generate Web Push VAPID keys                                                           |
 | `ci`                                    | lint + typecheck + test + build                                                        |
+
+## Database roles and row-level security
+
+Three Postgres roles (see [ADR 0015](docs/adr/0015-row-level-security.md)):
+
+| Role             | Used by                                             | Env                                                  |
+| ---------------- | --------------------------------------------------- | ---------------------------------------------------- |
+| `animal` (owner) | migrations, seed, E2E/test fixtures, pg-boss schema | `DATABASE_OWNER_URL`, `TEST_DATABASE_URL`            |
+| `animal_app`     | the web app (runtime)                               | `DATABASE_URL`, password `APP_DB_PASSWORD`           |
+| `animal_worker`  | the worker (narrowest access it needs)              | `WORKER_DATABASE_URL`, password `WORKER_DB_PASSWORD` |
+
+Every household-scoped table has `FORCE ROW LEVEL SECURITY`, and the app and worker roles own nothing, so the policies apply to them. In production, set strong passwords, run `db:migrate` with the owner URL, run `db:roles`, and start the web app and worker with the restricted URLs.
 
 ## Documentation
 
@@ -53,6 +67,12 @@ Work one phase per chat session. Start with `/plan-phase`, build in slices (`/ne
 ### Reverse proxy (required in production)
 
 Behind Caddy, nginx or Traefik you **must** set `TRUSTED_PROXY=true` (and make the proxy overwrite `X-Forwarded-For`; list extra hops in `TRUSTED_PROXY_CIDRS`). Left off, all visitors share one rate-limit bucket per endpoint and a few failed sign-ins from anyone lock everyone out for a short time. Never enable it when the app port is reachable directly, because clients could then pick their own limiter bucket. Sign-in and password-reset are also limited per account (10 sign-ins per 10 min, 5 resets per hour). Details: [ADR 0007](docs/adr/0007-self-hosted-deployment.md).
+
+### Privacy: export, deletion and audit log
+
+- `/settings/privacy`: request a data export (zip of JSON plus files, built by the worker, downloadable by you for `EXPORT_TTL_HOURS`, default 24) or delete your account. Both need your password. Owners of shared households must transfer ownership or delete the household first.
+- `/settings/audit`: owners see membership, invite, export and deletion events (kept `AUDIT_RETENTION_DAYS`, default 365).
+- Soft-deleted rows are purged after `RETENTION_DAYS` (default 30). Env: `EXPORT_DIR`, `EXPORT_TTL_HOURS`, `AUDIT_RETENTION_DAYS`. Design: ADR [0016](docs/adr/0016-retention-deletion-audit.md), [0017](docs/adr/0017-data-export.md).
 
 ### Reminders and push
 

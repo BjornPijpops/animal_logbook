@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, desc, eq, isNotNull, isNull, sql, type SQL } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { animals, expenseCategory, expenses, medications } from "@/db/schema";
@@ -86,7 +87,9 @@ const yearOf = sql`extract(year from ${expenses.incurredOn})::int`;
 const monthOf = sql`extract(month from ${expenses.incurredOn})::int`;
 const sumMinor = sql<string>`sum(${expenses.amountMinor})`.mapWith(Number);
 
-export function createExpensesRepository(db: DbExecutor, householdId: string) {
+export function createExpensesRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const scope = (filter: ExpenseFilter, withYear = true): SQL => {
     const parts: SQL[] = [eq(expenses.householdId, householdId), liveExpense];
     if (withYear && filter.year !== null) parts.push(sql`${yearOf} = ${filter.year}`);

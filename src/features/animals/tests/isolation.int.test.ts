@@ -56,7 +56,10 @@ async function world() {
 describe("tenant isolation: animal repositories", () => {
   it("household B cannot read, update or delete household A's animals", async () => {
     const w = await world();
-    const repoB = createAnimalsRepository(db, w.householdB.id);
+    const repoB = createAnimalsRepository(db, {
+      householdId: w.householdB.id,
+      userId: w.ownerB.id,
+    });
 
     expect(await repoB.list()).toEqual([]);
     expect(await repoB.find(w.animal.id)).toBeNull();
@@ -65,7 +68,10 @@ describe("tenant isolation: animal repositories", () => {
     expect(await repoB.softDelete(w.animal.id)).toBe(false);
     expect(await repoB.usedValues()).toEqual({ speciesOther: [], breeds: [] });
 
-    const still = await createAnimalsRepository(db, w.householdA.id).find(w.animal.id);
+    const still = await createAnimalsRepository(db, {
+      householdId: w.householdA.id,
+      userId: w.ownerA.id,
+    }).find(w.animal.id);
     expect(still?.name).toBe(w.animal.name);
     expect(still?.deletedAt).toBeNull();
   });

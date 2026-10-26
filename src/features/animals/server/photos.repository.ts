@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { animalPhotos, files } from "@/db/schema";
@@ -22,7 +23,9 @@ const columns = {
   isPrimary: animalPhotos.isPrimary,
 };
 
-export function createPhotosRepository(db: DbExecutor, householdId: string) {
+export function createPhotosRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const live = and(eq(animalPhotos.householdId, householdId), isNull(animalPhotos.deletedAt));
 
   return {

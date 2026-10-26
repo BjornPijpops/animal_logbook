@@ -1,3 +1,4 @@
+import { scopeDb } from "@/db/scope";
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import type { Database, Transaction } from "@/db/client";
@@ -75,7 +76,7 @@ async function commit(
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtextextended(${`quota:${ctx.householdId}`}, 0))`,
   );
-  const filesRepo = createFilesRepository(tx, ctx.householdId);
+  const filesRepo = createFilesRepository(tx, ctx);
   if ((await filesRepo.usedBytes()) + staged.sizeBytes > deps.householdQuotaBytes) {
     throw new UploadRejected("quota_exceeded");
   }
@@ -88,7 +89,7 @@ async function commit(
     originalName: staged.originalName,
     uploadedBy: ctx.userId,
   });
-  await createAttachmentsRepository(tx, ctx.householdId).insert(owner, staged.fileId);
+  await createAttachmentsRepository(tx, ctx).insert(owner, staged.fileId);
 }
 
 // Runs `work` in a transaction with an `attach` callback. If `work` returns an error or throws,
@@ -102,7 +103,7 @@ export async function withUpload<T>(
   const staged = await stage(deps, ctx, input);
   if (!staged.ok) return staged;
   try {
-    const value = await deps.db.transaction(async (tx) => {
+    const value = await scopeDb(deps.db, ctx).transaction(async (tx) => {
       const result = await work(tx, (owner) => commit(tx, deps, ctx, staged.value, owner));
       if (!result.ok) throw new Abort(result);
       return result.value;

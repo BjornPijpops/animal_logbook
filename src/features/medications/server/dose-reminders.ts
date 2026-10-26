@@ -1,4 +1,5 @@
 import type { DbExecutor } from "@/db/client";
+import type { Tenant } from "@/db/scope";
 import { createRemindersRepository } from "@/features/notifications/worker";
 import { expandSchedule } from "../schedule";
 import type { MedicationView } from "./medications.repository";
@@ -14,12 +15,12 @@ export type DoseReminderOptions = { now: Date; staleWindowHours: number };
 // earlier times of the same day. `logged` slots already have a dose and need no reminder.
 export async function reconcileDoseReminders(
   db: DbExecutor,
-  household: { householdId: string; timezone: string },
+  household: Tenant & { timezone: string },
   medication: MedicationView,
   logged: ReadonlySet<number>,
   options: DoseReminderOptions,
 ): Promise<void> {
-  const repo = createRemindersRepository(db, household.householdId);
+  const repo = createRemindersRepository(db, household);
   const key = { sourceType: "medication_dose", sourceId: medication.id } as const;
   const schedule = medication.schedule;
   if (medication.deletedAt || !schedule || schedule.kind === "as_needed") {

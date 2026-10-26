@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, eq, inArray, isNotNull, isNull, or, gte } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import { animals, medicalRecords, medications } from "@/db/schema";
@@ -16,7 +17,9 @@ export type MedicalRecordValues = {
 };
 export type AllergyRow = { animalId: string; title: string; severity: Severity | null };
 
-export function createMedicalRepository(db: DbExecutor, householdId: string) {
+export function createMedicalRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const inHousehold = eq(medicalRecords.householdId, householdId);
   const live = and(inHousehold, isNull(medicalRecords.deletedAt));
 

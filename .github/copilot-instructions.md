@@ -41,6 +41,7 @@ Cross-feature imports only through `features/<x>/index.ts`.
 - Files only via `StorageAdapter` and authenticated route handlers; no public URLs.
 - All user-facing strings through next-intl; no hard-coded text. Locale-aware dates, units, currency.
 - Dashboards (`features/dashboard`) are derived and read-only: bounded, household-scoped queries, local-day windows, "overdue" only means "the entered date has passed" (ADR 0014). Mobile nav is Home, Animals, Timeline, More (`src/app/(app)/nav-links.tsx`).
+- Household data is protected twice: repository `householdId` filters and RLS (ADR 0015). Run DB work through `scopeDb`; never use session-level settings. Exports live in `EXPORT_DIR`, not the upload root. The `al_household` cookie is only a validated preference (ADR 0016/0017).
 - Small pure functions, no premature abstraction, no dead code; comments explain why.
 - Migrations are reversible, reviewed, never edited after applied.
 - Never give veterinary/medical advice in the UI; show a disclaimer where relevant. All medical data is user-entered.
@@ -58,5 +59,5 @@ Typecheck, lint and tests pass; accessible (WCAG 2.2 AA, axe clean, keyboard); a
 
 Path rules: `.github/instructions/`. Roles: `.github/agents/`. Reusable prompts: `.github/prompts/` (`/plan-phase`, `/new-feature-slice`, ...).
 
-- Uploads go through `withUpload` (src/features/files) and `prepareUpload` (src/lib/uploads); never write files directly. Document env: `HOUSEHOLD_QUOTA_MB`, `FILE_RETENTION_DAYS`, `VIRUS_SCANNER` (none|clamav).
+- Uploads go through `withUpload` (src/features/files) and `prepareUpload` (src/lib/uploads); never write files directly. Document env: `HOUSEHOLD_QUOTA_MB`, `RETENTION_DAYS`, `VIRUS_SCANNER` (none|clamav).
 - Care records (ADR 0010): an appointment's cost is written to one linked expense in the same transaction; follow-up and vaccination due dates go through `syncDateReminder` (idempotent). Show times in the household zone via `src/lib/dates.ts`; store money as minor units via `src/lib/money.ts`. Owner delete/restore uses one shared timestamp for the row, its attachments and reminders. Allergies are derived from allergy records, never stored on the animal.

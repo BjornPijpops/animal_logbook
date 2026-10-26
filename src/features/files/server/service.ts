@@ -17,7 +17,10 @@ export async function getFileForUser(
   const memberships = await listMembershipsForUser(deps.db, userId);
   for (const membership of memberships) {
     if (!can(membership.role, "data:read")) continue;
-    const file = await createFilesRepository(deps.db, membership.householdId).find(fileId);
+    const file = await createFilesRepository(deps.db, {
+      householdId: membership.householdId,
+      userId,
+    }).find(fileId);
     if (!file) continue;
     const data = await deps.storage.get(file.storageKey);
     if (!data) break;
@@ -33,7 +36,7 @@ export async function getStorageUsage(
   ctx: Ctx,
 ): Promise<Result<StorageUsage>> {
   if (!can(ctx.role, "data:read")) return err("forbidden", "Not allowed");
-  const usedBytes = await createFilesRepository(deps.db, ctx.householdId).usedBytes();
+  const usedBytes = await createFilesRepository(deps.db, ctx).usedBytes();
   const percent = Math.min(100, Math.round((usedBytes / deps.householdQuotaBytes) * 100));
   return ok({ usedBytes, quotaBytes: deps.householdQuotaBytes, percent });
 }

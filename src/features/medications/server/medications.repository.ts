@@ -1,3 +1,4 @@
+import { scopeDb, type Tenant } from "@/db/scope";
 import { and, desc, eq, gte, isNotNull, isNull, lt } from "drizzle-orm";
 import type { DbExecutor } from "@/db/client";
 import {
@@ -80,7 +81,9 @@ export type DoseRecord = {
 };
 
 // Every query is scoped to one household; ids from another household simply do not match.
-export function createMedicationsRepository(db: DbExecutor, householdId: string) {
+export function createMedicationsRepository(executor: DbExecutor, tenant: Tenant) {
+  const db = scopeDb(executor, tenant);
+  const { householdId } = tenant;
   const inHousehold = eq(medications.householdId, householdId);
   const live = and(inHousehold, isNull(medications.deletedAt), isNull(medicalRecords.deletedAt));
 
