@@ -21,6 +21,6 @@ export const smtpMailer: Mailer = {
       auth: env.SMTP_USER ? { user: env.SMTP_USER, pass: env.SMTP_PASSWORD } : undefined,
     });
     await transporter.sendMail({ from: env.EMAIL_FROM, ...message });
-    logger.info({ subject: message.subject }, "email sent");
+    logger.info("email sent");
   },
 };
