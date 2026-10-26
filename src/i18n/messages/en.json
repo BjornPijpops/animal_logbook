@@ -111,7 +111,8 @@
       "current": "Time zone: {zone}",
       "save": "Save time zone",
       "saved": "Time zone saved.",
-      "error": "Could not save the time zone."
+      "error": "Could not save the time zone.",
+      "warning": "Changing the time zone does not move existing entries. Appointments, expenses and other past entries keep the dates they were saved with; only new entries and reminders use the new zone."
     },
     "members": "Members",
     "you": "(you)",

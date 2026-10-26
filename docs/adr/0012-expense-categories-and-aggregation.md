@@ -41,6 +41,16 @@ double count, must respect household-local months and years, and must never mix 
    runtime only). Cells starting with `=`, `+`, `-`, `@`, tab or CR get a leading `'`; cells with
    commas, quotes or newlines are quoted.
 
+## Which date an expense stores
+
+| Source              | `incurred_on`                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| Manual expense      | The date the user typed. It is never converted.                                             |
+| Appointment expense | The appointment's local date in the household timezone **at the moment it was last saved**. |
+
+Editing an appointment recomputes its date with the then-current timezone. Changing the household
+timezone does not touch stored dates, and the household settings page warns about this.
+
 ## Consequences
 
 - No recurring-expense scheduler and no cost splitting between animals in V1 (see BACKLOG).
