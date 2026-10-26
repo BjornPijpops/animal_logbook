@@ -37,16 +37,6 @@ export const medicalRecordType = pgEnum("medical_record_type", [
 
 export const severity = pgEnum("severity", ["mild", "moderate", "severe"]);
 
-export const expenseCategory = pgEnum("expense_category", [
-  "vet",
-  "food",
-  "insurance",
-  "grooming",
-  "toys",
-  "medication",
-  "other",
-]);
-
 export const reminderSource = pgEnum("reminder_source", [
   "follow_up",
   "vaccination_due",
@@ -150,41 +140,6 @@ export const medicalRecords = pgTable(
       .on(t.householdId, t.animalId, t.startedOn.desc())
       .where(sql`${t.deletedAt} is null`),
     index("medical_records_appointment_idx").on(t.householdId, t.appointmentId),
-  ],
-);
-
-export const expenses = pgTable(
-  "expenses",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    householdId: householdColumn(),
-    animalId: uuid("animal_id"),
-    category: expenseCategory("category").notNull(),
-    incurredOn: date("incurred_on", { mode: "string" }).notNull(),
-    amountMinor: integer("amount_minor").notNull(),
-    currency: char("currency", { length: 3 }).notNull(),
-    description: text("description").notNull(),
-    // At most one expense per appointment keeps appointment costs from being counted twice.
-    appointmentId: uuid("appointment_id"),
-    createdBy: createdBy(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true }),
-    ...timestamps,
-  },
-  (t) => [
-    unique("expenses_id_household_key").on(t.id, t.householdId),
-    unique("expenses_appointment_key").on(t.appointmentId),
-    foreignKey({
-      columns: [t.animalId, t.householdId],
-      foreignColumns: [animals.id, animals.householdId],
-    }),
-    foreignKey({
-      columns: [t.appointmentId, t.householdId],
-      foreignColumns: [appointments.id, appointments.householdId],
-    }),
-    check("expenses_amount_check", sql`${t.amountMinor} >= 0`),
-    index("expenses_household_date_idx")
-      .on(t.householdId, t.incurredOn.desc())
-      .where(sql`${t.deletedAt} is null`),
   ],
 );
 

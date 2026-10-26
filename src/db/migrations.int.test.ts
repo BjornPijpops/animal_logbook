@@ -4,30 +4,43 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Client, Pool } from "pg";
 import { describe, expect, it } from "vitest";
 
-const MIGRATION = "0005_medications_reminders_delivery";
 const statements = (file: string) =>
   readFileSync(file, "utf8")
     .split("--> statement-breakpoint")
     .map((sql) => sql.trim())
     .filter(Boolean);
 
-describe(`migration ${MIGRATION}`, () => {
-  it("applies, reverses with its down script, and applies again", async () => {
-    const base = process.env.TEST_DATABASE_URL;
-    if (!base) throw new Error("TEST_DATABASE_URL is not set");
-    const name = "animal_logbook_migration_test";
-    const admin = new URL(base);
-    admin.pathname = "/postgres";
-    const client = new Client({ connectionString: admin.toString() });
-    await client.connect();
+async function withScratchDatabase(run: (pool: Pool) => Promise<void>) {
+  const base = process.env.TEST_DATABASE_URL;
+  if (!base) throw new Error("TEST_DATABASE_URL is not set");
+  const name = "animal_logbook_migration_test";
+  const admin = new URL(base);
+  admin.pathname = "/postgres";
+  const client = new Client({ connectionString: admin.toString() });
+  await client.connect();
+  await client.query(`DROP DATABASE IF EXISTS "${name}"`);
+  await client.query(`CREATE DATABASE "${name}"`);
+  const target = new URL(base);
+  target.pathname = `/${name}`;
+  const pool = new Pool({ connectionString: target.toString() });
+  try {
+    await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
+    await run(pool);
+  } finally {
+    await pool.end();
     await client.query(`DROP DATABASE IF EXISTS "${name}"`);
-    await client.query(`CREATE DATABASE "${name}"`);
+    await client.end();
+  }
+}
 
-    const target = new URL(base);
-    target.pathname = `/${name}`;
-    const pool = new Pool({ connectionString: target.toString() });
-    try {
-      await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
+const runAll = async (pool: Pool, file: string) => {
+  for (const sql of statements(file)) await pool.query(sql);
+};
+
+describe("migration 0005_medications_reminders_delivery", () => {
+  const MIGRATION = "0005_medications_reminders_delivery";
+  it("applies, reverses with its down script, and applies again", async () => {
+    await withScratchDatabase(async (pool) => {
       const tables = async () =>
         (
           await pool.query<{ table_name: string }>(
@@ -36,7 +49,9 @@ describe(`migration ${MIGRATION}`, () => {
         ).rows.map((row) => row.table_name);
       expect(await tables()).toContain("medication_doses");
 
-      for (const sql of statements(`./drizzle/down/${MIGRATION}.down.sql`)) await pool.query(sql);
+      // 0006 depends on 0005, so it is reversed first.
+      await runAll(pool, "./drizzle/down/0006_expenses_manual.down.sql");
+      await runAll(pool, `./drizzle/down/${MIGRATION}.down.sql`);
       const after = await tables();
       for (const table of [
         "medications",
@@ -54,12 +69,85 @@ describe(`migration ${MIGRATION}`, () => {
       );
       expect(column.rowCount).toBe(0);
 
-      for (const sql of statements(`./drizzle/${MIGRATION}.sql`)) await pool.query(sql);
+      await runAll(pool, `./drizzle/${MIGRATION}.sql`);
+      await runAll(pool, "./drizzle/0006_expenses_manual.sql");
       expect(await tables()).toContain("medication_doses");
-    } finally {
-      await pool.end();
-      await client.query(`DROP DATABASE IF EXISTS "${name}"`);
-      await client.end();
-    }
+    });
+  });
+});
+
+describe("migration 0006_expenses_manual", () => {
+  const categories = async (pool: Pool) =>
+    (
+      await pool.query<{ value: string }>(
+        "SELECT unnest(enum_range(NULL::expense_category))::text AS value",
+      )
+    ).rows.map((row) => row.value);
+  const columns = async (pool: Pool) =>
+    (
+      await pool.query<{ column_name: string }>(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'expenses'",
+      )
+    ).rows.map((row) => row.column_name);
+
+  it("adds training and the manual-expense columns, and reverses cleanly", async () => {
+    await withScratchDatabase(async (pool) => {
+      expect(await categories(pool)).toContain("training");
+      expect(await columns(pool)).toEqual(
+        expect.arrayContaining(["notes", "medication_id", "food_plan_id"]),
+      );
+
+      const user = await pool.query<{ id: string }>(
+        "INSERT INTO users (name, email, email_verified) VALUES ('U', 'u@example.test', true) RETURNING id",
+      );
+      const userId = user.rows[0]?.id;
+      const household = await pool.query<{ id: string }>(
+        "INSERT INTO households (name, created_by) VALUES ('H', $1) RETURNING id",
+        [userId],
+      );
+      const householdId = household.rows[0]?.id;
+      await pool.query(
+        `INSERT INTO expenses (household_id, category, incurred_on, amount_minor, currency, description)
+         VALUES ($1, 'training', '2025-01-01', 500, 'EUR', 'Class')`,
+        [householdId],
+      );
+
+      await runAll(pool, "./drizzle/down/0006_expenses_manual.down.sql");
+      expect(await categories(pool)).not.toContain("training");
+      expect(await columns(pool)).not.toContain("notes");
+      const kept = await pool.query<{ category: string }>("SELECT category::text FROM expenses");
+      expect(kept.rows[0]?.category).toBe("other");
+
+      await runAll(pool, "./drizzle/0006_expenses_manual.sql");
+      expect(await categories(pool)).toContain("training");
+      expect(await columns(pool)).toContain("food_plan_id");
+    });
+  });
+
+  it("moves existing training appointment expenses to the training category", async () => {
+    await withScratchDatabase(async (pool) => {
+      await runAll(pool, "./drizzle/down/0006_expenses_manual.down.sql");
+      const user = await pool.query<{ id: string }>(
+        "INSERT INTO users (name, email, email_verified) VALUES ('U', 'u2@example.test', true) RETURNING id",
+      );
+      const household = await pool.query<{ id: string }>(
+        "INSERT INTO households (name, created_by) VALUES ('H', $1) RETURNING id",
+        [user.rows[0]?.id],
+      );
+      const householdId = household.rows[0]?.id;
+      const appointment = await pool.query<{ id: string }>(
+        `INSERT INTO appointments (household_id, type, title, scheduled_at, timezone)
+         VALUES ($1, 'training', 'Puppy class', now(), 'UTC') RETURNING id`,
+        [householdId],
+      );
+      await pool.query(
+        `INSERT INTO expenses (household_id, category, incurred_on, amount_minor, currency, description, appointment_id)
+         VALUES ($1, 'other', '2025-01-01', 500, 'EUR', 'Puppy class', $2)`,
+        [householdId, appointment.rows[0]?.id],
+      );
+      await runAll(pool, "./drizzle/0006_expenses_manual.sql");
+      const row = await pool.query<{ category: string }>("SELECT category::text FROM expenses");
+      expect(row.rows[0]?.category).toBe("training");
+    });
   });
 });
