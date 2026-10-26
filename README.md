@@ -68,6 +68,12 @@ Work one phase per chat session. Start with `/plan-phase`, build in slices (`/ne
 
 Behind Caddy, nginx or Traefik you **must** set `TRUSTED_PROXY=true` (and make the proxy overwrite `X-Forwarded-For`; list extra hops in `TRUSTED_PROXY_CIDRS`). Left off, all visitors share one rate-limit bucket per endpoint and a few failed sign-ins from anyone lock everyone out for a short time. Never enable it when the app port is reachable directly, because clients could then pick their own limiter bucket. Sign-in and password-reset are also limited per account (10 sign-ins per 10 min, 5 resets per hour). Details: [ADR 0007](docs/adr/0007-self-hosted-deployment.md).
 
+### Privacy: export, deletion and audit log
+
+- `/settings/privacy`: request a data export (zip of JSON plus files, built by the worker, downloadable by you for `EXPORT_TTL_HOURS`, default 24) or delete your account. Both need your password. Owners of shared households must transfer ownership or delete the household first.
+- `/settings/audit`: owners see membership, invite, export and deletion events (kept `AUDIT_RETENTION_DAYS`, default 365).
+- Soft-deleted rows are purged after `RETENTION_DAYS` (default 30). Env: `EXPORT_DIR`, `EXPORT_TTL_HOURS`, `AUDIT_RETENTION_DAYS`. Design: ADR [0016](docs/adr/0016-retention-deletion-audit.md), [0017](docs/adr/0017-data-export.md).
+
 ### Reminders and push
 
 The worker generates dose reminders and sends them by email (Mailpit in dev) and Web Push. Generate VAPID keys with `npm run vapid` and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` in `.env.local`; without them push stays off and email still works. Reminders older than `REMINDER_STALE_WINDOW_HOURS` (24) are never sent. Reminders are a convenience, not medical advice or a delivery guarantee.

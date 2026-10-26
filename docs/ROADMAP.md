@@ -55,6 +55,8 @@ Row-level security, GDPR export (JSON + zip) and account deletion, audit log, an
 **Purge rule for linked expenses**: when soft-deleted rows are purged, linked expenses are kept and their links (`food_plan_id`, `appointment_id`, `medication_id`) are set to null. Each link needs its own test.
 **Accept**: export contains all user data and files; deletion leaves no rows or files; purge is idempotent; security-reviewer audit has no open high findings.
 
+**Status**: done. Security review: headers (nosniff, DENY, HSTS, nonce CSP) and uploads are fine; logs strip SQL parameters and email subjects; `npm audit` reports only dev/build tooling (@serwist build-time zod, drizzle-kit esbuild), left as is because the suggested fix is a downgrade.
+
 ### 8c: Production
 
 `Dockerfile`, `docker-compose.prod.yml`, backups, deployment guide, E2E against the built image.

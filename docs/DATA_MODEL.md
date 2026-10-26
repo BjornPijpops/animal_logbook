@@ -106,9 +106,16 @@ Sharing model: access is granted to a **household** (all its animals). Per-anima
 - Expenses: `(household_id, incurred_on)`, `(household_id, category, incurred_on)`.
 - Unique: `animals(id, household_id)`, `household_members(household_id,user_id)`, `files(storage_key)`, `push_subscriptions(endpoint)`.
 
+## Privacy tables (migration 0010)
+
+- `audit_log(household_id, actor_user_id, target_user_id, event, detail, created_at)`: owner-only SELECT, member INSERT with `actor_user_id = app_user_id()`, no UPDATE or DELETE for the app role. Events: invite_sent, invite_revoked, invite_accepted, member_removed, member_left, role_changed, ownership_transferred, export_requested, export_downloaded, account_deletion_requested, account_deleted, reauth_failed.
+- `data_exports(id, user_id, household_id, status, storage_key, expires_at, ...)`: status pending, processing, ready, failed or expired. The app role reads its own rows and inserts as an owner; the worker role has full access.
+- `household_invites` gained own-email SELECT and DELETE policies so account deletion can remove invites addressed to the user.
+- All 23 household-scoped tables use FORCE ROW LEVEL SECURITY ([ADR 0015](adr/0015-row-level-security.md)).
+
 ## Deletion semantics
 
-Soft delete hides rows in all repositories by default. A purge job hard-deletes after a retention window (default 30 days) and removes orphan files. Account deletion hard-deletes the household if the user is its sole owner; otherwise only membership is removed.
+Soft delete hides rows in all repositories by default. A purge job hard-deletes after a retention window (default 30 days), keeps linked expenses with their links nulled, and removes orphan files ([ADR 0016](adr/0016-retention-deletion-audit.md)). Account deletion hard-deletes the household if the user is its sole owner; otherwise only membership is removed.
 
 ## Derived values (never hand-edited)
 
