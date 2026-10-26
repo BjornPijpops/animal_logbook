@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getDb } from "@/db/client";
@@ -38,6 +39,14 @@ export default async function SettingsPage() {
           timezones={timezones}
           currencies={currencies}
         />
+      </Card>
+      <Card>
+        <Link
+          href="/settings/notifications"
+          className="text-primary text-lg font-semibold underline"
+        >
+          {t("notificationsLink")}
+        </Link>
       </Card>
     </div>
   );

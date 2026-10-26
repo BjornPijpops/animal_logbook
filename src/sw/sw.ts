@@ -62,3 +62,29 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+function field(source: unknown, key: string): unknown {
+  return typeof source === "object" && source !== null ? Reflect.get(source, key) : undefined;
+}
+
+// The payload is generic by design (see NotificationMessage); only same-origin links are opened.
+self.addEventListener("push", (event) => {
+  const data: unknown = event.data?.json();
+  const title = field(data, "title");
+  const body = field(data, "body");
+  event.waitUntil(
+    self.registration.showNotification(typeof title === "string" ? title : "Animal Logbook", {
+      body: typeof body === "string" ? body : "A reminder is due.",
+      icon: "/icon.png",
+      data: { url: field(data, "url") },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = field(event.notification.data, "url");
+  const parsed = typeof target === "string" ? new URL(target, self.location.origin) : null;
+  const href = parsed && parsed.origin === self.location.origin ? parsed.href : "/";
+  event.waitUntil(self.clients.openWindow(href));
+});

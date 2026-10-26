@@ -97,7 +97,8 @@
     "phone": "Phone number",
     "phoneHint": "Shown on the emergency cards of your household's animals.",
     "language": "Language",
-    "languageEnglish": "English"
+    "languageEnglish": "English",
+    "notificationsLink": "Notification settings"
   },
   "household": {
     "title": "Household",
@@ -567,6 +568,27 @@
       "conflict": "This item already has the maximum number of files.",
       "rate_limited": "Too many attempts. Please wait a moment.",
       "other": "Something went wrong. Please try again."
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "back": "Back to settings",
+    "channels": "Send reminders by",
+    "channel": {
+      "email": "Email",
+      "push": "Push notification on my devices"
+    },
+    "pushTitle": "Push notifications",
+    "pushNotConfigured": "Push is not set up on this server. Ask the administrator to configure VAPID keys.",
+    "pushUnsupported": "This browser does not support push notifications. Install the app or use another browser.",
+    "devices": "{count, plural, =0 {No devices subscribed.} one {1 device subscribed.} other {# devices subscribed.}}",
+    "enableDevice": "Enable on this device",
+    "disableDevice": "Disable on this device",
+    "disclaimer": "Reminders are a convenience, not medical advice or a delivery guarantee. Notifications show as little detail as possible. Always follow your vet's instructions.",
+    "errors": {
+      "other": "Something went wrong. Please try again.",
+      "denied": "Notifications are blocked in this browser. Allow them in the site settings and try again.",
+      "unavailable": "The app is not ready for push yet. Reload the page and try again."
     }
   }
 }
