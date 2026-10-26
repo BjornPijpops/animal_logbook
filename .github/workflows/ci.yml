@@ -30,6 +30,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Production dependencies must be clean. Optional peers are omitted because the image never
+      # installs them (drizzle-kit is only better-auth's optional peer; it is a devDependency here).
+      - name: Audit production dependencies (fails the build)
+        run: npm audit --omit=dev --omit=optional
+      - name: Audit everything (report only, dev tooling findings do not fail the build)
+        run: npm audit || true
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
