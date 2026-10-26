@@ -56,3 +56,5 @@ Typecheck, lint and tests pass; accessible (WCAG 2.2 AA, axe clean, keyboard); a
 ## Customization
 
 Path rules: `.github/instructions/`. Roles: `.github/agents/`. Reusable prompts: `.github/prompts/` (`/plan-phase`, `/new-feature-slice`, ...).
+
+- Uploads go through `withUpload` (src/features/files) and `prepareUpload` (src/lib/uploads); never write files directly. Document env: `HOUSEHOLD_QUOTA_MB`, `FILE_RETENTION_DAYS`, `VIRUS_SCANNER` (none|clamav).
