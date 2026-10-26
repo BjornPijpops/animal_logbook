@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import type { Database, DbExecutor } from "@/db/client";
 import { householdMembers, households } from "@/db/schema";
 import type { Role } from "./can";
@@ -22,11 +22,16 @@ export async function listMembershipsForUser(
     .orderBy(asc(householdMembers.createdAt), asc(households.id));
 }
 
-export async function createHouseholdWithOwner(
+// Serialised per user with a transaction-scoped advisory lock, so concurrent first requests
+// create exactly one household. The membership re-check happens inside the lock.
+export async function ensureHouseholdForUser(
   db: Database,
   input: { name: string; userId: string },
-): Promise<string> {
-  return db.transaction(async (tx) => {
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${input.userId}, 0))`);
+    const existing = await listMembershipsForUser(tx, input.userId);
+    if (existing.length > 0) return;
     const [household] = await tx
       .insert(households)
       .values({ name: input.name, createdBy: input.userId })
@@ -35,6 +40,5 @@ export async function createHouseholdWithOwner(
     await tx
       .insert(householdMembers)
       .values({ householdId: household.id, userId: input.userId, role: "owner" });
-    return household.id;
   });
 }

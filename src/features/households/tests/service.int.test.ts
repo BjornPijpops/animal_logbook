@@ -36,6 +36,21 @@ function tokenFrom(text: string): string {
 }
 
 describe("resolveCtx", () => {
+  it("concurrent first requests create exactly one household", async () => {
+    const user = await createUser(db, { name: "Racer" });
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () => resolveCtx(db, { id: user.id, name: user.name })),
+    );
+    const ids = new Set(results.map((r) => (r.ok ? r.value.householdId : "failed")));
+    expect(ids.size).toBe(1);
+    expect(ids.has("failed")).toBe(false);
+    const rows = await db
+      .select()
+      .from(householdMembers)
+      .where(eq(householdMembers.userId, user.id));
+    expect(rows).toHaveLength(1);
+  });
+
   it("creates a personal owner household for a user that has none", async () => {
     const user = await createUser(db, { name: "Fresh" });
     const result = await resolveCtx(db, { id: user.id, name: "Fresh" });

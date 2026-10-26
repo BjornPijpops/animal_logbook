@@ -17,14 +17,19 @@
       "owner": "Owner",
       "editor": "Editor",
       "viewer": "Viewer"
-    }
+    },
+    "invalid": "Check this value.",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Are you sure?"
   },
   "nav": {
     "label": "Main",
     "home": "Home",
     "household": "Household",
     "settings": "Settings",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "animals": "Animals"
   },
   "auth": {
     "signUp": {
@@ -75,7 +80,8 @@
     "welcome": "Hello, {name}",
     "household": "Household: {name}",
     "emptyTitle": "No animals yet",
-    "emptyBody": "Animal profiles are coming in the next release."
+    "emptyBody": "Add an animal to start its logbook.",
+    "animalsLink": "Go to your animals"
   },
   "settings": {
     "title": "Settings",
@@ -141,5 +147,130 @@
   },
   "pwa": {
     "description": "Everything about your animals in one place."
+  },
+  "animals": {
+    "title": "Animals",
+    "add": "Add animal",
+    "empty": {
+      "title": "No animals yet",
+      "body": "Add your first animal to start its logbook."
+    },
+    "viewerNote": "You have read-only access to this household.",
+    "newTitle": "Add an animal",
+    "editTitle": "Edit {name}",
+    "photoOf": "Photo of {name}",
+    "noPhoto": "No photo",
+    "species": {
+      "dog": "Dog",
+      "cat": "Cat",
+      "rabbit": "Rabbit",
+      "guinea_pig": "Guinea pig",
+      "hamster": "Hamster",
+      "bird": "Bird",
+      "horse": "Horse",
+      "reptile": "Reptile",
+      "fish": "Fish",
+      "other": "Other"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female",
+      "unknown": "Unknown"
+    },
+    "sterilized": {
+      "yes": "Yes",
+      "no": "No",
+      "unknown": "Unknown"
+    },
+    "fields": {
+      "name": "Name",
+      "species": "Species",
+      "speciesOther": "Which species?",
+      "breed": "Breed",
+      "gender": "Gender",
+      "birthDate": "Date of birth",
+      "birthDateIsEstimate": "Estimated date",
+      "colorMarkings": "Color / markings",
+      "chipNumber": "Chip number",
+      "registrationNumber": "Registration number",
+      "sterilizedLabel": "Sterilized",
+      "allergyInfo": "Allergies",
+      "emergencyNotes": "Emergency notes"
+    },
+    "hints": {
+      "breed": "Pick a suggestion or type any breed.",
+      "allergyInfo": "Information you enter yourself. It is not veterinary advice.",
+      "emergencyNotes": "Shown on the emergency card, e.g. your vet's phone number."
+    },
+    "save": "Save animal",
+    "saving": "Saving?",
+    "created": "Animal saved.",
+    "profile": "Profile",
+    "currentWeight": "Current weight",
+    "notSet": "Not set",
+    "age": "Age",
+    "emergencyCard": "Emergency card",
+    "deleteAnimal": "Delete animal",
+    "deleteConfirm": "Delete {name}? It will disappear from your household.",
+    "errors": {
+      "validation": "Please check the form and try again.",
+      "forbidden": "You only have read access, so you cannot change this.",
+      "not_found": "That animal could not be found.",
+      "unauthenticated": "Please sign in again.",
+      "conflict": "That conflicts with existing data.",
+      "rate_limited": "Too many attempts. Please wait a moment."
+    },
+    "photos": {
+      "title": "Photos",
+      "upload": "Add a photo",
+      "uploading": "Uploading?",
+      "hint": "JPEG, PNG or WebP. Location data is removed automatically.",
+      "primary": "Primary photo",
+      "makePrimary": "Make photo {n} primary",
+      "delete": "Delete photo {n}",
+      "deleteConfirm": "Delete this photo permanently?",
+      "open": "Open photo {n} full size",
+      "alt": "Photo {n}",
+      "empty": "No photos yet.",
+      "uploadFailed": "The photo could not be uploaded. Use a JPEG, PNG or WebP image that is not too large.",
+      "limit": "This animal has reached the photo limit."
+    },
+    "weight": {
+      "title": "Weight",
+      "add": "Add weight",
+      "weight": "Weight",
+      "unit": "Unit",
+      "date": "Date measured",
+      "note": "Note",
+      "submit": "Add entry",
+      "history": "Weight history",
+      "historyEmpty": "No weight entries yet.",
+      "delete": "Delete the entry from {date}",
+      "deleteConfirm": "Delete this weight entry?",
+      "chartLabel": "Weight over time. The table below lists every entry.",
+      "columnDate": "Date",
+      "columnWeight": "Weight",
+      "columnNote": "Note",
+      "invalid": "Enter a weight above zero and a valid date that is not in the future.",
+      "current": "Current: {value}"
+    },
+    "emergency": {
+      "title": "Emergency card",
+      "print": "Print card",
+      "allergies": "Allergies",
+      "none": "None recorded",
+      "notes": "Emergency notes",
+      "chip": "Chip number",
+      "born": "Born",
+      "owner": "Owner contact",
+      "disclaimer": "Information entered by the owner. Not veterinary advice.",
+      "back": "Back to {name}"
+    },
+    "offline": {
+      "label": "Keep emergency cards available offline on this device",
+      "hint": "Stores the cards and primary photos in this browser. Removed when you sign out.",
+      "enabled": "Emergency cards are saved for offline use.",
+      "failed": "Could not save the cards offline. Check your connection."
+    }
   }
 }
