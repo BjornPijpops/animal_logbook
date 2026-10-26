@@ -10,6 +10,7 @@ import { getAnimalDeps, listAnimals } from "@/features/animals";
 import {
   EXPENSE_CATEGORY_VALUES,
   EXPENSE_VIEWS,
+  EXPORT_LIMIT,
   expenseFilterSchema,
   getExpenseDeps,
   getExpenseSummary,
@@ -187,6 +188,11 @@ export default async function ExpensesPage({
               {t("export")}
             </a>
           </div>
+          {list.value.total > EXPORT_LIMIT ? (
+            <p role="status" className="text-sm">
+              {t("exportCapped", { limit: EXPORT_LIMIT })}
+            </p>
+          ) : null}
         </form>
       </Card>
 

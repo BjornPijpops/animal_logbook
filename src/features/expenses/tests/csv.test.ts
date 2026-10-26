@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildExpensesCsv, CSV_BOM, csvCell } from "../server/csv";
+import { buildExpensesCsv, CSV_BOM, csvCell, csvNumberCell } from "../server/csv";
 import type { ExpenseListRow } from "../server/expenses.repository";
 
 function row(overrides: Partial<ExpenseListRow> = {}): ExpenseListRow {
@@ -22,6 +22,18 @@ function row(overrides: Partial<ExpenseListRow> = {}): ExpenseListRow {
 }
 
 describe("csv export", () => {
+  it("keeps negative amounts numeric but still guards free text", () => {
+    const csv = buildExpensesCsv([row({ amountMinor: -500, description: "-2+3", notes: "@cmd" })]);
+    expect(csv).toContain("2025-03-14,food,-5.00,EUR,,\x27-2+3,\x27@cmd,manual");
+    expect(csvNumberCell("-5.00")).toBe("-5.00");
+    expect(csvNumberCell("=1+1")).toBe("\x27=1+1");
+  });
+
+  it("puts a note above the header when truncated", () => {
+    const csv = buildExpensesCsv([row()], 10_000);
+    expect(csv.slice(1).split("\r\n")[0]).toMatch(/^# Export truncated: only the first 10000/);
+  });
+
   it("starts with a UTF-8 byte order mark and uses CRLF lines", () => {
     const csv = buildExpensesCsv([row()]);
     const bytes = Buffer.from(csv, "utf8");

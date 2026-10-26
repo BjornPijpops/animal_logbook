@@ -24,22 +24,34 @@ export function csvCell(value: string): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
 }
 
-export function buildExpensesCsv(rows: ExpenseListRow[]): string {
-  const lines = [HEADER.join(",")];
+// App-generated numbers (including negatives) are not formulas, so they skip the prefix; every
+// free-text column still goes through csvCell. Anything that is not a plain number falls back to it.
+const PLAIN_NUMBER = /^-?\d+(\.\d+)?$/;
+export function csvNumberCell(value: string): string {
+  return PLAIN_NUMBER.test(value) ? value : csvCell(value);
+}
+
+export const EXPORT_TRUNCATED_NOTE = (limit: number) =>
+  `# Export truncated: only the first ${limit} entries are included. Narrow the filter to export the rest.`;
+
+export function buildExpensesCsv(
+  rows: ExpenseListRow[],
+  truncatedAt: number | null = null,
+): string {
+  const lines = truncatedAt === null ? [] : [EXPORT_TRUNCATED_NOTE(truncatedAt)];
+  lines.push(HEADER.join(","));
   for (const row of rows) {
     lines.push(
       [
-        row.incurredOn,
-        row.category,
-        minorToInput(row.amountMinor, row.currency),
-        row.currency,
-        row.animalName ?? "",
-        row.description,
-        row.notes ?? "",
-        row.appointmentId ? "appointment" : "manual",
-      ]
-        .map(csvCell)
-        .join(","),
+        csvCell(row.incurredOn),
+        csvCell(row.category),
+        csvNumberCell(minorToInput(row.amountMinor, row.currency)),
+        csvCell(row.currency),
+        csvCell(row.animalName ?? ""),
+        csvCell(row.description),
+        csvCell(row.notes ?? ""),
+        csvCell(row.appointmentId ? "appointment" : "manual"),
+      ].join(","),
     );
   }
   return `${CSV_BOM}${lines.join("\r\n")}\r\n`;

@@ -15,10 +15,10 @@ import {
   type YearTotal,
 } from "./expenses.repository";
 
-export type ExpenseDeps = { db: Database; now?: () => Date };
+export type ExpenseDeps = { db: Database; now?: () => Date; exportLimit?: number };
 
 export const EXPENSES_PAGE_SIZE = 25;
-const EXPORT_LIMIT = 10_000;
+export const EXPORT_LIMIT = 10_000;
 
 const forbidden = () => err("forbidden", "Not allowed");
 const notFound = () => err("not_found", "Expense not found");
@@ -217,15 +217,23 @@ export async function getExpenseSummary(
   return ok({ years, monthly, yearly, categories });
 }
 
+export type CsvExport = { csv: string; truncated: boolean };
+
+// Fetches one row beyond the limit to know whether the export had to be cut short.
 export async function exportExpensesCsv(
   deps: ExpenseDeps,
   ctx: Ctx,
   filter: ExpenseFilter,
-): Promise<Result<string>> {
+): Promise<Result<CsvExport>> {
   if (!can(ctx.role, "data:read")) return forbidden();
+  const limit = deps.exportLimit ?? EXPORT_LIMIT;
   const rows = await createExpensesRepository(deps.db, ctx.householdId).list(filter, {
-    limit: EXPORT_LIMIT,
+    limit: limit + 1,
     offset: 0,
   });
-  return ok(buildExpensesCsv(rows));
+  const truncated = rows.length > limit;
+  return ok({
+    csv: buildExpensesCsv(truncated ? rows.slice(0, limit) : rows, truncated ? limit : null),
+    truncated,
+  });
 }

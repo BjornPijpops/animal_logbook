@@ -779,6 +779,7 @@
       "forbidden": "You can view expenses but not change them.",
       "conflict": "This expense comes from an appointment. Edit it there.",
       "other": "Something went wrong. Try again."
-    }
+    },
+    "exportCapped": "This filter has more than {limit} entries. The CSV export includes only the first {limit}; narrow the filters to export the rest."
   }
 }
