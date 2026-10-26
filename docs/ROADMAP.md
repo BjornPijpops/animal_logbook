@@ -47,7 +47,7 @@ Food plans, meal schedule with derived daily quantity, diet-change history, food
 
 ### 8a: Dashboard and navigation
 
-Household and per-animal dashboards built only from existing data (upcoming, overdue by entered dates, medications, expiring documents, spending this month, recent diet changes) and a nav cleanup (mobile bottom bar with a "More" group).
+Household and per-animal dashboards built only from existing data (upcoming, overdue by entered dates, medications, expiring documents, spending this month, recent diet changes) and a nav cleanup (mobile bottom bar with a "More" group). **Done** (ADR 0014).
 
 ### 8b: Privacy and security
 
