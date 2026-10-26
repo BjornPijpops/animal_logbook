@@ -30,3 +30,12 @@ Ideas for after V1. Optional paid adapters may be listed here but must never be 
 
 - Translate transactional emails (currently English only)
 - `audit_log` table (deferred to Phase 8)
+
+## From Phase 2
+
+- HEIC/HEIF photo support (needs a libheif-enabled sharp build)
+- `VirusScanner` interface and optional ClamAV adapter (planned with Phase 3 uploads)
+- Background job to remove orphaned files and bytes of soft-deleted animals
+- Owner phone number and a deceased date on the animal profile
+- Photo cropping UI
+- Refresh the offline emergency cache automatically when animal data changes

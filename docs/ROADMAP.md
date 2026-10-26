@@ -13,7 +13,7 @@ Docs, ADRs, Copilot customization, scaffold. **Accept**: user approves; `npm ins
 Auth (email+password with verification and reset; OAuth providers structured but none enabled), households + members + invites, base layout, design system (shadcn/ui), PWA shell, next-intl, worker skeleton, CI, security headers, rate limiter.
 **Accept**: sign up/in/out works; a household is created on first sign-in; invite flow lets a second account join with a role; viewer cannot write; app installable; Lighthouse PWA check passes; worker boots and runs a heartbeat job; CI green; cross-tenant integration test harness exists.
 
-## Phase 2: Animals
+## Phase 2: Animals (done)
 
 CRUD, photos (upload, crop, thumbnails via sharp), weight history + chart, emergency card (printable, offline).
 **Accept**: create/edit/archive animals; weight entries drive "current weight"; emergency card prints and loads offline; cross-tenant tests for every repository; axe clean.
