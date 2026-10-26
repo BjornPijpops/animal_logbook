@@ -50,6 +50,7 @@ describe("migration 0005_medications_reminders_delivery", () => {
       expect(await tables()).toContain("medication_doses");
 
       // Later migrations depend on 0005, so they are reversed first.
+      await runAll(pool, "./drizzle/down/0010_audit_and_exports.down.sql");
       await runAll(pool, "./drizzle/down/0009_row_level_security.down.sql");
       await runAll(pool, "./drizzle/down/0008_dashboard_indexes.down.sql");
       await runAll(pool, "./drizzle/down/0007_food_plans.down.sql");
@@ -77,6 +78,7 @@ describe("migration 0005_medications_reminders_delivery", () => {
       await runAll(pool, "./drizzle/0007_food_plans.sql");
       await runAll(pool, "./drizzle/0008_dashboard_indexes.sql");
       await runAll(pool, "./drizzle/0009_row_level_security.sql");
+      await runAll(pool, "./drizzle/0010_audit_and_exports.sql");
       expect(await tables()).toContain("medication_doses");
     });
   });
@@ -254,6 +256,7 @@ describe("migration 0009_row_level_security", () => {
 
   it("enables forced RLS, reverses to a plain schema and applies again", async () => {
     await withScratchDatabase(async (pool) => {
+      await runAll(pool, "./drizzle/down/0010_audit_and_exports.down.sql");
       const applied = await state(pool);
       expect(applied.forced).toBe(21);
       expect(applied.policies).toBeGreaterThan(40);
@@ -264,6 +267,36 @@ describe("migration 0009_row_level_security", () => {
 
       await runAll(pool, "./drizzle/0009_row_level_security.sql");
       expect(await state(pool)).toEqual(applied);
+      await runAll(pool, "./drizzle/0010_audit_and_exports.sql");
+    });
+  });
+});
+
+describe("migration 0010_audit_and_exports", () => {
+  const present = async (pool: Pool) =>
+    (
+      await pool.query<{ table_name: string }>(
+        "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('audit_log', 'data_exports')",
+      )
+    ).rows
+      .map((row) => row.table_name)
+      .sort();
+
+  it("adds both tables under forced RLS, reverses and applies again", async () => {
+    await withScratchDatabase(async (pool) => {
+      expect(await present(pool)).toEqual(["audit_log", "data_exports"]);
+      const forced = await pool.query(
+        "SELECT 1 FROM pg_class WHERE relname IN ('audit_log', 'data_exports') AND relforcerowsecurity",
+      );
+      expect(forced.rowCount).toBe(2);
+
+      await runAll(pool, "./drizzle/down/0010_audit_and_exports.down.sql");
+      expect(await present(pool)).toEqual([]);
+      const fn = await pool.query("SELECT 1 FROM pg_proc WHERE proname = 'app_is_owner'");
+      expect(fn.rowCount).toBe(0);
+
+      await runAll(pool, "./drizzle/0010_audit_and_exports.sql");
+      expect(await present(pool)).toEqual(["audit_log", "data_exports"]);
     });
   });
 });

@@ -47,6 +47,52 @@ export function createMembersRepository(executor: DbExecutor, tenant: Tenant) {
       await db.insert(householdMembers).values({ householdId, userId, role });
     },
 
+    async setRole(userId: string, role: Exclude<Role, "owner">): Promise<boolean> {
+      const rows = await db
+        .update(householdMembers)
+        .set({ role })
+        .where(
+          and(
+            eq(householdMembers.householdId, householdId),
+            eq(householdMembers.userId, userId),
+            ne(householdMembers.role, "owner"),
+          ),
+        )
+        .returning({ id: householdMembers.id });
+      return rows.length > 0;
+    },
+
+    // The single-owner unique index means the old owner is demoted before the new one is promoted.
+    async demoteOwner(userId: string): Promise<boolean> {
+      const rows = await db
+        .update(householdMembers)
+        .set({ role: "editor" })
+        .where(
+          and(
+            eq(householdMembers.householdId, householdId),
+            eq(householdMembers.userId, userId),
+            eq(householdMembers.role, "owner"),
+          ),
+        )
+        .returning({ id: householdMembers.id });
+      return rows.length > 0;
+    },
+
+    async promoteToOwner(userId: string): Promise<boolean> {
+      const rows = await db
+        .update(householdMembers)
+        .set({ role: "owner" })
+        .where(
+          and(
+            eq(householdMembers.householdId, householdId),
+            eq(householdMembers.userId, userId),
+            ne(householdMembers.role, "owner"),
+          ),
+        )
+        .returning({ id: householdMembers.id });
+      return rows.length > 0;
+    },
+
     // The owner can never be removed this way.
     async remove(userId: string): Promise<boolean> {
       const rows = await db

@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
+import { hashPassword } from "better-auth/crypto";
 import { afterAll } from "vitest";
 import { createTestDatabase, type Database } from "@/db/client";
 import { roleUrl } from "@/db/roles";
 import { TEST_APP_PASSWORD, TEST_WORKER_PASSWORD } from "./roles";
-import { householdMembers, households, users } from "@/db/schema";
+import { accounts, householdMembers, households, users } from "@/db/schema";
 import type { Mailer, EmailMessage } from "@/lib/notify/email";
 import type { StorageAdapter } from "@/lib/storage/types";
 
@@ -100,4 +101,16 @@ export function createFakeMailer(): Mailer & { sent: EmailMessage[] } {
       sent.push(message);
     },
   };
+}
+
+export const TEST_PASSWORD = "correct horse battery staple";
+
+// Gives a fixture user a credential account, so re-confirmation can be tested.
+export async function setPassword(db: Database, userId: string, password = TEST_PASSWORD) {
+  await db.insert(accounts).values({
+    userId,
+    accountId: userId,
+    providerId: "credential",
+    password: await hashPassword(password),
+  });
 }

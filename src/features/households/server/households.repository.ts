@@ -68,3 +68,15 @@ export async function setHouseholdTimezone(
   const db = scopeDb(executor, tenant);
   await db.update(households).set({ timezone }).where(eq(households.id, tenant.householdId));
 }
+
+export async function setHouseholdCreator(
+  executor: DbExecutor,
+  tenant: Tenant,
+  userId: string,
+): Promise<void> {
+  const db = scopeDb(executor, tenant);
+  await db
+    .update(households)
+    .set({ createdBy: userId })
+    .where(eq(households.id, tenant.householdId));
+}

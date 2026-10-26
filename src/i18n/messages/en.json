@@ -103,7 +103,9 @@
     "phoneHint": "Shown on the emergency cards of your household's animals.",
     "language": "Language",
     "languageEnglish": "English",
-    "notificationsLink": "Notification settings"
+    "notificationsLink": "Notification settings",
+    "privacyLink": "Privacy, data export and deletion",
+    "auditLink": "Household activity log"
   },
   "household": {
     "title": "Household",
@@ -138,7 +140,13 @@
       "not_found": "That item no longer exists.",
       "validation": "Check the details and try again.",
       "unauthenticated": "Please sign in again."
-    }
+    },
+    "changeRoleLabel": "Change role for {name}",
+    "makeOwner": "Make owner",
+    "makeOwnerLabel": "Make {name} the owner",
+    "makeOwnerConfirm": "Make {name} the owner of this household? You will become an editor.",
+    "leave": "Leave household",
+    "leaveConfirm": "Leave this household? You will lose access to its animals and data."
   },
   "invite": {
     "title": "Household invitation",
@@ -969,6 +977,71 @@
       "started": "started {date}",
       "ended": "ended {date}",
       "link": "Diet history"
+    }
+  },
+  "audit": {
+    "title": "Household activity log",
+    "intro": "Membership, invitation, export and account-deletion events. No medical content is recorded. Only household owners can see this page.",
+    "empty": "Nothing has been recorded yet.",
+    "unknownActor": "A removed account",
+    "older": "Older entries",
+    "back": "Back to settings",
+    "events": {
+      "invite_sent": "Invitation sent",
+      "invite_revoked": "Invitation revoked",
+      "invite_accepted": "Invitation accepted",
+      "member_removed": "Member removed",
+      "member_left": "Member left",
+      "role_changed": "Role changed",
+      "ownership_transferred": "Ownership transferred",
+      "export_requested": "Data export requested",
+      "export_downloaded": "Data export downloaded",
+      "account_deletion_requested": "Account deletion requested",
+      "account_deleted": "Account deleted",
+      "reauth_failed": "Password confirmation failed"
+    }
+  },
+  "privacy": {
+    "title": "Privacy and data",
+    "intro": "Download your household data or delete it. These actions ask for your password every time.",
+    "back": "Back to settings",
+    "confirmPassword": "Confirm your password",
+    "requested": "Done. Your request was received.",
+    "errors": {
+      "forbidden": "The password is wrong, or you are not allowed to do that.",
+      "rate_limited": "Too many attempts. Try again later.",
+      "conflict": "An export is already being prepared.",
+      "validation": "Enter your password.",
+      "not_found": "That item no longer exists.",
+      "unauthenticated": "Please sign in again."
+    },
+    "export": {
+      "title": "Export household data",
+      "description": "Creates a zip with all household data as JSON, plus your uploaded files and a README. The download link is available for {hours} hours and only to you.",
+      "submit": "Request export",
+      "listTitle": "Your exports",
+      "none": "No exports yet.",
+      "download": "Download",
+      "expires": "available until {when}",
+      "ownerOnly": "Only the household owner can export household data.",
+      "status": {
+        "pending": "Waiting to be prepared",
+        "processing": "Being prepared",
+        "ready": "Ready",
+        "failed": "Failed, request a new export",
+        "expired": "Expired"
+      }
+    },
+    "deleteHousehold": {
+      "title": "Delete household",
+      "description": "Permanently deletes this household, all its animals, records and files, and removes every member's access. This cannot be undone.",
+      "submit": "Delete household"
+    },
+    "deleteAccount": {
+      "title": "Delete my account",
+      "description": "Permanently deletes your account, sessions, devices and invitations. Households where you are the only member are deleted with all their data. If you are a member of a shared household you leave it; what you added there stays, without your name.",
+      "submit": "Delete my account",
+      "blocked": "You own a household that still has other members: {households}. Transfer ownership or delete the household first."
     }
   }
 }
