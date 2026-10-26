@@ -21,6 +21,8 @@ const schema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   SMTP_SECURE: booleanString.default(false),
   EMAIL_FROM: z.string().default("Animal Logbook <no-reply@localhost>"),
+  TRUSTED_PROXY: booleanString.default(false),
+  TRUSTED_PROXY_CIDRS: z.string().optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });
 

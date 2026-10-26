@@ -6,6 +6,7 @@ import { accounts, rateLimits, sessions, users, verifications } from "@/db/schem
 import { isValidTimeZone } from "@/lib/dates";
 import { getEnv } from "@/lib/env";
 import { errorReporter } from "@/lib/error-reporter";
+import { authIpOptions, proxyTrustFromEnv } from "@/lib/security/client-ip";
 import { smtpMailer, type Mailer } from "@/lib/notify/email";
 import { PASSWORD_MIN_LENGTH } from "../schemas";
 import { resetPasswordEmail, verificationEmail } from "./emails";
@@ -35,7 +36,10 @@ function createAuth(mailer: Mailer) {
         rateLimit: rateLimits,
       },
     }),
-    advanced: { database: { generateId: "uuid" } },
+    advanced: {
+      database: { generateId: "uuid" },
+      ipAddress: authIpOptions(proxyTrustFromEnv(env)),
+    },
     emailAndPassword: {
       enabled: true,
       minPasswordLength: PASSWORD_MIN_LENGTH,

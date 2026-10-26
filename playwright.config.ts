@@ -12,5 +12,7 @@ export default defineConfig({
     command: "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
+    // Tests send a distinct X-Forwarded-For per test; the app ignores it unless this is on.
+    env: { TRUSTED_PROXY: "true" },
   },
 });
