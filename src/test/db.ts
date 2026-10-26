@@ -3,6 +3,7 @@ import { afterAll } from "vitest";
 import { createDatabase, type Database } from "@/db/client";
 import { householdMembers, households, users } from "@/db/schema";
 import type { Mailer, EmailMessage } from "@/lib/notify/email";
+import type { StorageAdapter } from "@/lib/storage/types";
 
 type Role = "owner" | "editor" | "viewer";
 
@@ -54,6 +55,25 @@ export async function seedTwoHouseholds(db: Database) {
   const householdA = await createHousehold(db, ownerA.id, "Household A");
   const householdB = await createHousehold(db, ownerB.id, "Household B");
   return { ownerA, ownerB, householdA, householdB };
+}
+
+export function createMemoryStorage(): StorageAdapter & { keys(): string[] } {
+  const store = new Map<string, Buffer>();
+  return {
+    keys: () => [...store.keys()],
+    async put(key, data) {
+      store.set(key, data);
+    },
+    async get(key) {
+      return store.get(key) ?? null;
+    },
+    async delete(key) {
+      store.delete(key);
+    },
+    async exists(key) {
+      return store.has(key);
+    },
+  };
 }
 
 export function createFakeMailer(): Mailer & { sent: EmailMessage[] } {

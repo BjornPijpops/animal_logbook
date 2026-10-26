@@ -8,6 +8,13 @@
       "when": 1792964651877,
       "tag": "0000_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792996683692,
+      "tag": "0001_animals",
+      "breakpoints": true
     }
   ]
 }

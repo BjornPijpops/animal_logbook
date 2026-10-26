@@ -8,6 +8,8 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
   AUTH_SECRET: z.string().min(32, "AUTH_SECRET must be at least 32 characters"),
   FILE_TOKEN_SECRET: z.string().min(32).optional(),
+  UPLOAD_DIR: z.string().default("./data/uploads"),
+  MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(100).default(15),
   SMTP_HOST: z.string().default("localhost"),
   SMTP_PORT: z.coerce.number().int().default(1025),
   SMTP_USER: z.string().optional(),
