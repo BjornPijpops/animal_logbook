@@ -21,9 +21,7 @@ export async function signUpAndVerify(page: Page, request: APIRequestContext, pr
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible({
-    timeout: 20_000,
-  });
+  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
 
   let link: string | undefined;
   await expect

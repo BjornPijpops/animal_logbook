@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import sharp from "sharp";
 import { expectNoA11yViolations, signUpAndVerify } from "./helpers";
 

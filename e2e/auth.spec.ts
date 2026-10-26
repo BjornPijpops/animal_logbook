@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { z } from "zod";
 
 const MAILPIT = process.env.MAILPIT_URL ?? "http://localhost:8025";
@@ -89,4 +90,17 @@ test("wrong password shows an error", async ({ page }) => {
   await expect(page.getByRole("alert").filter({ hasText: "incorrect" })).toContainText(
     "Email or password is incorrect.",
   );
+});
+
+test("repeated sign-in attempts from one client are rate limited", async ({ request }) => {
+  const statuses: number[] = [];
+  for (let i = 0; i < 5; i++) {
+    const response = await request.post("/api/auth/sign-in/email", {
+      data: { email: `nobody-${i}@example.test`, password: PASSWORD },
+      headers: { origin: "http://localhost:3000" },
+    });
+    statuses.push(response.status());
+  }
+  expect(statuses.at(-1)).toBe(429);
+  expect(statuses.slice(0, 3)).not.toContain(429);
 });
