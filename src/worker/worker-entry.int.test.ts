@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
+import { sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { roleUrl } from "@/db/roles";
+import { setupTestDatabase } from "@/test/db";
 import { TEST_WORKER_PASSWORD } from "@/test/roles";
 
 // A cold tsx start plus pg-boss setup took about 12s on a CI runner, so allow generous headroom.
@@ -9,9 +11,19 @@ const START_TIMEOUT_MS = 45_000;
 // Boots the real entry point (not registerJobs) because the worker once crashed on startup for two
 // phases while every unit test stayed green. Fails when it exits early or never logs a heartbeat.
 describe("worker entry point", () => {
+  const db = setupTestDatabase();
+
   it("starts and logs a heartbeat without exiting", async () => {
     const url = process.env.TEST_DATABASE_URL;
     if (!url) throw new Error("TEST_DATABASE_URL is not set");
+    // A worker killed by an earlier run leaves its jobs behind; start from a clean queue.
+    await db.execute(
+      sql`do $$ begin
+        if to_regclass('pgboss.job') is not null then
+          delete from pgboss.job where name = 'heartbeat';
+        end if;
+      end $$`,
+    );
     const workerUrl = roleUrl(url, "animal_worker", TEST_WORKER_PASSWORD);
     const child = spawn(
       process.execPath,

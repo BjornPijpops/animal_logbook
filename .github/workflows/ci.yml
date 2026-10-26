@@ -35,8 +35,6 @@ jobs:
       - run: npm run test
       - name: Date-sensitive suites with a frozen clock
         run: npm run test:clock
-      - name: Worker smoke test (boots the real entry point)
-        run: npx vitest run src/worker/worker-entry.int.test.ts
       - run: npm run build
 
   e2e:
