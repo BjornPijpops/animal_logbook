@@ -6,4 +6,5 @@ export {
   createWebPushSender,
   type NotificationChannel,
 } from "./server/channels";
+export { createRemindersRepository } from "./server/reminders.repository";
 export { createPushStore } from "./server/push.repository";

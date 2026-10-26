@@ -420,7 +420,7 @@
     "hints": {
       "nextDueOn": "A reminder is created for this date.",
       "endedOn": "Leave empty if it is ongoing.",
-      "medication": "Medication schedules and dose logs arrive in a later update. For now this is a note."
+      "medication": "Medications with a schedule are added on the Medications page. This type only stores a plain note."
     },
     "errors": {
       "not_applicable": "This field does not apply to this type.",
@@ -428,7 +428,8 @@
       "validation": "Please check the highlighted fields.",
       "not_found": "That record or animal could not be found.",
       "forbidden": "You do not have permission to do that.",
-      "other": "Something went wrong. Please try again."
+      "other": "Something went wrong. Please try again.",
+      "conflict": "Medications are managed on the Medications page."
     },
     "save": "Save record",
     "create": "Add record",
