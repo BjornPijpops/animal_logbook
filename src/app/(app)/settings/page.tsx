@@ -30,6 +30,7 @@ export default async function SettingsPage() {
         <PreferencesForm
           defaults={{
             name: user.name,
+            phone: user.phone ?? "",
             timezone: user.timezone,
             weightUnit: user.weightUnit,
             defaultCurrency: user.defaultCurrency,

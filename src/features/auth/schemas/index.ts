@@ -25,6 +25,11 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export const preferencesSchema = z.object({
   name: z.string().trim().min(1).max(80),
   timezone: z.string().refine(isValidTimeZone, "Unknown time zone"),
+  phone: z
+    .string()
+    .trim()
+    .max(32)
+    .regex(/^[0-9+()\-./ ]*$/),
   weightUnit: z.enum(["kg", "lb"]),
   defaultCurrency: z
     .string()

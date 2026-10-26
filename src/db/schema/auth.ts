@@ -34,6 +34,7 @@ export const users = pgTable(
     image: text("image"),
     locale: text("locale").notNull().default("en"),
     timezone: text("timezone").notNull().default("UTC"),
+    phone: text("phone"),
     weightUnit: weightUnit("weight_unit").notNull().default("kg"),
     defaultCurrency: char("default_currency", { length: 3 }).notNull().default("EUR"),
     ...timestamps,

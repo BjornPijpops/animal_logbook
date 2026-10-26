@@ -92,6 +92,8 @@
     "kg": "Kilograms (kg)",
     "lb": "Pounds (lb)",
     "saved": "Preferences saved.",
+    "phone": "Phone number",
+    "phoneHint": "Shown on the emergency cards of your household's animals.",
     "language": "Language",
     "languageEnglish": "English"
   },
