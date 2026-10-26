@@ -58,3 +58,4 @@ Typecheck, lint and tests pass; accessible (WCAG 2.2 AA, axe clean, keyboard); a
 Path rules: `.github/instructions/`. Roles: `.github/agents/`. Reusable prompts: `.github/prompts/` (`/plan-phase`, `/new-feature-slice`, ...).
 
 - Uploads go through `withUpload` (src/features/files) and `prepareUpload` (src/lib/uploads); never write files directly. Document env: `HOUSEHOLD_QUOTA_MB`, `FILE_RETENTION_DAYS`, `VIRUS_SCANNER` (none|clamav).
+- Care records (ADR 0010): an appointment's cost is written to one linked expense in the same transaction; follow-up and vaccination due dates go through `syncDateReminder` (idempotent). Show times in the household zone via `src/lib/dates.ts`; store money as minor units via `src/lib/money.ts`. Owner delete/restore uses one shared timestamp for the row, its attachments and reminders. Allergies are derived from allergy records, never stored on the animal.
