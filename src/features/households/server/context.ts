@@ -1,7 +1,7 @@
 import type { Database } from "@/db/client";
 import { err, ok, type Result } from "@/lib/result";
 import type { Role } from "./can";
-import { createHouseholdWithOwner, listMembershipsForUser } from "./households.repository";
+import { ensureHouseholdForUser, listMembershipsForUser } from "./households.repository";
 
 export type Ctx = { userId: string; householdId: string; householdName: string; role: Role };
 
@@ -15,7 +15,7 @@ export async function resolveCtx(
   let memberships = await listMembershipsForUser(db, user.id);
 
   if (memberships.length === 0) {
-    await createHouseholdWithOwner(db, { name: defaultHouseholdName(user.name), userId: user.id });
+    await ensureHouseholdForUser(db, { name: defaultHouseholdName(user.name), userId: user.id });
     memberships = await listMembershipsForUser(db, user.id);
   }
 
