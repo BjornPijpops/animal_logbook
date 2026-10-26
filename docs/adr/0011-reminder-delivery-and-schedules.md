@@ -30,6 +30,14 @@ a reminder is a convenience, not a guarantee, and it must never invent medical a
    and records the result. Failures retry with backoff (1 min, 5 min, 30 min, 2 h, then give up
    after 5 attempts). Running the worker twice therefore sends once. Known limit: a crash between a
    successful send and recording it can send one duplicate after the lease expires.
+   **Delivery guarantee: at-least-once, exactly-once in normal operation.** The unique delivery row,
+   the claim and the lease make duplicates impossible while the worker runs normally, including when
+   two workers run at once. The one exception is a crash (or a lost database connection) after the
+   email server accepted the message but before the `sent` status was written. The row stays
+   `sending`, the lease expires after 10 minutes and the delivery is retried, so the recipient can
+   get that one reminder twice. We accept this: email and push have no idempotency key we could pass
+   to the provider, a duplicate reminder is harmless, and the alternative (marking `sent` before
+   sending) would silently lose reminders, which is worse for medication. Push has the same window.
 6. **Stale rule.** A reminder older than `REMINDER_STALE_WINDOW_HOURS` (default 24) that has not been
    claimed is marked `expired_at` and never sent. This covers follow-up and vaccination reminders too.
 7. **Recipients** are the household members. Email needs a verified address; push needs a
@@ -48,4 +56,4 @@ a reminder is a convenience, not a guarantee, and it must never invent medical a
 - Real browser push cannot be end-to-end tested; the `PushSender` seam is exercised with a fake
   push service in integration tests instead.
 - Phase 4 placeholder medication records can be adopted from their health page ("Create medication from this record"): the record, its dates and attachments are kept and a medication row is linked to it.
-- Email delivery is at-least-once in the crash window described above.
+- Delivery is at-least-once in the crash window described in decision 5; users may rarely see one duplicate reminder.
