@@ -25,7 +25,7 @@ export default defineConfig({
           environment: "jsdom",
           include: ["src/**/*.test.{ts,tsx}"],
           exclude: ["src/**/*.int.test.ts", "node_modules/**"],
-          setupFiles: ["./vitest.setup.ts"],
+          setupFiles: ["./vitest.setup.ts", "./src/test/fake-clock.ts"],
         },
       },
       {
@@ -35,6 +35,7 @@ export default defineConfig({
           environment: "node",
           include: ["src/**/*.int.test.ts"],
           globalSetup: ["./src/test/global-setup.ts"],
+          setupFiles: ["./src/test/fake-clock.ts"],
           // Tests share one database, so files run one after another.
           fileParallelism: false,
           testTimeout: 20_000,
