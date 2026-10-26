@@ -16,8 +16,14 @@ export async function expectNoA11yViolations(page: Page) {
   expect(results.violations).toEqual([]);
 }
 
-export async function signUpAndVerify(page: Page, request: APIRequestContext, prefix = "e2e") {
-  const email = `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.test`;
+export async function signUpAndVerify(
+  page: Page,
+  request: APIRequestContext,
+  prefix = "e2e",
+  fixedEmail?: string,
+) {
+  const email =
+    fixedEmail ?? `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.test`;
   await page.goto("/sign-up");
   await page.getByLabel("Name").fill("E2E Owner");
   await page.getByLabel("Email").fill(email);
@@ -32,12 +38,17 @@ export async function signUpAndVerify(page: Page, request: APIRequestContext, pr
         const search = await request.get(`${MAILPIT}/api/v1/search`, {
           params: { query: `to:${email}` },
         });
-        const first = searchSchema.parse(await search.json()).messages[0];
-        if (!first) return false;
-        const message = messageSchema.parse(
-          await (await request.get(`${MAILPIT}/api/v1/message/${first.ID}`)).json(),
-        );
-        link = /https?:\/\/\S+/.exec(message.Text)?.[0];
+        // An invitation addressed to the same email may already be in the inbox; skip it.
+        for (const { ID } of searchSchema.parse(await search.json()).messages) {
+          const message = messageSchema.parse(
+            await (await request.get(`${MAILPIT}/api/v1/message/${ID}`)).json(),
+          );
+          const candidate = /https?:\/\/\S+/.exec(message.Text)?.[0];
+          if (candidate && !candidate.includes("/invite/")) {
+            link = candidate;
+            break;
+          }
+        }
         return Boolean(link);
       },
       { timeout: 20_000 },
