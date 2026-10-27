@@ -54,8 +54,9 @@ export default defineConfig([
     },
   },
   {
-    // A feature may import its own internals through relative paths, and tests may reach in.
-    files: ["src/features/**/*.{ts,tsx}", "**/*.test.{ts,tsx}", "e2e/**"],
+    // A feature may import its own internals through relative paths, and tests may reach in. The demo
+    // seeder is a script that must call the server-side services directly, not the UI-facing index.
+    files: ["src/features/**/*.{ts,tsx}", "src/demo/**", "**/*.test.{ts,tsx}", "e2e/**"],
     rules: { "no-restricted-imports": "off" },
   },
 ]);
