@@ -153,7 +153,7 @@ export async function seedDemo(
   await seedAppointments(db, uploads, ctx, d, lunaId, dhppId, log);
   await seedFood(db, ctx, d, lunaId);
   await seedExpenses(db, uploads, ctx, d, lunaId, medications);
-  await generateDoseReminders(db, { now, staleWindowHours: 24 });
+  await generateDoseReminders(db, { now, staleWindowHours: 24, householdId: DEMO_IDS.household });
   await seedDocuments(uploads, ctx, d, lunaId);
   log("Demo data created.");
   return { created: true, householdId: DEMO_IDS.household, lunaId, miloId };
@@ -465,7 +465,12 @@ async function seedMedications(
         const logged = new Date(scheduled.getTime() + 20 * 60_000);
         must(
           await logDose(
-            { db, staleWindowHours: 24, missedAfterHours: 4, now: () => logged },
+            {
+              db,
+              staleWindowHours: 24,
+              missedAfterHours: 4,
+              now: () => logged,
+            },
             ctx,
             id,
             {
@@ -498,6 +503,7 @@ async function seedMedications(
     await markMissedDoses(db, {
       now: simulated.getTime() > d.now.getTime() ? d.now : simulated,
       missedAfterHours: 4,
+      householdId: DEMO_IDS.household,
     });
   }
   log("Medications and 30 days of dose history done.");

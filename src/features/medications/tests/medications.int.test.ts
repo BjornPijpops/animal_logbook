@@ -231,6 +231,24 @@ describe("medications: missed doses", () => {
     expect(doses[1]?.loggedBy).toBeNull();
   });
 
+  it("scoped to one household, leaves other households' schedules and doses untouched", async () => {
+    const w = await world();
+    const createdB = await createMedication(w.deps, w.ctxB, input(w.animalB));
+    if (!createdB.ok) throw new Error("setup failed");
+    const later = new Date("2025-06-11T13:00:00Z");
+
+    await markMissedDoses(db, { now: later, missedAfterHours: 4, householdId: w.householdB.id });
+    expect(await DOSES(w.householdA.id, w.id)).toEqual([]);
+    expect((await DOSES(w.householdB.id, createdB.value.id)).map((d) => d.status)).toEqual([
+      "missed",
+      "missed",
+    ]);
+
+    await markMissedDoses(db, { now: later, missedAfterHours: 4, householdId: w.householdA.id });
+    expect(await DOSES(w.householdA.id, w.id)).toHaveLength(2);
+    expect(await DOSES(w.householdB.id, createdB.value.id)).toHaveLength(2);
+  });
+
   it("includes missed doses in adherence", async () => {
     const w = await world();
     w.clock.now = new Date("2025-06-10T20:05:00Z");

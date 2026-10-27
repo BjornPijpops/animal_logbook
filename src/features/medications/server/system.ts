@@ -19,7 +19,7 @@ type Target = { household: { householdId: string; timezone: string }; medication
 
 // System-level (worker) access: it deliberately spans households, so it is kept apart from the
 // household-scoped repository and only ever acts on a medication's own household.
-async function activeTargets(db: Database): Promise<Target[]> {
+async function activeTargets(db: Database, onlyHousehold?: string): Promise<Target[]> {
   const rows = await db
     .select({
       householdId: medications.householdId,
@@ -33,6 +33,7 @@ async function activeTargets(db: Database): Promise<Target[]> {
     .innerJoin(animals, eq(animals.id, medications.animalId))
     .where(
       and(
+        onlyHousehold ? eq(medications.householdId, onlyHousehold) : undefined,
         isNull(medications.deletedAt),
         isNull(medicalRecords.deletedAt),
         isNull(animals.deletedAt),
@@ -55,9 +56,9 @@ async function activeTargets(db: Database): Promise<Target[]> {
 
 export async function generateDoseReminders(
   db: Database,
-  options: { now: Date; staleWindowHours: number },
+  options: { now: Date; staleWindowHours: number; householdId?: string },
 ): Promise<{ medications: number }> {
-  const targets = await activeTargets(db);
+  const targets = await activeTargets(db, options.householdId);
   for (const { household, medication } of targets) {
     const logged = await createMedicationsRepository(db, household).dosesBetween(
       medication.id,
@@ -81,11 +82,11 @@ const MISSED_LOOKBACK_HOURS = 72;
 // and never reschedules anything, so running it twice is the same as running it once.
 export async function markMissedDoses(
   db: Database,
-  options: { now: Date; missedAfterHours: number },
+  options: { now: Date; missedAfterHours: number; householdId?: string },
 ): Promise<{ marked: number }> {
   const to = new Date(options.now.getTime() - options.missedAfterHours * HOUR_MS);
   let marked = 0;
-  for (const { household, medication } of await activeTargets(db)) {
+  for (const { household, medication } of await activeTargets(db, options.householdId)) {
     const schedule = medication.schedule;
     if (!schedule) continue;
     const from = new Date(
