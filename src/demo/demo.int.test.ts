@@ -34,6 +34,7 @@ import {
 } from "@/test/db";
 import { DEMO_IDS, DEMO_OWNER, DEMO_VIEWER } from "./constants";
 import { assertDemoSeedAllowed } from "./cli";
+import { isDemoRecipient } from "@/lib/notify/demo-guard";
 import { createDemoDates } from "./dates";
 import { removeDemo, seedDemo } from "./seed";
 
@@ -281,7 +282,9 @@ describe("demo seed", () => {
     expect(open).toBeGreaterThan(0);
 
     const mailer = createFakeMailer();
-    const pushSend = vi.fn(async () => ({ status: 201 }));
+    const pushSend = vi.fn(async (_sub: { endpoint: string }, _payload: string) => ({
+      status: 201,
+    }));
     const sendSpy = vi.spyOn(mailer, "send");
     const evening = d.at(d.today, "23:59");
     const report = await runDelivery({
@@ -292,15 +295,29 @@ describe("demo seed", () => {
       channels: {
         email: createEmailChannel(mailer),
         push: createPushChannel(
-          { list: async () => [], remove: async () => undefined },
+          {
+            list: async (userId) => [
+              {
+                id: userId,
+                endpoint: `https://push.example.test/${userId}`,
+                p256dh: "k",
+                auth: "a",
+              },
+            ],
+            remove: async () => undefined,
+          },
           { send: pushSend },
         ),
       },
     });
     expect(report.enqueued).toBeGreaterThan(0);
-    expect(sendSpy).not.toHaveBeenCalled();
-    expect(mailer.sent).toHaveLength(0);
-    expect(pushSend).not.toHaveBeenCalled();
+    // runDelivery works on every household in the shared test database, so other suites' reminders
+    // may legitimately be delivered; only the demo recipients must never be reached.
+    const demoUsers = [DEMO_IDS.owner, DEMO_IDS.viewer];
+    for (const [message] of sendSpy.mock.calls) expect(isDemoRecipient(message.to)).toBe(false);
+    for (const [sub] of pushSend.mock.calls) {
+      for (const id of demoUsers) expect(sub.endpoint).not.toContain(id);
+    }
   }, 60_000);
 
   it("refuses to run in production unless explicitly allowed", () => {
