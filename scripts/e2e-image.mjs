@@ -36,6 +36,20 @@ if (!process.env.APP_IMAGE) upArgs.push("--build");
 if (run(["compose", "version"]) !== 0) process.exit(1);
 
 let status = run(upArgs);
+// The demo household is seeded inside the stack (the uploads volume lives there), through the
+// same bundle a public demo instance would use.
+if (status === 0) {
+  status = run([
+    ...compose,
+    "exec",
+    "-T",
+    "-e",
+    "ALLOW_DEMO_SEED=true",
+    "worker",
+    "node",
+    "dist/seed-demo.mjs",
+  ]);
+}
 if (status === 0) {
   const result = spawnSync(
     process.platform === "win32" ? "npx.cmd" : "npx",
@@ -46,6 +60,7 @@ if (status === 0) {
       env: {
         ...process.env,
         E2E_BASE_URL: "https://logbook.localhost:8443",
+        E2E_DEMO: "1",
         MAILPIT_URL: `http://127.0.0.1:${mailUi}`,
         DATABASE_OWNER_URL: dbUrl("animal_owner", envFile.POSTGRES_PASSWORD),
         E2E_WORKER_ONCE: `docker ${compose.join(" ")} exec -T worker node dist/run-once.mjs`,
