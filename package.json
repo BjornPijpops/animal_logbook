@@ -29,6 +29,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:roles": "tsx --env-file-if-exists=.env.local src/db/setup-roles.ts",
     "db:seed": "tsx --env-file-if-exists=.env.local src/db/seed.ts",
+    "db:seed:demo": "node scripts/build-server-bundles.mjs && node --env-file-if-exists=.env.local dist/seed-demo.mjs",
     "vapid": "web-push generate-vapid-keys",
     "ci": "npm run lint && npm run typecheck && npm run test && npm run build",
     "prepare": "husky"

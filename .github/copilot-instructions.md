@@ -65,3 +65,4 @@ Path rules: `.github/instructions/`. Roles: `.github/agents/`. Reusable prompts:
 
 - Uploads go through `withUpload` (src/features/files) and `prepareUpload` (src/lib/uploads); never write files directly. Document env: `HOUSEHOLD_QUOTA_MB`, `RETENTION_DAYS`, `VIRUS_SCANNER` (none|clamav).
 - Care records (ADR 0010): an appointment's cost is written to one linked expense in the same transaction; follow-up and vaccination due dates go through `syncDateReminder` (idempotent). Show times in the household zone via `src/lib/dates.ts`; store money as minor units via `src/lib/money.ts`. Owner delete/restore uses one shared timestamp for the row, its attachments and reminders. Allergies are derived from allergy records, never stored on the animal.
+- Demo data: `npm run db:seed:demo [-- --reset]` (src/demo, real services, restricted role). Delivery to `demo-*@example.test` is blocked. Keep it working when services change; tests in `src/demo/demo.int.test.ts`.
