@@ -18,6 +18,9 @@ export type MedicationActionResult = { ok: true } | { ok: false; code: AppErrorC
 function refresh(id?: string) {
   revalidatePath("/medications");
   revalidatePath("/timeline");
+  // The dashboard lists today's doses, on the home page and on each animal's overview.
+  revalidatePath("/");
+  revalidatePath("/animals/[id]", "page");
   if (id) revalidatePath(`/medications/${id}`);
 }
 

@@ -13,10 +13,30 @@
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-success: var(--success);
+  --color-line: var(--line);
+  --color-accent-soft: var(--accent-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-attention: var(--attention);
+  --color-attention-soft: var(--attention-soft);
+  --color-caution: var(--caution);
+  --color-caution-soft: var(--caution-soft);
+  --color-success-soft: var(--success-soft);
+}
+
+/* Scales that are not colours. Utilities: rounded-card, shadow-card, max-w-page, p-card, gap-section. */
+@theme {
+  --radius-card: 1rem;
+  --radius-tile: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.05), 0 4px 14px rgb(28 25 23 / 0.06);
+  --shadow-raised: 0 2px 4px rgb(28 25 23 / 0.06), 0 10px 28px rgb(28 25 23 / 0.1);
+  --container-page: 80rem;
+  --spacing-card: 1.25rem;
+  --spacing-section: 1.5rem;
 }
 
 :root {
-  --background: #fafaf9;
+  --background: #f1f5f4;
   --foreground: #1c1917;
   --card: #ffffff;
   --primary: #0f766e;
@@ -27,6 +47,17 @@
   --ring: #0f766e;
   --destructive: #b91c1c;
   --success: #166534;
+  /* Decorative dividers only; form controls keep --border (3:1 against the surface). */
+  --line: #e5e7e4;
+  --accent-soft: #e2f1ee;
+  /* Status pairs: text colour on its soft background is at least 7:1. Always shown with icon + label. */
+  --info: #1e40af;
+  --info-soft: #e8effd;
+  --attention: #8a3b0c;
+  --attention-soft: #fdf1dc;
+  --caution: #9f1239;
+  --caution-soft: #fde8ec;
+  --success-soft: #e3f4e8;
 }
 
 body {

@@ -31,3 +31,6 @@ npm-debug.log*
 .DS_Store
 /data/exports/
 /dist
+
+# review screenshots (CI artifact)
+/screenshots

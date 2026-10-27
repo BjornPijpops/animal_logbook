@@ -17,17 +17,19 @@ test("demo: owner sees the dashboard, weight markers, expense charts and investi
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: /Hello, Demo Owner/ })).toBeVisible();
 
-  const upcoming = page.getByRole("region", { name: "Upcoming" });
+  const comingUp = page.getByRole("region", { name: "Coming up" });
+  // The follow-up date on the check-up is listed once, not twice.
   await expect(
-    upcoming.getByRole("link", { name: "Follow-up: skin irritation", exact: true }),
-  ).toBeVisible();
+    comingUp.getByRole("link", { name: "Follow-up: Skin irritation check-up", exact: true }),
+  ).toHaveCount(1);
+  await expect(comingUp.getByRole("link", { name: /skin irritation/i })).toHaveCount(1);
   const vaccinations = page.getByRole("region", { name: "Vaccination dates passed" });
   await expect(vaccinations.getByRole("link", { name: "Rabies booster" })).toBeVisible();
-  const meds = page.getByRole("region", { name: "Medications" });
-  await expect(meds.getByRole("link", { name: "Skin soothing tablets" }).first()).toBeVisible();
-  await expect(meds).toContainText("Doses due today");
-  const docs = page.getByRole("region", { name: "Documents expiring" });
-  await expect(docs.getByRole("link", { name: "Pet passport (DEMO)" })).toBeVisible();
+  const today = page.getByRole("region", { name: "Today" });
+  await expect(today.getByRole("link", { name: /Skin soothing tablets/ }).first()).toBeVisible();
+  await expect(today.getByRole("button", { name: /^Given:/ }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Luna" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Milo" })).toBeVisible();
   await expect(page.getByRole("link", { name: "View expenses" })).toBeVisible();
   await expectNoA11yViolations(page);
 
@@ -72,6 +74,11 @@ test("demo: the viewer can read but not edit", async ({ page }) => {
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: /Hello, Demo Viewer/ })).toBeVisible();
+  // Viewers see today's doses but get no Given/Skipped buttons.
+  const today = page.getByRole("region", { name: "Today" });
+  await expect(today.getByRole("link", { name: /Skin soothing tablets/ }).first()).toBeVisible();
+  await expect(today.getByRole("button")).toHaveCount(0);
+  await expectNoA11yViolations(page);
   await page.goto("/expenses");
   await expect(page.getByRole("heading", { level: 1, name: "Expenses" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Add expense" })).toHaveCount(0);

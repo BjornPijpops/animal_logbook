@@ -4,6 +4,7 @@ import { can, type Ctx } from "@/features/households";
 import { getMedicationDashboard, type MedicationDashboard } from "@/features/medications";
 import { addDays, localDayStart, utcToLocalParts } from "@/lib/dates";
 import { err, ok, type Result } from "@/lib/result";
+import { buildComingUp, type ComingUpItem } from "./coming-up";
 import {
   createDashboardRepository,
   type DashboardAppointment,
@@ -35,6 +36,8 @@ export type Dashboard = {
   documents: Limited<DashboardDocument>;
   spending: { year: number; month: number; totals: { currency: string; totalMinor: number }[] };
   dietChanges: Limited<DashboardDietChange>;
+  // Appointments, follow-ups, documents and ending courses merged by date (from the lists above).
+  comingUp: { items: ComingUpItem[]; more: boolean };
 };
 
 function limited<T>(rows: T[]): Limited<T> {
@@ -77,14 +80,17 @@ export async function getDashboard(
   if (!medications.ok) return medications;
   if (!summary.ok) return summary;
 
+  const appointmentList = limited(appointments);
+  const followUpList = limited(followUps);
+  const documentList = limited(documents);
   return ok({
     today,
     animalId,
-    appointments: limited(appointments),
-    followUps: limited(followUps),
+    appointments: appointmentList,
+    followUps: followUpList,
     overdueVaccinations: limited(vaccinations),
     medications: medications.value,
-    documents: limited(documents),
+    documents: documentList,
     spending: {
       year: year ?? 0,
       month: month ?? 0,
@@ -94,5 +100,17 @@ export async function getDashboard(
         .sort((a, b) => a.currency.localeCompare(b.currency)),
     },
     dietChanges: limited(diet),
+    comingUp: {
+      items: buildComingUp(
+        {
+          appointments: appointmentList.items,
+          followUps: followUpList.items,
+          documents: documentList.items,
+          ending: medications.value.ending,
+        },
+        ctx.timezone,
+      ),
+      more: appointmentList.more || followUpList.more || documentList.more,
+    },
   });
 }

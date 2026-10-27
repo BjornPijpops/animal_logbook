@@ -4,17 +4,25 @@ import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { logDoseAction } from "../server/actions";
+import { DOSE_LOGGED_EVENT } from "./dose-live-region";
 
-function useDoseLogger(medicationId: string) {
+function useDoseLogger(medicationId: string, announce?: (status: "given" | "skipped") => string) {
   const t = useTranslations("medications");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const log = (status: "given" | "skipped", scheduledAt?: string) =>
     startTransition(async () => {
-      const result = await logDoseAction(medicationId, { status, scheduledAt });
-      setError(
-        result.ok ? null : t(`errors.${result.code === "forbidden" ? "forbidden" : "dose"}`),
-      );
+      try {
+        const result = await logDoseAction(medicationId, { status, scheduledAt });
+        setError(
+          result.ok ? null : t(`errors.${result.code === "forbidden" ? "forbidden" : "dose"}`),
+        );
+        if (result.ok && announce) {
+          window.dispatchEvent(new CustomEvent(DOSE_LOGGED_EVENT, { detail: announce(status) }));
+        }
+      } catch {
+        setError(t("errors.other"));
+      }
     });
   return { error, pending, log };
 }
@@ -23,7 +31,10 @@ type DoseProps = { medicationId: string; scheduledAt: string; label: string };
 
 export function DoseButtons({ medicationId, scheduledAt, label }: DoseProps) {
   const t = useTranslations("medications");
-  const { error, pending, log } = useDoseLogger(medicationId);
+  const { error, pending, log } = useDoseLogger(
+    medicationId,
+    (status) => `${t(status === "given" ? "given" : "skipped")}: ${label}`,
+  );
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button

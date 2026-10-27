@@ -549,13 +549,13 @@ async function seedAppointments(
   const vetVisit = await make("vet", "Skin irritation check-up", d.days(-28), {
     cost: "72.50",
     followUpDate: d.days(9),
+    // The follow-up is this date only; a second "Follow-up" appointment on the same day listed it twice.
     notes: "Weighed, skin checked. Medication started. Follow-up planned.",
   });
   await make("medication", "Pick up medication refill", d.days(-10), {
     cost: "24.90",
     time: "16:30",
   });
-  await make("vet", "Follow-up: skin irritation", d.days(9), { time: "11:15" });
   const deleted = await make("grooming", "Nail trim (entered twice)", d.days(-40), {
     cost: "60.00",
     time: "15:00",

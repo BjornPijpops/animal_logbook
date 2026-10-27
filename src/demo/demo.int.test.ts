@@ -108,7 +108,7 @@ describe("demo seed", () => {
   it("is idempotent: a second run changes nothing and --reset recreates the same shape", async () => {
     const before = await counts();
     expect(before.animals).toBe(2);
-    expect(before.appointments).toBe(10);
+    expect(before.appointments).toBe(9);
     expect(before.documents).toBe(5);
     expect(before.foodPlans).toBe(4);
 
@@ -210,7 +210,10 @@ describe("demo seed", () => {
       ["Rabies booster", d.days(-5)],
     ]);
     expect(board.followUps.items.map((f) => f.followUpDate)).toContain(d.days(9));
-    expect(board.appointments.items.some((a) => a.title.startsWith("Follow-up"))).toBe(true);
+    // One follow-up, listed once: the date on the check-up, not a second appointment on that day.
+    expect(
+      board.comingUp.items.filter((i) => i.date === d.days(9) && /skin/i.test(i.title)),
+    ).toHaveLength(1);
     expect(board.medications.dueToday.length).toBeGreaterThan(0);
     expect(board.medications.missed.length).toBeGreaterThan(0);
     expect(board.medications.ending.map((m) => m.endedOn)).toContain(d.days(5));
