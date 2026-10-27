@@ -939,35 +939,55 @@
   "dashboard": {
     "seeAll": "See all",
     "animalTitle": "Overview",
-    "upcoming": {
-      "title": "Upcoming",
-      "window": "Appointments and follow-up dates in the next 14 days.",
-      "empty": "Nothing scheduled in the next 14 days.",
-      "followUp": "Follow-up: {title}"
+    "tiles": {
+      "label": "Summary",
+      "dosesToday": "Doses due today",
+      "dosesHint": "Left for today",
+      "vaccinations": "Vaccination dates passed",
+      "vaccinationsHint": "Based on dates you entered",
+      "upcoming": "Upcoming in 14 days",
+      "upcomingHint": "Appointments and follow-ups",
+      "spending": "Spending this month",
+      "spendingHint": "Per currency",
+      "spendingNone": "None"
+    },
+    "today": {
+      "title": "Today",
+      "window": "Doses scheduled for today.",
+      "empty": "No doses left today.",
+      "emptyHint": "Doses show here on the days they are scheduled.",
+      "late": "Past its time",
+      "moreLink": "All medications"
+    },
+    "needs": {
+      "title": "Needs a look",
+      "window": "Dates you entered that have passed, and missed doses."
     },
     "vaccinations": {
       "title": "Vaccination dates passed",
       "note": "Based on the next-due date you entered.",
       "empty": "No entered next-due dates have passed.",
-      "dueOn": "next due {date}"
+      "dueOn": "next due {date}{hasAnimal, select, yes { for {animal}} other {}}",
+      "badge": "Date passed"
     },
-    "medications": {
-      "title": "Medications",
-      "dueToday": "Doses due today",
-      "dueEmpty": "No doses left today.",
-      "late": "past its time",
-      "missed": "Missed doses, last 7 days",
-      "missedEmpty": "No missed doses recorded.",
-      "ending": "Courses ending within 7 days",
-      "endingEmpty": "No courses ending soon.",
-      "endsOn": "ends {date}",
-      "link": "All medications"
+    "missed": {
+      "title": "Missed doses",
+      "empty": "No missed doses recorded.",
+      "summary": "{atLeast, select, yes {At least } other {}}{count, plural, one {# missed dose} other {# missed doses}} in the last 7 days",
+      "badge": "Missed"
     },
-    "documents": {
-      "title": "Documents expiring",
-      "window": "Expiry dates within the next 60 days.",
-      "empty": "No documents expiring soon.",
-      "expiresOn": "expires {date}"
+    "comingUp": {
+      "title": "Coming up",
+      "window": "Appointments, follow-up dates, expiring documents and ending courses.",
+      "empty": "Nothing coming up.",
+      "followUpTitle": "Follow-up: {title}",
+      "appointment": "Appointment at {time}{hasAnimal, select, yes { for {animal}} other {}}",
+      "followUp": "Follow-up date{hasAnimal, select, yes { for {animal}} other {}}",
+      "document": "Document expires{hasAnimal, select, yes { for {animal}} other {}}",
+      "medicationEnd": "Course ends{hasAnimal, select, yes { for {animal}} other {}}",
+      "more": "{count} more",
+      "morePlus": "{count}+ more",
+      "on": "on {date}"
     },
     "spending": {
       "title": "Spending this month",
@@ -978,9 +998,16 @@
       "title": "Recent diet changes",
       "window": "Food plans that started or ended in the last 30 days.",
       "empty": "No recent diet changes.",
-      "started": "started {date}",
-      "ended": "ended {date}",
+      "started": "started {date}{hasAnimal, select, yes { for {animal}} other {}}",
+      "ended": "ended {date}{hasAnimal, select, yes { for {animal}} other {}}",
       "link": "Diet history"
+    },
+    "header": {
+      "label": "Animals",
+      "add": "Add an animal",
+      "emptyTitle": "No animals yet",
+      "emptyBody": "Add an animal to start its logbook.",
+      "open": "Open {name}"
     }
   },
   "audit": {

@@ -6,11 +6,15 @@ test("dashboard: cards, animal overview and mobile navigation", async ({ page, r
   test.slow();
   const email = await signUpAndVerify(page, request, "dash");
 
-  await expect(page.getByRole("heading", { level: 2, name: "Upcoming" })).toBeVisible();
-  await expect(page.getByText("Nothing scheduled in the next 14 days.")).toBeVisible();
-  await expect(page.getByText("No documents expiring soon.")).toBeVisible();
+  // A household with no data: every section keeps its empty state.
+  await expect(page.getByRole("heading", { level: 2, name: "Today" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Coming up" })).toBeVisible();
+  await expect(page.getByText("No doses left today.")).toBeVisible();
+  await expect(page.getByText("Nothing coming up.")).toBeVisible();
   await expect(page.getByText("No entered next-due dates have passed.")).toBeVisible();
+  await expect(page.getByText("No missed doses recorded.")).toBeVisible();
   await expect(page.getByText("No expenses entered this month.")).toBeVisible();
+  await expect(page.getByText("No animals yet")).toBeVisible();
   await expectNoA11yViolations(page);
 
   await page.goto("/animals/new");
@@ -33,21 +37,37 @@ test("dashboard: cards, animal overview and mobile navigation", async ({ page, r
   await seedDashboardData(email, "Rex");
 
   await page.goto("/");
-  const upcoming = page.getByRole("region", { name: "Upcoming" });
-  await expect(upcoming.getByRole("link", { name: "Spring trim" })).toBeVisible();
-  await expect(upcoming.getByRole("link", { name: "Follow-up: Dental check" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Animals" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Open Rex" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Doses due today 1/ })).toBeVisible();
+  const comingUp = page.getByRole("region", { name: "Coming up" });
+  await expect(comingUp.getByRole("link", { name: "Spring trim" })).toBeVisible();
+  await expect(comingUp.getByRole("link", { name: "Follow-up: Dental check" })).toBeVisible();
+  await expect(comingUp.getByRole("link", { name: "Pet insurance" })).toBeVisible();
+  await expect(comingUp).toContainText("in 2 days");
   const vaccinations = page.getByRole("region", { name: "Vaccination dates passed" });
   await expect(vaccinations.getByRole("link", { name: "Rabies booster" })).toBeVisible();
   await expect(vaccinations).toContainText("next due");
-  const meds = page.getByRole("region", { name: "Medications" });
-  await expect(meds.getByRole("link", { name: "Amoxicillin" }).first()).toBeVisible();
-  await expect(meds).toContainText("Doses due today");
-  const docs = page.getByRole("region", { name: "Documents expiring" });
-  await expect(docs.getByRole("link", { name: "Pet insurance" })).toBeVisible();
   await expect(page.getByRole("link", { name: "View expenses" })).toBeVisible();
   await expect(page.getByText("No recent diet changes.")).toBeVisible();
+
+  // Today: the due dose is logged inline, announced politely, and leaves the list.
+  const today = page.getByRole("region", { name: "Today" });
+  await expect(today.getByRole("link", { name: "Amoxicillin 1 tablet" })).toBeVisible();
+  await expectNoA11yViolations(page);
+  await today.getByRole("button", { name: /^Given: Amoxicillin/ }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Given: Amoxicillin" })).toBeAttached();
+  await expect(today.getByText("No doses left today.")).toBeVisible();
+  await expect(today.getByRole("button")).toHaveCount(0);
   await expectNoA11yViolations(page);
 
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await expectNoA11yViolations(page);
+  }
   await page.setViewportSize({ width: 1280, height: 900 });
   await expectNoA11yViolations(page);
   await expect(

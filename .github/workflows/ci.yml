@@ -55,6 +55,8 @@ jobs:
       APP_IMAGE: animal-logbook:${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
         with:
@@ -79,6 +81,31 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: E2E against the image
         run: npm run e2e:image
+      # Review aid, never committed: dashboard screenshots at 1440px and 390px for the demo owner,
+      # the demo viewer and an empty household. "after" is this commit; on pull requests "before"
+      # comes from an image of the base commit run through the same stack and spec.
+      - name: Dashboard screenshots (after)
+        env:
+          E2E_SCREENSHOTS: "1"
+          SCREENSHOT_LABEL: after
+        run: npm run e2e:image -- e2e/screenshots.spec.ts
+      - name: Dashboard screenshots (before, base commit)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          E2E_SCREENSHOTS: "1"
+          SCREENSHOT_LABEL: before
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add ../base "$BASE_SHA"
+          docker build -t animal-logbook:base ../base
+          APP_IMAGE=animal-logbook:base npm run e2e:image -- e2e/screenshots.spec.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dashboard-screenshots
+          path: screenshots
+          if-no-files-found: ignore
       - name: Backup and restore drill
         run: ./deploy/restore-drill.sh
       - name: Stack logs

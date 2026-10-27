@@ -9,4 +9,6 @@ export {
   type DashboardDeps,
   type Limited,
 } from "./server/service";
+export { COMING_UP_LIMIT, comingUpMoreHref, type ComingUpItem } from "./server/coming-up";
 export { DashboardView } from "./components/dashboard-view";
+export { AnimalHeader, type HeaderAnimal } from "./components/animal-header";

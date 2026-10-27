@@ -28,5 +28,6 @@ export {
 export { deleteMedicationAction, logDoseAction, restoreMedicationAction } from "./server/actions";
 export { MedicationForm, type AnimalOption } from "./components/medication-form";
 export { DoseButtons, AsNeededButton } from "./components/dose-buttons";
+export { DoseLiveRegion } from "./components/dose-live-region";
 export { DeleteMedicationButton, RestoreMedicationButton } from "./components/lifecycle-buttons";
 export { AdherenceChart } from "./components/adherence-chart";

@@ -1,8 +1,9 @@
-import { eq } from "drizzle-orm";
+﻿import { eq } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { createDatabase } from "@/db/client";
 import { appointments, documents, medicalRecords, medicationDoses } from "@/db/schema";
-import { ctxFor, seedAnimal } from "@/features/animals/tests/helpers";
+import { addPhoto, listAnimals } from "@/features/animals/server/service";
+import { ctxFor, jpegWithGps, makeAnimalDeps, seedAnimal } from "@/features/animals/tests/helpers";
 import { createExpense, deleteExpense } from "@/features/expenses/server/service";
 import { expenseInput } from "@/features/expenses/tests/helpers";
 import { createFoodPlan } from "@/features/food/server/service";
@@ -178,6 +179,41 @@ describe("dashboard: windows and day boundaries", () => {
     const d = await dash(w.ctxA);
     expect(d.documents.items).toHaveLength(LIST_LIMIT);
     expect(d.documents.more).toBe(true);
+  });
+});
+
+describe("dashboard: coming up", () => {
+  it("merges appointments, follow-ups, documents and ending courses by local date, once each", async () => {
+    const w = await world();
+    await db.insert(appointments).values([
+      {
+        ...appt(w.householdA.id, w.animalA, "Check-up", "2025-06-01T08:00:00Z"),
+        followUpDate: "2025-06-19",
+      },
+      appt(w.householdA.id, w.animalA, "Groomer", "2025-06-12T08:00:00Z"),
+    ]);
+    await db.insert(documents).values({
+      householdId: w.householdA.id,
+      type: "other",
+      title: "Insurance",
+      expiresOn: "2025-06-15",
+    });
+    const med = await createMedication(
+      { db, now: () => NOW },
+      w.ctxA,
+      medInput(w.animalA, { endedOn: "2025-06-13" }),
+    );
+    expect(med.ok).toBe(true);
+    const d = await dash(w.ctxA);
+    expect(d.comingUp.items.map((i) => [i.date, i.kind, i.title])).toEqual([
+      ["2025-06-12", "appointment", "Groomer"],
+      ["2025-06-13", "medicationEnd", "Antibiotic"],
+      ["2025-06-15", "document", "Insurance"],
+      ["2025-06-19", "followUp", "Check-up"],
+    ]);
+    expect(d.comingUp.more).toBe(false);
+    const viewer = await dash(w.ctxViewer);
+    expect(viewer.comingUp.items).toHaveLength(4);
   });
 });
 
@@ -381,6 +417,7 @@ describe("dashboard: tenant isolation and roles", () => {
       expect(view.documents.items).toEqual([]);
       expect(view.dietChanges.items).toEqual([]);
       expect(view.spending.totals).toEqual([]);
+      expect(view.comingUp).toEqual({ items: [], more: false });
       expect(view.medications).toEqual({ dueToday: [], dueMore: false, missed: [], ending: [] });
     }
     const own = await dash(w.ctxB);
@@ -480,12 +517,25 @@ describe("dashboard: performance on a larger dataset", () => {
       );
     }
 
+    // Every statement runs on a pooled client inside the RLS transaction wrapper (src/db/scope.ts),
+    // so count statements on the client; begin, commit, rollback and set_config are bookkeeping.
     let queries = 0;
-    const originalQuery: unknown = counted.pool.query;
-    // @ts-expect-error counting wrapper around the pool's overloaded query
-    counted.pool.query = (...args: unknown[]) => {
-      queries += 1;
-      return Reflect.apply(Object(originalQuery), counted.pool, args);
+    const originalConnect: unknown = counted.pool.connect;
+    counted.pool.connect = async (...args: unknown[]) => {
+      const client: unknown = await Reflect.apply(Object(originalConnect), counted.pool, args);
+      return new Proxy(Object(client), {
+        get(target, property) {
+          const value: unknown = Reflect.get(target, property, target);
+          if (typeof value !== "function") return value;
+          if (property !== "query") return value.bind(target);
+          return (...a: unknown[]) => {
+            const first = a[0];
+            const text = typeof first === "string" ? first : (Object(first).text ?? "");
+            if (!/^\s*(begin|commit|rollback)\b|set_config/i.test(String(text))) queries += 1;
+            return Reflect.apply(value, target, a);
+          };
+        },
+      });
     };
     const started = performance.now();
     const result = await getDashboard({ db: counted.db, now: () => NOW }, w.ctxA);
@@ -511,6 +561,16 @@ describe("dashboard: performance on a larger dataset", () => {
     console.info(`dashboard (one animal, large data): ${queries} queries`);
     expect(single.ok).toBe(true);
     expect(queries).toBeLessThanOrEqual(13);
+
+    // The home page also lists the animals for the header avatars: one more query.
+    queries = 0;
+    const [pageDash, pageAnimals] = await Promise.all([
+      getDashboard({ db: counted.db, now: () => NOW }, w.ctxA),
+      listAnimals(makeAnimalDeps(counted.db).deps, w.ctxA),
+    ]);
+    console.info(`home page data (dashboard + animal avatars): ${queries} queries`);
+    expect(pageDash.ok && pageAnimals.ok).toBe(true);
+    expect(queries).toBeLessThanOrEqual(14);
 
     // The dashboard filters must be answered by indexes rather than by scanning the whole table.
     await counted.pool.query("analyze appointments, medical_records, documents, medication_doses");
@@ -540,5 +600,25 @@ describe("dashboard: performance on a larger dataset", () => {
         "select id from medication_doses where household_id = $1 and scheduled_at >= '2025-06-03'",
       ),
     ).toMatch(/medication_doses_household_time_idx|medication_doses_lookup_idx/);
+  });
+});
+
+describe("dashboard: animal avatars", () => {
+  it("lists only the household's own animals and photo thumbnails", async () => {
+    const w = await world();
+    const { deps } = makeAnimalDeps(db, () => NOW);
+    await addPhoto(deps, w.ctxA, w.animalA, await jpegWithGps());
+    await addPhoto(deps, w.ctxB, w.animalB, await jpegWithGps());
+
+    const a = await listAnimals(deps, w.ctxA);
+    const b = await listAnimals(deps, w.ctxB);
+    if (!a.ok || !b.ok) throw new Error("list failed");
+    expect(a.value.map((x) => x.name)).toEqual(["Rex"]);
+    expect(b.value.map((x) => x.name)).toEqual(["Bella"]);
+    const aThumb = a.value[0]?.thumbFileId;
+    const bThumb = b.value[0]?.thumbFileId;
+    expect(aThumb).toBeTruthy();
+    expect(bThumb).toBeTruthy();
+    expect(aThumb).not.toBe(bThumb);
   });
 });

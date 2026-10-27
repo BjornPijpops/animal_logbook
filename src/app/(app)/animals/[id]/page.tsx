@@ -78,7 +78,12 @@ export default async function AnimalPage({ params }: { params: Promise<{ id: str
           <h2 id="animal-overview" className="text-lg font-semibold">
             {td("animalTitle")}
           </h2>
-          <DashboardView dashboard={dashboard.value} timezone={ctx.timezone} showAnimal={false} />
+          <DashboardView
+            dashboard={dashboard.value}
+            timezone={ctx.timezone}
+            showAnimal={false}
+            canWrite={canWrite}
+          />
         </section>
       ) : null}
 

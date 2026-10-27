@@ -38,7 +38,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         </div>
         <SignOutButton />
       </aside>
-      <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-4 pt-6 pb-28 md:pb-10">
+      <main
+        id="main"
+        className="has-[[data-page-width=wide]]:max-w-page mx-auto w-full max-w-3xl min-w-0 flex-1 px-4 pt-6 pb-28 md:pb-10 has-[[data-page-width=wide]]:md:px-8"
+      >
         {children}
         <LegalLinks />
       </main>
