@@ -1,4 +1,4 @@
-﻿# Design system
+# Design system
 
 Foundation for every page. Reuse these pieces; do not invent new colours, shadows or row layouts.
 Tokens live in `src/app/globals.css` (CSS variables mapped in `@theme`); components live in

@@ -1,4 +1,4 @@
-﻿import { eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { createDatabase } from "@/db/client";
 import { appointments, documents, medicalRecords, medicationDoses } from "@/db/schema";

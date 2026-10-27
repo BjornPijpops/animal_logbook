@@ -1,4 +1,4 @@
-﻿import { expect, test } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { expectNoA11yViolations } from "./helpers";
 
 // The page background tint is global, so pages that are not restyled yet still need to pass axe.

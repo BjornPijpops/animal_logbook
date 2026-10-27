@@ -1,4 +1,4 @@
-﻿# 0021. Dashboard structure and design system
+# 0021. Dashboard structure and design system
 
 Status: accepted. Updates the layout described in ADR 0014 (its data rules still apply).
 
