@@ -1,6 +1,7 @@
 import { isIP } from "node:net";
 import webpush from "web-push";
 import type { Env } from "@/lib/env";
+import { DEMO_DELIVERY_DISABLED, isDemoRecipient } from "@/lib/notify/demo-guard";
 import type { Mailer } from "@/lib/notify/email";
 
 export const CHANNELS = ["email", "push"] as const;
@@ -33,6 +34,9 @@ export function createEmailChannel(mailer: Mailer): NotificationChannel {
   return {
     name: "email",
     async send(recipient, message) {
+      if (isDemoRecipient(recipient.email)) {
+        return { ok: false, retryable: false, error: DEMO_DELIVERY_DISABLED };
+      }
       try {
         await mailer.send({
           to: recipient.email,
@@ -98,6 +102,9 @@ export function createPushChannel(
   return {
     name: "push",
     async send(recipient, message) {
+      if (isDemoRecipient(recipient.email)) {
+        return { ok: false, retryable: false, error: DEMO_DELIVERY_DISABLED };
+      }
       const subscriptions = await store.list(recipient.userId);
       const payload = JSON.stringify(message);
       let delivered = 0;
