@@ -28,6 +28,17 @@ npm run e2e:image          # build the image and run the Playwright suite agains
 ./deploy/restore-drill.sh  # backup, wipe all volumes, restore, verify (PowerShell: .\deploy\restore-drill.ps1)
 ```
 
+## Demo
+
+One fully populated, fictional household (Luna the dog, Milo the cat) for showing the app.
+
+```bash
+npm run db:seed:demo              # create (no-op if it already exists)
+npm run db:seed:demo -- --reset   # remove and recreate only the demo household
+```
+
+Sign in as `demo-owner@example.test` (owner) or `demo-viewer@example.test` (read-only) with password `DemoPassword-2024!`. Dates are relative to today in Europe/Brussels. Writes go through the real services under the restricted database role. Email and push to `demo-*@example.test` are suppressed. The seeder refuses `NODE_ENV=production` unless `ALLOW_DEMO_SEED=true`. **Never run it against a real household's database you care about**: `--reset` deletes the demo household and both demo users.
+
 ## Scripts
 
 | Script                                  | Purpose                                                                                      |

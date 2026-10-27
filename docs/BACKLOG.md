@@ -79,3 +79,7 @@ Ideas for after V1. Optional paid adapters may be listed here but must never be 
 - Option to disable public sign-up (invite-only server), for operators who do not want strangers to register.
 - WAL archiving / point-in-time recovery and an atomic uploads + database snapshot for backups.
 - Stream the export zip instead of building it in memory (today a documented size cap applies, EXPORT_MAX_MB).
+
+## From the demo seeder
+
+- Negative expenses (refunds): the DB forbids `amount_minor < 0` and the schema requires > 0, so the demo has no refund. Needs a product and schema decision.

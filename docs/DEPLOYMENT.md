@@ -199,6 +199,25 @@ It starts Postgres, runs `migrate` (so the roles exist on a fresh server), repla
 | Readiness is 503 right after an upgrade                   | `dc logs migrate web`. Readiness needs every migration of the image applied.                                                                                       |
 | Disk filling up                                           | `docker system df`; logs are capped at 30 MB per service. Check `uploads`, `pgdata`, and `BACKUP_DIR`. `RETENTION_DAYS` controls when soft-deleted data is purged. |
 
+## Demo data (optional)
+
+Seeds a fictional household for showcasing a public demo instance. **Never run it on an instance holding real data.** Only the demo household and `demo-*@example.test` users are touched, but treat the instance as disposable.
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file /etc/animal-logbook/.env exec -T -e ALLOW_DEMO_SEED=true worker node dist/seed-demo.mjs          # create
+docker compose -f docker-compose.prod.yml --env-file /etc/animal-logbook/.env exec -T -e ALLOW_DEMO_SEED=true worker node dist/seed-demo.mjs --reset  # reset
+```
+
+It prints the URL and credentials (`demo-owner@example.test` / `demo-viewer@example.test`, password `DemoPassword-2024!`). Change nothing else; no email or push is ever delivered to demo accounts.
+
+Nightly reset (cron, 03:00):
+
+```cron
+0 3 * * * cd /opt/animal-logbook && docker compose -f docker-compose.prod.yml --env-file /etc/animal-logbook/.env exec -T -e ALLOW_DEMO_SEED=true worker node dist/seed-demo.mjs --reset >> /var/log/demo-reset.log 2>&1
+```
+
+On Windows, use Task Scheduler to run the same `docker compose ... exec -T ...` command daily. A nightly reset also keeps the demo's soft-deleted appointment from being purged by retention.
+
 ## 9. Optional: publish the image to GitHub Container Registry
 
 Free for public repositories. In the repository settings add the variable `PUBLISH_IMAGE=true`; CI then pushes `ghcr.io/<owner>/<repo>:<git sha>` (and `:latest` from `main`) after the end-to-end suite and the Trivy scan pass. To deploy a tag on the server:
